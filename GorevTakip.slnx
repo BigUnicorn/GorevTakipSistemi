@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="GorevTakip.API/GorevTakip.API.csproj" />
+  <Project Path="GorevTakip.Business/GorevTakip.Business.csproj" />
+  <Project Path="GorevTakip.DataAccess/GorevTakip.DataAccess.csproj" />
+  <Project Path="GorevTakip.Entities/GorevTakip.Entities.csproj" />
+</Solution>
