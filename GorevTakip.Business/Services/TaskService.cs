@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using GorevTakip.DataAccess.Repositories;
 using GorevTakip.Entities;
 using GorevTakip.Entities.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 namespace GorevTakip.Business.Services
 {
@@ -17,6 +18,62 @@ namespace GorevTakip.Business.Services
         {
             _taskRepository = taskRepository;
             _userRepository = userRepository;
+        }
+
+        // --- YENİ EKLENEN FİLTRELEME VE SAYFALAMA METODU ---
+        public async Task<PagedResponseDto<TaskResponseDto>> GetFilteredTasksAsync(TaskFilterDto filter)
+        {
+            // 1. Sorguyu Başlat (Henüz SQL'e gitmedi)
+            var query = _taskRepository.GetQueryable();
+
+            // 2. Metin Araması (SearchText)
+            if (!string.IsNullOrWhiteSpace(filter.SearchText))
+            {
+                var search = filter.SearchText.ToLower();
+                // Veritabanı tarafında büyük/küçük harf duyarlılığını kaldırmak için ToLower() kullanıyoruz
+                query = query.Where(x => x.Title.ToLower().Contains(search) || 
+                                         x.Description.ToLower().Contains(search));
+            }
+
+            // 3. Durum Filtresi (Status)
+            if (filter.Status.HasValue && filter.Status.Value > 0)
+            {
+                // Enum yapısına göre cast (int) işlemi gerekebilir
+                query = query.Where(x => (int)x.Status == filter.Status.Value);
+            }
+
+            // Toplam kayıt sayısını al (Sayfalama hesabı için - EF Core CountAsync gerektirir)
+            var totalRecords = await query.CountAsync();
+
+            // 4. Sayfalama (Pagination) İşlemi
+            var tasks = await query
+                .OrderByDescending(x => x.DueDate) // Yaklaşan görevleri/son eklenenleri üste alıyoruz
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync(); // SQL sorgusu veritabanında burada çalışır!
+
+            // 5. Entity'den DTO'ya dönüştürme
+            var mappedTasks = tasks.Select(t => new TaskResponseDto
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Description = t.Description,
+                    
+                    // HATA BURADAYDI! 
+                    // filter.Status.Value yazan yeri silip aşağıdaki gibi değiştirmelisin:
+                    Status = t.Status, 
+                    
+                    DueDate = t.DueDate,
+                    AssignedUserId = t.AssignedUserId
+                }).ToList();
+            // 6. Yanıtı Döndür
+            return new PagedResponseDto<TaskResponseDto>
+            {
+                Data = mappedTasks,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling((double)totalRecords / filter.PageSize),
+                CurrentPage = filter.PageNumber
+            };
         }
 
         public async Task<IEnumerable<TaskResponseDto>> GetAllTasksAsync()

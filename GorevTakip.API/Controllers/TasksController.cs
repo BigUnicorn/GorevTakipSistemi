@@ -1,13 +1,13 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using GorevTakip.Business.Services;
-using GorevTakip.Entities;
-using GorevTakip.Entities.DTOs;
+using System;
 using System.Threading.Tasks;
+using GorevTakip.Business.Services;
+using GorevTakip.Entities.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GorevTakip.API.Controllers
 {
-    [Authorize]
+    [Authorize] // Frontend token gönderdiği için yetkilendirme zorunlu
     [Route("api/[controller]")]
     [ApiController]
     public class TasksController : ControllerBase
@@ -19,79 +19,79 @@ namespace GorevTakip.API.Controllers
             _taskService = taskService;
         }
 
+        // GET: api/Tasks
+        // 4. Maddede eklediğimiz, sayfalamalı ve filtreli yeni listeleme metodu
         [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
-            var tasks = await _taskService.GetAllTasksAsync();
-            return Ok(tasks);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var task = await _taskService.GetTaskByIdAsync(id);
-            if (task == null)
-                return NotFound("Görev bulunamadı.");
-            
-            return Ok(task);
-        }
-
-        [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetByUserId(int userId)
-        {
-            var tasks = await _taskService.GetTasksByUserIdAsync(userId);
-            return Ok(tasks);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] TaskCreateDto taskDto)
+        public async Task<IActionResult> GetAllTasks([FromQuery] TaskFilterDto filter)
         {
             try
             {
-                var createdTask = await _taskService.CreateTaskAsync(taskDto);
-                return CreatedAtAction(nameof(GetById), new { id = createdTask.Id }, createdTask);
+                // İş katmanındaki GetFilteredTasksAsync metodunu çağırıyoruz
+                var result = await _taskService.GetFilteredTasksAsync(filter);
+                return Ok(result);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, $"Sunucu hatası: {ex.Message}");
             }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] TaskUpdateDto taskDto)
+        // GET: api/Tasks/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTaskById(int id)
         {
-            if (id != taskDto.Id)
-                return BadRequest("URL'deki ID ile gövdedeki ID uyuşmuyor.");
+            var task = await _taskService.GetTaskByIdAsync(id);
+            if (task == null) 
+                return NotFound("Görev bulunamadı.");
+                
+            return Ok(task);
+        }
+
+        // POST: api/Tasks
+        [HttpPost]
+        public async Task<IActionResult> CreateTask([FromBody] TaskCreateDto taskDto)
+        {
+            try
+            {
+                await _taskService.CreateTaskAsync(taskDto);
+                return Ok("Görev başarıyla oluşturuldu.");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Görev eklenirken hata oluştu: {ex.Message}");
+            }
+        }
+
+        // PUT: api/Tasks/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskUpdateDto taskDto)
+        {
+            if (id != taskDto.Id) 
+                return BadRequest("URL içindeki ID ile gönderilen görev ID'si uyuşmuyor.");
 
             try
             {
                 await _taskService.UpdateTaskAsync(taskDto);
-                return NoContent();
+                return Ok("Görev başarıyla güncellendi.");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest($"Görev güncellenirken hata oluştu: {ex.Message}");
             }
         }
 
+        // DELETE: api/Tasks/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _taskService.DeleteTaskAsync(id);
-            return NoContent();
-        }
-        
-        [HttpPatch("{id}/status")]
-        public async Task<IActionResult> ChangeStatus(int id, [FromBody] WorkStatus newStatus)
+        public async Task<IActionResult> DeleteTask(int id)
         {
             try
             {
-                await _taskService.UpdateTaskStatusAsync(id, newStatus);
-                return NoContent();
+                await _taskService.DeleteTaskAsync(id);
+                return Ok("Görev başarıyla silindi.");
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest($"Görev silinirken hata oluştu: {ex.Message}");
             }
         }
     }

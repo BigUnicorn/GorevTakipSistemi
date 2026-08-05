@@ -1,18 +1,18 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using GorevTakip.Entities;
-using GorevTakip.Entities.DTOs; // DTO kütüphanesini ekledik
+using GorevTakip.Entities.DTOs;
 
 namespace GorevTakip.Business.Services
 {
     public interface ITaskService
     {
-        Task<IEnumerable<TaskResponseDto>> GetAllTasksAsync();
+        // Eski GetAllTasksAsync yerine bunu kullanacağız:
+        Task<PagedResponseDto<TaskResponseDto>> GetFilteredTasksAsync(TaskFilterDto filter);
+
+        // Senin var olan diğer metotların:
         Task<TaskResponseDto?> GetTaskByIdAsync(int id);
-        Task<IEnumerable<TaskResponseDto>> GetTasksByUserIdAsync(int userId);
-        Task<TaskResponseDto> CreateTaskAsync(TaskCreateDto taskDto);
-        Task UpdateTaskAsync(TaskUpdateDto taskDto);
+        Task<TaskResponseDto> CreateTaskAsync(TaskCreateDto taskCreateDto);
+        Task UpdateTaskAsync(TaskUpdateDto taskUpdateDto);
         Task DeleteTaskAsync(int id);
-        Task UpdateTaskStatusAsync(int id, WorkStatus newStatus);
     }
 }

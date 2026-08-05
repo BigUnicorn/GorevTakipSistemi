@@ -98,3 +98,8 @@ app.UseCors("AllowAll");
 app.MapControllers();
 
 app.Run();
+
+
+// cd GorevTakip.API
+// dotnet run
+// docker start gorevtakip-postgres pgadmin
