@@ -11,10 +11,17 @@ namespace GorevTakip.API.Controllers
     {
         private readonly IGenericRepository<User> _userRepository;
 
-        // Geçici olarak direkt Repository'i alıyoruz ki hızlıca kullanıcı ekleyebilelim.
         public UsersController(IGenericRepository<User> userRepository)
         {
             _userRepository = userRepository;
+        }
+
+        // YENİ EKLENEN GET METODU (Frontend'in kullanıcıları çekebilmesi için)
+        [HttpGet]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = await _userRepository.GetAllAsync();
+            return Ok(users);
         }
 
         [HttpPost]

@@ -60,7 +60,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Token'ı buraya yapıştırın."
+        Description = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJ0YWxoYUBnbWFpbC5jb20iLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJFbXBsb3llZSIsImV4cCI6MTc4NTkyMDU1Nn0.azsjP4X5grJR-m5nRho18Tt1xFIxzw-R3h2RR19jeIA"
     });
 
     // İsteklerde bu token'ı kullanmasını söyler
