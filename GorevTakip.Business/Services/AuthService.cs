@@ -71,11 +71,17 @@ namespace GorevTakip.Business.Services
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            // DEĞİŞTİRİLEN KISIM BURASI:
             // Token içine kullanıcının kimlik bilgilerini (Id, Email, Rol) gömüyoruz
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                // Controller tarafında User.FindFirst(ClaimTypes.NameIdentifier) ile okuyabilmek için:
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                
+                // E-posta bilgisi:
+                new Claim(ClaimTypes.Email, user.Email),
+                
+                // Rol bilgisi (Admin veya Employee/User):
                 new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 

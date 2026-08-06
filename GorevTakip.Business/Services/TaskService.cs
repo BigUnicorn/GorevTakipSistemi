@@ -30,7 +30,6 @@ namespace GorevTakip.Business.Services
             if (!string.IsNullOrWhiteSpace(filter.SearchText))
             {
                 var search = filter.SearchText.ToLower();
-                // Veritabanı tarafında büyük/küçük harf duyarlılığını kaldırmak için ToLower() kullanıyoruz
                 query = query.Where(x => x.Title.ToLower().Contains(search) || 
                                          x.Description.ToLower().Contains(search));
             }
@@ -38,8 +37,13 @@ namespace GorevTakip.Business.Services
             // 3. Durum Filtresi (Status)
             if (filter.Status.HasValue && filter.Status.Value > 0)
             {
-                // Enum yapısına göre cast (int) işlemi gerekebilir
                 query = query.Where(x => (int)x.Status == filter.Status.Value);
+            }
+
+            // 3.5. Atanan Kullanıcı Filtresi (Yetkilendirme için)
+            if (filter.AssignedUserId.HasValue && filter.AssignedUserId.Value > 0)
+            {
+                query = query.Where(x => x.AssignedUserId == filter.AssignedUserId.Value);
             }
 
             // Toplam kayıt sayısını al (Sayfalama hesabı için - EF Core CountAsync gerektirir)
@@ -47,10 +51,10 @@ namespace GorevTakip.Business.Services
 
             // 4. Sayfalama (Pagination) İşlemi
             var tasks = await query
-                .OrderByDescending(x => x.DueDate) // Yaklaşan görevleri/son eklenenleri üste alıyoruz
+                .OrderByDescending(x => x.DueDate) 
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
-                .ToListAsync(); // SQL sorgusu veritabanında burada çalışır!
+                .ToListAsync(); 
 
             // 5. Entity'den DTO'ya dönüştürme
             var mappedTasks = tasks.Select(t => new TaskResponseDto
@@ -58,14 +62,11 @@ namespace GorevTakip.Business.Services
                     Id = t.Id,
                     Title = t.Title,
                     Description = t.Description,
-                    
-                    // HATA BURADAYDI! 
-                    // filter.Status.Value yazan yeri silip aşağıdaki gibi değiştirmelisin:
                     Status = t.Status, 
-                    
                     DueDate = t.DueDate,
                     AssignedUserId = t.AssignedUserId
                 }).ToList();
+                
             // 6. Yanıtı Döndür
             return new PagedResponseDto<TaskResponseDto>
             {

@@ -186,5 +186,22 @@
     </div>
 
     <script src="tasks.js"></script>
+
+    <!-- ROL KONTROLÜ VE ARAYÜZ GİZLEME İŞLEMİ BURAYA YAZILIYOR -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // tasks.js içindeki userRole değişkenini kontrol ediyoruz
+            if (typeof userRole !== 'undefined' && userRole !== 'Admin') {
+                // Form alanını bul ve gizle
+                const formSection = document.querySelector('.form-section');
+                if (formSection) formSection.style.display = 'none';
+                
+                // Form gizlenince tablo alanının ekranı tam kaplaması için genişlet
+                const listSection = document.querySelector('.list-section');
+                if (listSection) listSection.style.flex = '100%';
+            }
+        });
+    </script>
+
 </body>
 </html>

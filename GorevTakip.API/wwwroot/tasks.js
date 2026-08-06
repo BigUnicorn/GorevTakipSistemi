@@ -13,6 +13,28 @@ if (!token) {
     window.location.href = 'index.html';
 }
 
+// Token'ı çözen (Decode eden) fonksiyon
+function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+}
+
+// Global kullanıcı rolü değişkeni
+let userRole = '';
+const tokenData = token ? parseJwt(token) : null;
+// API'den gelen Claim isimlendirmeleri (URL şeklinde olabilir, bu yüzden kapsayıcı bir atama yapıyoruz)
+if (tokenData) {
+    userRole = tokenData['role'] || tokenData['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'User';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     fetchTasks();
     fetchUsers();
@@ -139,6 +161,23 @@ function renderTasks(tasks) {
         let rowStyle = task.status === 3 ? "opacity: 0.7;" : "";
         tr.style = rowStyle;
 
+        // YENİ EKLENEN KISIM: Yetkiye göre butonları hazırlama
+        let actionButtons = '';
+        if (userRole === 'Admin') {
+            actionButtons = `
+                <button onclick="openEditModal(${taskId})" class="action-btn btn-edit" title="Düzenle">
+                    <i class="fa-solid fa-pen"></i>
+                </button>
+                <button onclick="openDeleteModal(${taskId})" class="action-btn btn-delete" title="Sil">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
+        } else {
+            // Normal kullanıcıysa sadece bir uyarı/boşluk göster
+            actionButtons = `<span style="color:#9ca3af; font-size:12px;">Yetkisiz İşlem</span>`;
+        }
+
+        // TABLO İÇERİĞİ OLUŞTURMA (actionButtons değişkeni son sütuna eklendi)
         tr.innerHTML = `
             <td><strong>${task.title}</strong></td>
             <td style="color: #6b7280;">${task.description || '-'}</td>
@@ -151,12 +190,7 @@ function renderTasks(tasks) {
                 </select>
             </td>
             <td>
-                <button onclick="openEditModal(${taskId})" class="action-btn btn-edit" title="Düzenle">
-                    <i class="fa-solid fa-pen"></i>
-                </button>
-                <button onclick="openDeleteModal(${taskId})" class="action-btn btn-delete" title="Sil">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
+                ${actionButtons}
             </td>
         `;
         tbody.appendChild(tr);

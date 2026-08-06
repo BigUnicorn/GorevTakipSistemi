@@ -1,4 +1,5 @@
 using System;
+using System.Security.Claims; // Token içindeki rol ve ID'yi okumak için EKLENDİ
 using System.Threading.Tasks;
 using GorevTakip.Business.Services;
 using GorevTakip.Entities.DTOs;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace GorevTakip.API.Controllers
 {
-    [Authorize] // Frontend token gönderdiği için yetkilendirme zorunlu
+    [Authorize] // Frontend token gönderdiği için yetkilendirme zorunlu (Genel kural)
     [Route("api/[controller]")]
     [ApiController]
     public class TasksController : ControllerBase
@@ -20,12 +21,24 @@ namespace GorevTakip.API.Controllers
         }
 
         // GET: api/Tasks
-        // 4. Maddede eklediğimiz, sayfalamalı ve filtreli yeni listeleme metodu
         [HttpGet]
         public async Task<IActionResult> GetAllTasks([FromQuery] TaskFilterDto filter)
         {
             try
             {
+                // YENİ EKLENDİ: Token'dan kullanıcının rolünü okuyoruz
+                var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+                // YENİ EKLENDİ: Eğer kullanıcı Admin değilse, ZORUNLU olarak sadece kendi görevlerini listele
+                if (role != "Admin") 
+                {
+                    var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    if (int.TryParse(userIdStr, out int userId))
+                    {
+                        filter.AssignedUserId = userId; // Frontend'den ne gelirse gelsin, kendi ID'sini eziyoruz
+                    }
+                }
+
                 // İş katmanındaki GetFilteredTasksAsync metodunu çağırıyoruz
                 var result = await _taskService.GetFilteredTasksAsync(filter);
                 return Ok(result);
@@ -49,6 +62,7 @@ namespace GorevTakip.API.Controllers
 
         // POST: api/Tasks
         [HttpPost]
+        [Authorize(Roles = "Admin")] // YENİ EKLENDİ: Sadece Admin rolüne sahip olanlar yeni görev ekleyebilir
         public async Task<IActionResult> CreateTask([FromBody] TaskCreateDto taskDto)
         {
             try
@@ -82,6 +96,7 @@ namespace GorevTakip.API.Controllers
 
         // DELETE: api/Tasks/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")] // YENİ EKLENDİ: Sadece Admin rolüne sahip olanlar görev silebilir
         public async Task<IActionResult> DeleteTask(int id)
         {
             try
