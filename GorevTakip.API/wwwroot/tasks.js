@@ -161,8 +161,8 @@ function renderTasks(tasks) {
     tbody.innerHTML = '';
 
     if (tasks.length === 0) {
-        // DİKKAT: Sütun sayısı 6'ya çıktığı için colspan 6 yapıldı
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #6b7280; padding: 20px;">Görev bulunamadı.</td></tr>`;
+        // DİKKAT: Sütun sayısı 7'ye (Kategori eklendiği için) çıktığı için colspan 7 yapıldı
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #6b7280; padding: 20px;">Görev bulunamadı.</td></tr>`;
         return;
     }
 
@@ -178,7 +178,7 @@ function renderTasks(tasks) {
         let rowStyle = task.status === 3 ? "opacity: 0.7;" : "";
         tr.style = rowStyle;
 
-        // YENİ EKLENEN KISIM: Yetkiye göre butonları hazırlama
+        // Yetkiye göre butonları hazırlama
         let actionButtons = '';
         if (userRole === 'Admin') {
             actionButtons = `
@@ -194,13 +194,33 @@ function renderTasks(tasks) {
             actionButtons = `<span style="color:#9ca3af; font-size:12px;">Yetkisiz İşlem</span>`;
         }
 
+        // --- YENİ EKLENEN: KATEGORİ BADGE MANTIĞI ---
+        let categoryLabel = "Belirsiz";
+        let catBg = "#f3f4f6", catColor = "#374151";
+
+        switch(task.category) {
+            case 1: categoryLabel = "Frontend"; catBg = "#e0f2fe"; catColor = "#0284c7"; break;
+            case 2: categoryLabel = "Backend"; catBg = "#ede9fe"; catColor = "#7c3aed"; break;
+            case 3: categoryLabel = "Veritabanı"; catBg = "#fce7f3"; catColor = "#db2777"; break;
+            case 4: categoryLabel = "BugFix"; catBg = "#fee2e2"; catColor = "#dc2626"; break;
+            case 5: categoryLabel = "Mobil"; catBg = "#ffedd5"; catColor = "#ea580c"; break;
+            case 6: categoryLabel = "DevOps"; catBg = "#dcfce7"; catColor = "#16a34a"; break;
+        }
+
+        const categoryBadge = `<span style="background-color: ${catBg}; color: ${catColor}; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">${categoryLabel}</span>`;
+        // ---------------------------------------------
+
         // TABLO İÇERİĞİ OLUŞTURMA
         tr.innerHTML = `
             <td><strong>${task.title}</strong></td>
             <td style="color: #6b7280;">${task.description || '-'}</td>
+            
+            <!-- YENİ EKLENEN KISIM: Kategori Sütunu -->
+            <td>${categoryBadge}</td>
+
             <td><i class="fa-regular fa-calendar" style="margin-right:5px; color:#9ca3af;"></i>${formatDate(task.dueDate)}</td>
             
-            <!-- YENİ EKLENEN KISIM: Atanan Kişi İkonu ve Adı -->
+            <!-- Atanan Kişi İkonu ve Adı -->
             <td>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #3b82f6; color: white; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold;">
@@ -232,11 +252,15 @@ async function createTask() {
     const assignedUserId = document.getElementById('taskAssignedUserId').value;
     const dueDate = document.getElementById('taskDueDate').value;
     
+    // YENİ EKLENDİ: Kategori değerini arayüzden alıyoruz
+    const category = document.getElementById('taskCategory').value;
+    
     const submitBtn = document.querySelector('.btn-success');
     const originalBtnText = submitBtn ? submitBtn.innerText : 'Ekle';
 
-    if (!title || !assignedUserId) {
-        showToast("Lütfen başlık ve atanacak kullanıcıyı seçin.", "error");
+    // YENİ EKLENDİ: category değişkenini de boş mu diye kontrol ediyoruz
+    if (!title || !assignedUserId || !category) {
+        showToast("Lütfen başlık, atanacak kullanıcı ve kategoriyi seçin.", "error");
         return;
     }
 
@@ -255,7 +279,8 @@ async function createTask() {
             body: JSON.stringify({ 
                 title: title, 
                 description: description,
-                assignedUserId: parseInt(assignedUserId), 
+                assignedUserId: parseInt(assignedUserId),
+                category: parseInt(category), // YENİ EKLENDİ: Veriyi JSON'a ekliyoruz
                 dueDate: dueDate ? new Date(dueDate).toISOString() : null 
             })
         });
@@ -268,6 +293,9 @@ async function createTask() {
             document.getElementById('taskDescription').value = '';
             document.getElementById('taskAssignedUserId').value = '';
             document.getElementById('taskDueDate').value = '';
+            
+            // YENİ EKLENDİ: Kayıt başarılı olunca kategori seçimini de sıfırla
+            document.getElementById('taskCategory').value = '';
             
             fetchTasks();
         } else {
@@ -402,6 +430,9 @@ function openEditModal(taskId) {
     document.getElementById('editTaskTitle').value = task.title || '';
     document.getElementById('editTaskDescription').value = task.description || '';
     
+    // YENİ EKLENEN SATIR: Kategori bilgisini modaldaki seçiciye (select) atıyoruz
+    document.getElementById('editTaskCategory').value = task.category || 2;
+    
     if (task.dueDate) {
         const dateOnly = task.dueDate.split('T')[0];
         document.getElementById('editTaskDueDate').value = dateOnly;
@@ -423,6 +454,9 @@ async function saveTaskEdit() {
     const title = document.getElementById('editTaskTitle').value;
     const description = document.getElementById('editTaskDescription').value;
     const dueDate = document.getElementById('editTaskDueDate').value;
+    
+    // YENİ EKLENEN: Modal'daki kategori seçimini okuyoruz
+    const category = document.getElementById('editTaskCategory').value;
 
     if (!title) {
         showToast('Görev başlığı boş bırakılamaz!', 'warning');
@@ -445,7 +479,9 @@ async function saveTaskEdit() {
                 description: description, 
                 status: currentTask.status, 
                 dueDate: dueDate ? new Date(dueDate).toISOString() : null,
-                assignedUserId: currentTask.assignedUserId || 1 
+                assignedUserId: currentTask.assignedUserId || 1,
+                // YENİ EKLENEN: Kategoriyi API'ye gönderiyoruz
+                category: parseInt(category)
             })
         });
 

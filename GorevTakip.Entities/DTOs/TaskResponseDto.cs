@@ -12,5 +12,6 @@ namespace GorevTakip.Entities.DTOs
         public DateTime? DueDate { get; set; }
         public int AssignedUserId { get; set; }
         public string AssignedUserName { get; set; } = string.Empty;
+        public TaskCategory Category { get; set; }
     }
 }

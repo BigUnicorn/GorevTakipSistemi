@@ -98,7 +98,7 @@ namespace GorevTakip.Business.Services
                     Status = t.Status,
                     DueDate = t.DueDate,
                     AssignedUserId = t.AssignedUserId,
-                    // YENİ EKLENDİ: Kullanıcının Adı ve Soyadı
+                    Category = t.Category,
                     AssignedUserName = t.AssignedUser != null ? $"{t.AssignedUser.FirstName} {t.AssignedUser.LastName}" : "Bilinmiyor"
                 }).ToList();
                 
@@ -168,6 +168,7 @@ namespace GorevTakip.Business.Services
                 DueDate = taskDto.DueDate,
                 AssignedUserId = taskDto.AssignedUserId,
                 Status = WorkStatus.Todo,
+                Category = taskDto.Category,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -192,6 +193,7 @@ namespace GorevTakip.Business.Services
             existingTask.Status = taskDto.Status;
             existingTask.DueDate = taskDto.DueDate;
             existingTask.AssignedUserId = taskDto.AssignedUserId;
+            existingTask.Category = taskDto.Category;
 
             _taskRepository.Update(existingTask);
             await _taskRepository.SaveChangesAsync();
@@ -230,6 +232,7 @@ namespace GorevTakip.Business.Services
                 CreatedDate = task.CreatedDate,
                 DueDate = task.DueDate,
                 AssignedUserId = task.AssignedUserId,
+                Category = task.Category,
                 AssignedUserName = task.AssignedUser != null ? $"{task.AssignedUser.FirstName} {task.AssignedUser.LastName}" : "Bilinmiyor" 
             };
         }

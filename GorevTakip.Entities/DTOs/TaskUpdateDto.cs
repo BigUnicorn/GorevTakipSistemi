@@ -10,5 +10,6 @@ namespace GorevTakip.Entities.DTOs
         public WorkStatus Status { get; set; }
         public DateTime? DueDate { get; set; }
         public int AssignedUserId { get; set; }
+        public TaskCategory Category { get; set; }
     }
 }

@@ -10,7 +10,7 @@ namespace GorevTakip.Entities
         public string Description { get; set; } = string.Empty;
         
         public WorkStatus Status { get; set; } = WorkStatus.Todo;
-        
+        public TaskCategory Category { get; set; } = TaskCategory.Backend;
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime? DueDate { get; set; }
 

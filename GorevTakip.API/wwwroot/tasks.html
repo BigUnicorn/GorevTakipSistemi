@@ -109,6 +109,15 @@
         <div class="form-section">
             <h3>Yeni Görev Ekle</h3>
             <input type="text" id="taskTitle" placeholder="Görev Başlığı" required>
+            <select id="taskCategory" required style="margin-bottom: 15px;">
+                <option value="" disabled selected>Kategori Seçin</option>
+                <option value="1">Frontend (Arayüz)</option>
+                <option value="2">Backend (API / Servis)</option>
+                <option value="3">Veritabanı (DB)</option>
+                <option value="4">BugFix (Hata Çözümü)</option>
+                <option value="5">Mobil (Çapraz Platform)</option>
+                <option value="6">DevOps (Dağıtım)</option>
+            </select>
             <select id="taskAssignedUserId" required>
                 <option value="" disabled selected>Atanacak Kişiyi Seçin</option>
             </select>
@@ -144,6 +153,7 @@
                     <tr>
                         <th class="sortable" onclick="handleSort('title')">Başlık <i id="icon-title" class="fa-solid fa-sort sort-icon"></i></th>
                         <th class="sortable" onclick="handleSort('description')">Açıklama <i id="icon-description" class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="sortable" onclick="handleSort('category')">Kategori <i id="icon-category" class="fa-solid fa-sort sort-icon"></i></th>
                         <th class="sortable" onclick="handleSort('duedate')">Bitiş Tarihi <i id="icon-duedate" class="fa-solid fa-sort sort-icon"></i></th>
                         <th class="sortable" onclick="handleSort('assigneduser')">Atanan Kişi <i id="icon-assigneduser" class="fa-solid fa-sort sort-icon"></i></th>
                         <th class="sortable" onclick="handleSort('status')">Durum <i id="icon-status" class="fa-solid fa-sort sort-icon"></i></th>
@@ -170,6 +180,18 @@
             <div style="margin-bottom: 12px;">
                 <label style="display: block; font-size: 13px; margin-bottom: 4px; font-weight: bold;">Başlık</label>
                 <input type="text" id="editTaskTitle" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px; font-weight: bold;">Kategori</label>
+                <select id="editTaskCategory" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <option value="1">Frontend</option>
+                    <option value="2">Backend</option>
+                    <option value="3">Veritabanı</option>
+                    <option value="4">BugFix</option>
+                    <option value="5">Mobil</option>
+                    <option value="6">DevOps</option>
+                </select>
             </div>
 
             <div style="margin-bottom: 12px;">
