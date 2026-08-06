@@ -8,6 +8,8 @@ let taskToDeleteId = null;  // Silinecek görevin ID'sini tutar
 let currentPage = 1;
 const pageSize = 5; // Sayfa başına 5 görev gösterelim
 let totalPages = 1;
+let currentSortBy = 'duedate'; // Varsayılan sıralama kolonu
+let isSortDescending = true;   // Varsayılan sıralama yönü (Yeni eklenenler en üstte)
 
 if (!token) {
     window.location.href = 'index.html';
@@ -72,12 +74,17 @@ async function fetchTasks() {
         PageNumber: currentPage,
         PageSize: pageSize
     });
-    
+
     if (currentFilter !== 'all') {
         params.append('Status', currentFilter);
     }
     if (currentSearchQuery) {
         params.append('SearchText', currentSearchQuery);
+    }
+    // YENİ EKLENENLER: API'ye sıralama bilgisini gönderiyoruz
+    if (currentSortBy) {
+        params.append('SortBy', currentSortBy);
+        params.append('SortDescending', isSortDescending);
     }
 
     try {
@@ -616,3 +623,33 @@ async function saveUserRole(userId) {
         showToast('Sunucu bağlantı hatası.', 'error');
     }
 }
+
+    // --- SIRALAMA (SORTING) FONKSİYONLARI ---
+    function handleSort(column) {
+        // Eğer aynı kolona tıklandıysa yönü değiştir, farklı kolonsa o kolonu seç ve A-Z yap
+        if (currentSortBy === column) {
+            isSortDescending = !isSortDescending; 
+        } else {
+            currentSortBy = column;
+            isSortDescending = false; // Yeni kolon seçildiğinde genelde Artan (A-Z) başlanır
+        }
+        
+        updateSortIcons();
+        currentPage = 1; // Sıralama değişince kafa karışıklığı olmaması için 1. sayfaya dönüyoruz
+        fetchTasks();
+    }
+
+    function updateSortIcons() {
+        // 1. Bütün ok ikonlarını varsayılan (çift yönlü gri ok) haline getir
+        document.querySelectorAll('.sort-icon').forEach(icon => {
+            icon.className = 'fa-solid fa-sort sort-icon';
+        });
+        
+        // 2. Sadece aktif olan kolondaki okun yönünü ve rengini değiştir
+        const activeIcon = document.getElementById(`icon-${currentSortBy}`);
+        if (activeIcon) {
+            activeIcon.className = isSortDescending 
+                ? 'fa-solid fa-arrow-down-z-a sort-icon active' 
+                : 'fa-solid fa-arrow-down-a-z sort-icon active';
+        }
+    }

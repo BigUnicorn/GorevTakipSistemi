@@ -48,8 +48,43 @@ namespace GorevTakip.Business.Services
 
             var totalRecords = await query.CountAsync();
 
+            // 3.8. DİNAMİK SIRALAMA (YENİ EKLENEN BLOK BURADA)
+            if (!string.IsNullOrEmpty(filter.SortBy))
+            {
+                switch (filter.SortBy.ToLower())
+                {
+                    case "title":
+                        query = filter.SortDescending ? query.OrderByDescending(x => x.Title) : query.OrderBy(x => x.Title);
+                        break;
+                    case "description":
+                        query = filter.SortDescending ? query.OrderByDescending(x => x.Description) : query.OrderBy(x => x.Description);
+                        break;
+                    case "duedate":
+                        query = filter.SortDescending ? query.OrderByDescending(x => x.DueDate) : query.OrderBy(x => x.DueDate);
+                        break;
+                    case "assigneduser":
+                        // Kullanıcı ismine göre sıralama (İlişkili tablo üzerinden)
+                        // Ünlem (!) operatörü ile derleyiciye null kontrolünü es geçmesini söylüyoruz.
+                        query = filter.SortDescending 
+                            ? query.OrderByDescending(x => x.AssignedUser!.FirstName).ThenByDescending(x => x.AssignedUser!.LastName) 
+                            : query.OrderBy(x => x.AssignedUser!.FirstName).ThenBy(x => x.AssignedUser!.LastName);
+                        break;
+                    case "status":
+                        query = filter.SortDescending ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status);
+                        break;
+                    default:
+                        query = query.OrderByDescending(x => x.DueDate); 
+                        break;
+                }
+            }
+            else
+            {
+                query = query.OrderByDescending(x => x.DueDate); 
+            }
+
+            // 4. Sayfalama (Pagination) İşlemi
+            // DİKKAT: Buradan .OrderByDescending(...) satırını sildik!
             var tasks = await query
-                .OrderByDescending(x => x.DueDate)
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
                 .ToListAsync();

@@ -76,6 +76,11 @@
         .btn-edit:hover { background-color: #d97706; }
         .btn-delete { background-color: #ef4444; color: white; }
         .btn-delete:hover { background-color: #dc2626; }
+
+        th.sortable { cursor: pointer; user-select: none; transition: background-color 0.2s; white-space: nowrap; }
+        th.sortable:hover { background-color: #e5e7eb; }
+        .sort-icon { margin-left: 5px; font-size: 11px; color: #9ca3af; transition: color 0.2s; }
+        .sort-icon.active { color: #3b82f6; }
     </style>
 </head>
 <body>
@@ -137,11 +142,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Başlık</th>
-                        <th>Açıklama</th>
-                        <th>Bitiş Tarihi</th>
-                        <th>Atanan Kişi</th>
-                        <th>Durum</th>
+                        <th class="sortable" onclick="handleSort('title')">Başlık <i id="icon-title" class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="sortable" onclick="handleSort('description')">Açıklama <i id="icon-description" class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="sortable" onclick="handleSort('duedate')">Bitiş Tarihi <i id="icon-duedate" class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="sortable" onclick="handleSort('assigneduser')">Atanan Kişi <i id="icon-assigneduser" class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="sortable" onclick="handleSort('status')">Durum <i id="icon-status" class="fa-solid fa-sort sort-icon"></i></th>
                         <th>İşlemler</th>
                     </tr>
                 </thead>
