@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Görev Paneli</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f3f4f6; 
+            color: #1f2937;
+            padding: 20px; 
+            margin: 0;
+        }
+        .header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #111827; color: white; padding: 15px 25px; 
+            border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .header h2 { margin: 0; font-weight: 500; letter-spacing: 0.5px; }
+        .logout-btn { 
+            background-color: #ef4444; color: white; border: none; padding: 10px 20px; 
+            border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s;
+        }
+        .logout-btn:hover { background-color: #dc2626; transform: translateY(-1px); }
+
+        .container { display: flex; gap: 25px; margin-top: 25px; flex-wrap: wrap; }
+        .form-section, .list-section { 
+            background: white; padding: 25px; border-radius: 16px; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border: 1px solid #e5e7eb;
+        }
+        .form-section { flex: 1; min-width: 300px; }
+        .list-section { flex: 2.5; min-width: 500px; }
+
+        h3 { margin-top: 0; color: #111827; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; }
+
+        input, textarea, select { 
+            width: 100%; padding: 12px; margin: 10px 0 15px; 
+            border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box;
+            font-family: 'Inter', sans-serif; transition: all 0.3s;
+            background-color: #f9fafb;
+        }
+        input:focus, textarea:focus, select:focus { 
+            outline: none; border-color: #3b82f6; 
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); background-color: white;
+        }
+
+        .btn-success { 
+            width: 100%; padding: 12px; background-color: #10b981; color: white; 
+            border: none; border-radius: 8px; cursor: pointer; font-weight: 600; 
+            font-size: 15px; transition: all 0.2s;
+        }
+        .btn-success:hover { background-color: #059669; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); }
+
+        /* Tablo Tasarımı */
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; }
+        th, td { padding: 15px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        th { background-color: #f9fafb; font-weight: 600; color: #6b7280; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; }
+        tr { transition: background-color 0.2s; }
+        tr:hover td { background-color: #f9fafb; }
+
+        /* Durum Seçici (Badge Görünümü) */
+        .status-select { 
+            padding: 6px 12px; border-radius: 9999px; font-weight: 600; font-size: 13px; 
+            border: none; cursor: pointer; appearance: none; text-align: center; width: auto; margin: 0;
+        }
+
+        /* Buton İkonları */
+        .action-btn { 
+            border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; 
+            transition: all 0.2s; margin-right: 5px; font-size: 13px; font-weight: 500;
+        }
+        .btn-edit { background-color: #f59e0b; color: white; }
+        .btn-edit:hover { background-color: #d97706; }
+        .btn-delete { background-color: #ef4444; color: white; }
+        .btn-delete:hover { background-color: #dc2626; }
+    </style>
+</head>
+<body>
+
+    <!-- Toast Bildirim Konteyneri -->
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+    <div class="header">
+        <h2>Görev Takip Paneli</h2>
+        <button class="logout-btn" onclick="logout()">Çıkış Yap</button>
+    </div>
+
+    <div class="container">
+        <!-- Yeni Görev Ekleme Formu -->
+        <div class="form-section">
+            <h3>Yeni Görev Ekle</h3>
+            <input type="text" id="taskTitle" placeholder="Görev Başlığı" required>
+            <select id="taskAssignedUserId" required>
+                <option value="" disabled selected>Atanacak Kişiyi Seçin</option>
+            </select>
+            <input type="date" id="taskDueDate">
+            <textarea id="taskDescription" placeholder="Görev Açıklaması" rows="4"></textarea>
+            <button class="btn-success" onclick="createTask()">Görevi Kaydet</button>
+        </div>
+
+        <!-- Görev Listesi Tablosu -->
+        <div class="list-section">
+            <h3>Görevlerim</h3>
+            <!-- Filtreleme Butonları (Tablonun hemen üstüne ekleyebilirsin) -->
+            <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+                <button onclick="filterTasks('all')" style="padding: 8px 12px; cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 4px;">Tümü</button>
+                <button onclick="filterTasks(1)" style="padding: 8px 12px; cursor: pointer; background: #17a2b8; color: white; border: none; border-radius: 4px;">Yapılacaklar</button>
+                <button onclick="filterTasks(2)" style="padding: 8px 12px; cursor: pointer; background: #ffc107; color: black; border: none; border-radius: 4px;">Devam Edenler</button>
+                <button onclick="filterTasks(3)" style="padding: 8px 12px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 4px;">Tamamlananlar</button>
+            </div>
+            <!-- İstatistikler ve Arama Alanı -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <!-- Özet Sayaçlar -->
+                <div style="display: flex; gap: 10px;">
+                    <span id="statTotal" style="background: #e2e3e5; padding: 6px 12px; border-radius: 4px; font-size: 14px; font-weight: bold;">Toplam: 0</span>
+                </div>
+
+                <!-- Arama Kutusu -->
+                <div>
+                    <input type="text" id="searchInput" placeholder="🔍 Görevlerde ara..." onkeyup="handleSearch(this.value)" style="padding: 7px 12px; border: 1px solid #ccc; border-radius: 4px; width: 220px;">
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Başlık</th>
+                        <th>Açıklama</th>
+                        <th>Bitiş Tarihi</th>
+                        <th>Durum</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="tasksTableBody">
+                    <!-- Görevler buraya JavaScript ile eklenecek -->
+                </tbody>
+            </table>
+            <!-- Sayfalama Kontrolleri -->
+            <div id="pagination-controls" style="display: flex; justify-content: center; gap: 8px; margin-top: 20px;">
+                <!-- JS ile butonlar buraya eklenecek -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Düzenleme Modalı (Başlangıçta gizlidir) -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+        <div style="background: white; padding: 25px; border-radius: 8px; width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+            <h3>Görevi Düzenle</h3>
+            <input type="hidden" id="editTaskId">
+            
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px; font-weight: bold;">Başlık</label>
+                <input type="text" id="editTaskTitle" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px; font-weight: bold;">Açıklama</label>
+                <textarea id="editTaskDescription" rows="3" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px; font-weight: bold;">Bitiş Tarihi</label>
+                <input type="date" id="editTaskDueDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="closeEditModal()" style="padding: 8px 14px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">İptal</button>
+                <button onclick="saveTaskEdit()" style="padding: 8px 14px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Kaydet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Özel Silme Onay Modalı -->
+    <div id="deleteConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1001;">
+        <div style="background: white; padding: 30px; border-radius: 16px; width: 320px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); transform: translateY(-20px); transition: all 0.3s;">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 45px; color: #ef4444; margin-bottom: 15px;"></i>
+            <h3 style="border:none; margin:0 0 10px 0;">Emin misiniz?</h3>
+            <p style="color: #6b7280; font-size: 14px; margin-bottom: 20px;">Bu görevi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.</p>
+            <div style="display: flex; justify-content: center; gap: 12px;">
+                <button onclick="closeDeleteModal()" style="padding: 10px 20px; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">İptal</button>
+                <button id="confirmDeleteBtn" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 500;">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="tasks.js"></script>
+</body>
+</html>

@@ -91,6 +91,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseDefaultFiles(); // index.html dosyasını varsayılan başlangıç sayfası yapar
+app.UseStaticFiles();  // wwwroot klasörünü dışarıya açar
 app.UseAuthorization();
 
 app.UseCors("AllowAll");
