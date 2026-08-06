@@ -77,16 +77,15 @@ namespace GorevTakip.Business.Services
         }
 
         public async Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null)
-{
+        {
             var query = _taskRepository.GetQueryable();
 
-            // Eğer parametre olarak userId gelirse, sadece o kullanıcının görevlerini say
+            // YENİ DÜZENLEME: Eğer userId gelmişse ve 0'dan büyükse filtrele, değilse tüm sistem
             if (userId.HasValue && userId.Value > 0)
             {
                 query = query.Where(t => t.AssignedUserId == userId.Value);
             }
 
-            // Ayrı ayrı count sorguları atıyoruz (Performans için ideal)
             var total = await query.CountAsync();
             var todo = await query.CountAsync(t => t.Status == WorkStatus.Todo);
             var inProgress = await query.CountAsync(t => t.Status == WorkStatus.InProgress);

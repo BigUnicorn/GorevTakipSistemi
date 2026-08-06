@@ -110,16 +110,15 @@ namespace GorevTakip.API.Controllers
             }
         }
 
-        // GET: api/Tasks/statistics
+        // GET: api/Tasks/statistics?userId=5
         [HttpGet("statistics")]
-        public async Task<IActionResult> GetTaskStatistics()
+        public async Task<IActionResult> GetTaskStatistics([FromQuery] int? userId)
         {
             try
             {
                 var role = User.FindFirst(ClaimTypes.Role)?.Value;
-                int? userId = null;
 
-                // Kullanıcı Admin değilse, sadece kendi istatistiklerini görebilsin
+                // Eğer kullanıcı Admin değilse, dışarıdan ne gönderilirse gönderilsin kendi ID'sini eziyoruz (Güvenlik)
                 if (role != "Admin")
                 {
                     var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -128,6 +127,8 @@ namespace GorevTakip.API.Controllers
                         userId = parsedUserId;
                     }
                 }
+                // Admin ise ve parametre olarak bir userId gönderdiyse o kullanıcınınkini, 
+                // göndermediyse (veya 0/null ise) tüm sistemin istatistiğini getirir.
 
                 var stats = await _taskService.GetTaskStatisticsAsync(userId);
                 return Ok(stats);

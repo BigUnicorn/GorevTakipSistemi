@@ -34,6 +34,16 @@
         </div>
     </div>
 
+    <div id="adminFilterContainer" style="display: none; max-width: 1200px; margin: 20px auto 0 auto; padding: 0 10px;">
+        <div style="background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px;">
+            <label for="userFilterSelect" style="font-weight: 600; color: #4b5563; font-size: 14px;"><i class="fa-solid fa-filter"></i> Personel Bazlı İncele:</label>
+            <select id="userFilterSelect" onchange="onUserFilterChange(this.value)" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: 'Inter', sans-serif; background-color: #f9fafb; cursor: pointer; min-width: 250px;">
+                <option value="">Tüm Sistem (Genel Özet)</option>
+                <!-- JS ile kullanıcılar buraya dolacak -->
+            </select>
+        </div>
+    </div>
+
     <!-- Özet Sayısal Veriler -->
     <div class="dashboard-container">
         <div class="stat-card" style="border-bottom: 4px solid #3b82f6;">
