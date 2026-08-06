@@ -44,6 +44,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if(confirmBtn) {
         confirmBtn.addEventListener('click', confirmDeleteAction);
     }
+
+    // YENİ: Kullanıcı rolü "Admin" ise Kullanıcı Yönetimi butonunu görünür yap
+    if (typeof userRole !== 'undefined' && userRole === 'Admin') {
+        const adminBtn = document.getElementById('adminUsersBtn');
+        if (adminBtn) {
+            // Butonun CSS display özelliğini inline-block (veya flex) yaparak görünür hale getiriyoruz
+            adminBtn.style.display = 'inline-block'; 
+        }
+    }
 });
 
 // 1. Tarih Formatlama Yardımcı Fonksiyonu
@@ -512,4 +521,86 @@ function renderPagination() {
     nextBtn.disabled = currentPage === totalPages;
     nextBtn.onclick = () => { if (currentPage < totalPages) { currentPage++; fetchTasks(); } };
     paginationDiv.appendChild(nextBtn);
+}
+
+// 14. Kullanıcı Moadlı Fonksiyonları
+function openUsersModal() {
+    document.getElementById('usersModal').style.display = 'flex';
+    loadUsersList();
+}
+
+function closeUsersModal() {
+    document.getElementById('usersModal').style.display = 'none';
+}
+
+async function loadUsersList() {
+    const tbody = document.getElementById('usersTableBody');
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</td></tr>`;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/Users`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const users = await response.json();
+            tbody.innerHTML = '';
+            
+            users.forEach(u => {
+                const tr = document.createElement('tr');
+                const userId = u.id || u.Id;
+                const roleValue = u.role || u.Role;
+                
+                tr.innerHTML = `
+                    <td>${u.firstName || u.FirstName} ${u.lastName || u.LastName}</td>
+                    <td>${u.email || u.Email}</td>
+                    <td>
+                        <select id="userRoleSelect_${userId}" class="status-select" style="background: #e5e7eb;">
+                            <option value="1" ${roleValue === 1 ? 'selected' : ''}>Admin</option>
+                            <option value="2" ${roleValue === 2 ? 'selected' : ''}>Personel</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button onclick="saveUserRole(${userId})" style="padding: 6px 12px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer;">Kaydet</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    } catch (error) {
+        console.error('Kullanıcılar yüklenirken hata:', error);
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: red;">Veriler çekilemedi!</td></tr>`;
+    }
+}
+
+async function saveUserRole(userId) {
+    const newRole = document.getElementById(`userRoleSelect_${userId}`).value;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/Users/${userId}/role`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                userId: parseInt(userId), 
+                newRole: parseInt(newRole) 
+            })
+        });
+
+        if (response.ok) {
+            showToast("Kullanıcı rolü başarıyla güncellendi.", "success");
+        } else {
+            const errorText = await response.text();
+            showToast(`Hata: ${errorText}`, "error");
+        }
+    } catch (error) {
+        console.error('Rol güncellenirken hata:', error);
+        showToast('Sunucu bağlantı hatası.', 'error');
+    }
 }
