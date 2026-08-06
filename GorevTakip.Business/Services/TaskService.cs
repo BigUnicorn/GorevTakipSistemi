@@ -111,14 +111,20 @@ namespace GorevTakip.Business.Services
             };
         }
 
-        public async Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null)
+        public async Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null, int? categoryId = null)
         {
             var query = _taskRepository.GetQueryable();
 
-            // YENİ DÜZENLEME: Eğer userId gelmişse ve 0'dan büyükse filtrele, değilse tüm sistem
+            // 1. Personel Filtresi
             if (userId.HasValue && userId.Value > 0)
             {
                 query = query.Where(t => t.AssignedUserId == userId.Value);
+            }
+
+            // 2. Kategori Filtresi (YENİ EKLENDİ)
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                query = query.Where(t => (int)t.Category == categoryId.Value);
             }
 
             var total = await query.CountAsync();
@@ -126,12 +132,26 @@ namespace GorevTakip.Business.Services
             var inProgress = await query.CountAsync(t => t.Status == WorkStatus.InProgress);
             var completed = await query.CountAsync(t => t.Status == WorkStatus.Done);
 
+            var frontend = await query.CountAsync(t => t.Category == TaskCategory.Frontend);
+            var backend = await query.CountAsync(t => t.Category == TaskCategory.Backend);
+            var database = await query.CountAsync(t => t.Category == TaskCategory.Database);
+            var bugFix = await query.CountAsync(t => t.Category == TaskCategory.BugFix);
+            var mobile = await query.CountAsync(t => t.Category == TaskCategory.Mobile);
+            var devOps = await query.CountAsync(t => t.Category == TaskCategory.DevOps);
+
             return new TaskStatisticsDto
             {
                 TotalTasks = total,
                 TodoTasks = todo,
                 InProgressTasks = inProgress,
-                CompletedTasks = completed
+                CompletedTasks = completed,
+
+                FrontendTasks = frontend,
+                BackendTasks = backend,
+                DatabaseTasks = database,
+                BugFixTasks = bugFix,
+                MobileTasks = mobile,
+                DevOpsTasks = devOps
             };
         }
 

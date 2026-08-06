@@ -110,9 +110,9 @@ namespace GorevTakip.API.Controllers
             }
         }
 
-        // GET: api/Tasks/statistics?userId=5
+        // GET: api/Tasks/statistics?userId=5&categoryId=2
         [HttpGet("statistics")]
-        public async Task<IActionResult> GetTaskStatistics([FromQuery] int? userId)
+        public async Task<IActionResult> GetTaskStatistics([FromQuery] int? userId, [FromQuery] int? categoryId) // <-- 1. BURAYA EKLENDİ
         {
             try
             {
@@ -127,10 +127,12 @@ namespace GorevTakip.API.Controllers
                         userId = parsedUserId;
                     }
                 }
+                
                 // Admin ise ve parametre olarak bir userId gönderdiyse o kullanıcınınkini, 
                 // göndermediyse (veya 0/null ise) tüm sistemin istatistiğini getirir.
 
-                var stats = await _taskService.GetTaskStatisticsAsync(userId);
+                // <-- 2. BURAYA EKLENDİ: categoryId parametresini de servise gönderiyoruz
+                var stats = await _taskService.GetTaskStatisticsAsync(userId, categoryId);
                 return Ok(stats);
             }
             catch (Exception ex)

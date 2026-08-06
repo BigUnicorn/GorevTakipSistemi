@@ -34,12 +34,28 @@
         </div>
     </div>
 
-    <div id="adminFilterContainer" style="display: none; max-width: 1200px; margin: 20px auto 0 auto; padding: 0 10px;">
-        <div style="background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px;">
-            <label for="userFilterSelect" style="font-weight: 600; color: #4b5563; font-size: 14px;"><i class="fa-solid fa-filter"></i> Personel Bazlı İncele:</label>
-            <select id="userFilterSelect" onchange="onUserFilterChange(this.value)" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: 'Inter', sans-serif; background-color: #f9fafb; cursor: pointer; min-width: 250px;">
+    <!-- Filtreleme Alanı -->
+    <div id="filterContainer" style="max-width: 1200px; margin: 20px auto 0 auto; padding: 0 10px; display: flex; gap: 15px; flex-wrap: wrap;">
+        
+        <!-- Admin'e Özel Personel Filtresi (Varsayılan gizli) -->
+        <div id="adminFilterDiv" style="display: none; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); flex: 1; min-width: 250px;">
+            <label style="font-weight: 600; color: #4b5563; font-size: 14px; display: block; margin-bottom: 8px;"><i class="fa-solid fa-users"></i> Personel Seçimi:</label>
+            <select id="userFilterSelect" onchange="applyFilters()" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: 'Inter', sans-serif; background-color: #f9fafb; cursor: pointer;">
                 <option value="">Tüm Sistem (Genel Özet)</option>
-                <!-- JS ile kullanıcılar buraya dolacak -->
+            </select>
+        </div>
+
+        <!-- Herkese Açık Kategori Filtresi -->
+        <div style="background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); flex: 1; min-width: 250px;">
+            <label style="font-weight: 600; color: #4b5563; font-size: 14px; display: block; margin-bottom: 8px;"><i class="fa-solid fa-layer-group"></i> Kategori Seçimi:</label>
+            <select id="categoryFilterSelect" onchange="applyFilters()" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: 'Inter', sans-serif; background-color: #f9fafb; cursor: pointer;">
+                <option value="">Tüm Kategoriler</option>
+                <option value="1">Frontend</option>
+                <option value="2">Backend</option>
+                <option value="3">Veritabanı</option>
+                <option value="4">BugFix</option>
+                <option value="5">Mobil</option>
+                <option value="6">DevOps</option>
             </select>
         </div>
     </div>
@@ -69,6 +85,10 @@
         <div class="chart-section">
             <h3 style="text-align: center; color: #374151; margin-top: 0;">Görev Dağılım Grafiği</h3>
             <canvas id="taskChart"></canvas>
+        </div>
+            <div class="chart-section" style="margin-top: 0;">
+            <h3 style="text-align: center; color: #374151; margin-top: 0;">Kategori Dağılımı (Sütun)</h3>
+            <canvas id="categoryChart"></canvas>
         </div>
     </div>
 

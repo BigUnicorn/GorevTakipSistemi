@@ -20,9 +20,10 @@ const tokenData = parseJwt(token);
 const userRole = tokenData ? (tokenData['role'] || tokenData['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'User') : 'User';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Eğer kullanıcı Admin ise filtre panelini aç ve kullanıcıları doldur
+    // Eğer kullanıcı Admin ise personel filtre panelini aç ve kullanıcıları doldur
     if (userRole === 'Admin') {
-        document.getElementById('adminFilterContainer').style.display = 'block';
+        const adminFilterDiv = document.getElementById('adminFilterDiv');
+        if (adminFilterDiv) adminFilterDiv.style.display = 'block';
         fetchUsersForFilter();
     }
     
@@ -30,13 +31,25 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchStatistics();
 });
 
-// İstatistikleri API'den çeken ana fonksiyon
-async function fetchStatistics(selectedUserId = '') {
+// YENİ EKLENDİ: İki filtreyi de (Personel ve Kategori) okuyup API'ye gönderir
+function applyFilters() {
+    const userSelect = document.getElementById('userFilterSelect');
+    const categorySelect = document.getElementById('categoryFilterSelect');
+    
+    const userId = userSelect ? userSelect.value : '';
+    const categoryId = categorySelect ? categorySelect.value : '';
+    
+    fetchStatistics(userId, categoryId);
+}
+
+// GÜNCELLENDİ: Hem userId hem categoryId alıyor ve URL'i URLSearchParams ile dinamik oluşturuyor
+async function fetchStatistics(selectedUserId = '', selectedCategoryId = '') {
     try {
-        let url = `${API_BASE_URL}/Tasks/statistics`;
-        if (selectedUserId) {
-            url += `?userId=${selectedUserId}`;
-        }
+        const params = new URLSearchParams();
+        if (selectedUserId) params.append('userId', selectedUserId);
+        if (selectedCategoryId) params.append('categoryId', selectedCategoryId);
+
+        const url = `${API_BASE_URL}/Tasks/statistics?${params.toString()}`;
 
         const response = await fetch(url, {
             method: 'GET',
@@ -55,8 +68,9 @@ async function fetchStatistics(selectedUserId = '') {
             document.getElementById('valInProgress').textContent = stats.inProgressTasks;
             document.getElementById('valCompleted').textContent = stats.completedTasks;
 
-            // Grafiği yeniden çiz
+            // Grafikleri yeniden çiz
             renderChart(stats);
+            renderCategoryChart(stats);
         } else if (response.status === 401) {
             alert('Oturumunuz süresi dolmuş.');
             logout();
@@ -66,12 +80,7 @@ async function fetchStatistics(selectedUserId = '') {
     }
 }
 
-// Admin dropdown değiştiğinde tetiklenecek fonksiyon
-function onUserFilterChange(userId) {
-    fetchStatistics(userId);
-}
-
-// Admin için personelleri getiren fonksiyon
+// Admin için personelleri getiren fonksiyon (Aynı Kaldı)
 async function fetchUsersForFilter() {
     try {
         const response = await fetch(`${API_BASE_URL}/Users`, {
@@ -104,6 +113,7 @@ async function fetchUsersForFilter() {
 
 let myChart = null;
 
+// Durum Grafiği (Aynı Kaldı)
 function renderChart(stats) {
     const ctx = document.getElementById('taskChart').getContext('2d');
 
@@ -137,6 +147,61 @@ function renderChart(stats) {
                 }
             },
             cutout: '65%'
+        }
+    });
+}
+
+let categoryChartInstance = null; 
+
+// Kategori Grafiği (Aynı Kaldı)
+function renderCategoryChart(stats) {
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+
+    if (categoryChartInstance != null) {
+        categoryChartInstance.destroy();
+    }
+
+    categoryChartInstance = new Chart(ctx, {
+        type: 'bar', 
+        data: {
+            labels: ['Frontend', 'Backend', 'Veritabanı', 'BugFix', 'Mobil', 'DevOps'],
+            datasets: [{
+                label: 'Görev Sayısı',
+                data: [
+                    stats.frontendTasks, 
+                    stats.backendTasks, 
+                    stats.databaseTasks, 
+                    stats.bugFixTasks, 
+                    stats.mobileTasks, 
+                    stats.devOpsTasks
+                ],
+                backgroundColor: [
+                    '#0284c7', 
+                    '#7c3aed', 
+                    '#db2777', 
+                    '#dc2626', 
+                    '#ea580c', 
+                    '#16a34a'  
+                ],
+                borderRadius: 6, 
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false 
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1 
+                    }
+                }
+            }
         }
     });
 }

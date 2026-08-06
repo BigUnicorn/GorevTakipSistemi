@@ -14,6 +14,6 @@ namespace GorevTakip.Business.Services
         Task<TaskResponseDto> CreateTaskAsync(TaskCreateDto taskCreateDto);
         Task UpdateTaskAsync(TaskUpdateDto taskUpdateDto);
         Task DeleteTaskAsync(int id);
-        Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null);
+        Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null, int? categoryId = null);
     }
 }
