@@ -109,5 +109,33 @@ namespace GorevTakip.API.Controllers
                 return BadRequest($"Görev silinirken hata oluştu: {ex.Message}");
             }
         }
+
+        // GET: api/Tasks/statistics
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetTaskStatistics()
+        {
+            try
+            {
+                var role = User.FindFirst(ClaimTypes.Role)?.Value;
+                int? userId = null;
+
+                // Kullanıcı Admin değilse, sadece kendi istatistiklerini görebilsin
+                if (role != "Admin")
+                {
+                    var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    if (int.TryParse(userIdStr, out int parsedUserId))
+                    {
+                        userId = parsedUserId;
+                    }
+                }
+
+                var stats = await _taskService.GetTaskStatisticsAsync(userId);
+                return Ok(stats);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Sunucu hatası: {ex.Message}");
+            }
+        }
     }
 }

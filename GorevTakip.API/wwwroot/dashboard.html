@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Görev Takip Sistemi - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js Kütüphanesi CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1f2937; padding: 20px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #111827; color: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .header h2 { margin: 0; font-weight: 500; }
+        .btn-link { color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; transition: background 0.2s; background: #374151; margin-right: 10px; }
+        .btn-link:hover { background: #4b5563; }
+        .logout-btn { background-color: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .logout-btn:hover { background-color: #dc2626; }
+        
+        .dashboard-container { display: flex; gap: 25px; margin-top: 25px; flex-wrap: wrap; justify-content: center; }
+        .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); flex: 1; min-width: 200px; text-align: center; }
+        .stat-card h3 { margin: 0 0 10px 0; color: #6b7280; font-size: 16px; }
+        .stat-card .value { font-size: 32px; font-weight: bold; color: #111827; }
+        
+        .chart-section { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); width: 100%; max-width: 600px; margin-top: 25px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Dashboard Analizi</h2>
+        <div>
+            <a href="tasks.html" class="btn-link"><i class="fa-solid fa-list-check"></i> Görevlere Dön</a>
+            <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-arrow-right-from-bracket"></i> Çıkış</button>
+        </div>
+    </div>
+
+    <!-- Özet Sayısal Veriler -->
+    <div class="dashboard-container">
+        <div class="stat-card" style="border-bottom: 4px solid #3b82f6;">
+            <h3>Toplam Görev</h3>
+            <div class="value" id="valTotal">0</div>
+        </div>
+        <div class="stat-card" style="border-bottom: 4px solid #6c757d;">
+            <h3>Yapılacaklar</h3>
+            <div class="value" id="valTodo">0</div>
+        </div>
+        <div class="stat-card" style="border-bottom: 4px solid #f59e0b;">
+            <h3>Devam Edenler</h3>
+            <div class="value" id="valInProgress">0</div>
+        </div>
+        <div class="stat-card" style="border-bottom: 4px solid #10b981;">
+            <h3>Tamamlananlar</h3>
+            <div class="value" id="valCompleted">0</div>
+        </div>
+    </div>
+
+    <!-- Grafik Alanı -->
+    <div style="display: flex; justify-content: center;">
+        <div class="chart-section">
+            <h3 style="text-align: center; color: #374151; margin-top: 0;">Görev Dağılım Grafiği</h3>
+            <canvas id="taskChart"></canvas>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

@@ -154,7 +154,8 @@ function renderTasks(tasks) {
     tbody.innerHTML = '';
 
     if (tasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #6b7280; padding: 20px;">Görev bulunamadı.</td></tr>`;
+        // DİKKAT: Sütun sayısı 6'ya çıktığı için colspan 6 yapıldı
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #6b7280; padding: 20px;">Görev bulunamadı.</td></tr>`;
         return;
     }
 
@@ -186,11 +187,22 @@ function renderTasks(tasks) {
             actionButtons = `<span style="color:#9ca3af; font-size:12px;">Yetkisiz İşlem</span>`;
         }
 
-        // TABLO İÇERİĞİ OLUŞTURMA (actionButtons değişkeni son sütuna eklendi)
+        // TABLO İÇERİĞİ OLUŞTURMA
         tr.innerHTML = `
             <td><strong>${task.title}</strong></td>
             <td style="color: #6b7280;">${task.description || '-'}</td>
             <td><i class="fa-regular fa-calendar" style="margin-right:5px; color:#9ca3af;"></i>${formatDate(task.dueDate)}</td>
+            
+            <!-- YENİ EKLENEN KISIM: Atanan Kişi İkonu ve Adı -->
+            <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #3b82f6; color: white; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold;">
+                        ${(task.assignedUserName || 'B').charAt(0).toUpperCase()}
+                    </div>
+                    <span>${task.assignedUserName || 'Bilinmiyor'}</span>
+                </div>
+            </td>
+
             <td>
                 <select onchange="updateTaskStatus(${taskId}, this.value)" class="status-select" style="${statusClass}">
                     <option value="1" ${task.status === 1 ? 'selected' : ''}>Yapılacak</option>

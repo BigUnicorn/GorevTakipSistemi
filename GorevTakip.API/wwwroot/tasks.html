@@ -85,7 +85,13 @@
 
     <div class="header">
         <h2>Görev Takip Paneli</h2>
+        <!-- Burayı aşağıdaki gibi güncelliyoruz -->
         <div style="display: flex; gap: 10px;">
+            <!-- Dashboard Linki -->
+            <a href="dashboard.html" class="logout-btn" style="background-color: #8b5cf6; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-chart-pie"></i> Dashboard
+            </a>
+            <!-- Kullanıcı Yönetimi Butonu (Admin için) -->
             <button id="adminUsersBtn" class="logout-btn" style="background-color: #3b82f6; display: none;" onclick="openUsersModal()">
                 <i class="fa-solid fa-users"></i> Kullanıcı Yönetimi
             </button>
@@ -134,6 +140,7 @@
                         <th>Başlık</th>
                         <th>Açıklama</th>
                         <th>Bitiş Tarihi</th>
+                        <th>Atanan Kişi</th>
                         <th>Durum</th>
                         <th>İşlemler</th>
                     </tr>

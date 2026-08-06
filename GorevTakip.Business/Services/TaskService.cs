@@ -23,15 +23,15 @@ namespace GorevTakip.Business.Services
         // --- YENİ EKLENEN FİLTRELEME VE SAYFALAMA METODU ---
         public async Task<PagedResponseDto<TaskResponseDto>> GetFilteredTasksAsync(TaskFilterDto filter)
         {
-            // 1. Sorguyu Başlat (Henüz SQL'e gitmedi)
-            var query = _taskRepository.GetQueryable();
+            // 1. Sorguyu Başlat ve İlişkili Kullanıcı Tablosunu Dahil Et (YENİ EKLENDİ: .Include)
+            IQueryable<TaskItem> query = _taskRepository.GetQueryable().Include(t => t.AssignedUser);
 
             // 2. Metin Araması (SearchText)
             if (!string.IsNullOrWhiteSpace(filter.SearchText))
             {
                 var search = filter.SearchText.ToLower();
-                query = query.Where(x => x.Title.ToLower().Contains(search) || 
-                                         x.Description.ToLower().Contains(search));
+                query = query.Where(x => x.Title.ToLower().Contains(search) ||
+                                        x.Description.ToLower().Contains(search));
             }
 
             // 3. Durum Filtresi (Status)
@@ -40,40 +40,64 @@ namespace GorevTakip.Business.Services
                 query = query.Where(x => (int)x.Status == filter.Status.Value);
             }
 
-            // 3.5. Atanan Kullanıcı Filtresi (Yetkilendirme için)
+            // 3.5. Atanan Kullanıcı Filtresi
             if (filter.AssignedUserId.HasValue && filter.AssignedUserId.Value > 0)
             {
                 query = query.Where(x => x.AssignedUserId == filter.AssignedUserId.Value);
             }
 
-            // Toplam kayıt sayısını al (Sayfalama hesabı için - EF Core CountAsync gerektirir)
             var totalRecords = await query.CountAsync();
 
-            // 4. Sayfalama (Pagination) İşlemi
             var tasks = await query
-                .OrderByDescending(x => x.DueDate) 
+                .OrderByDescending(x => x.DueDate)
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
-                .ToListAsync(); 
+                .ToListAsync();
 
-            // 5. Entity'den DTO'ya dönüştürme
+            // 5. Entity'den DTO'ya dönüşüm
             var mappedTasks = tasks.Select(t => new TaskResponseDto
                 {
                     Id = t.Id,
                     Title = t.Title,
                     Description = t.Description,
-                    Status = t.Status, 
+                    Status = t.Status,
                     DueDate = t.DueDate,
-                    AssignedUserId = t.AssignedUserId
+                    AssignedUserId = t.AssignedUserId,
+                    // YENİ EKLENDİ: Kullanıcının Adı ve Soyadı
+                    AssignedUserName = t.AssignedUser != null ? $"{t.AssignedUser.FirstName} {t.AssignedUser.LastName}" : "Bilinmiyor"
                 }).ToList();
                 
-            // 6. Yanıtı Döndür
             return new PagedResponseDto<TaskResponseDto>
             {
                 Data = mappedTasks,
                 TotalRecords = totalRecords,
                 TotalPages = (int)Math.Ceiling((double)totalRecords / filter.PageSize),
                 CurrentPage = filter.PageNumber
+            };
+        }
+
+        public async Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null)
+{
+            var query = _taskRepository.GetQueryable();
+
+            // Eğer parametre olarak userId gelirse, sadece o kullanıcının görevlerini say
+            if (userId.HasValue && userId.Value > 0)
+            {
+                query = query.Where(t => t.AssignedUserId == userId.Value);
+            }
+
+            // Ayrı ayrı count sorguları atıyoruz (Performans için ideal)
+            var total = await query.CountAsync();
+            var todo = await query.CountAsync(t => t.Status == WorkStatus.Todo);
+            var inProgress = await query.CountAsync(t => t.Status == WorkStatus.InProgress);
+            var completed = await query.CountAsync(t => t.Status == WorkStatus.Done);
+
+            return new TaskStatisticsDto
+            {
+                TotalTasks = total,
+                TodoTasks = todo,
+                InProgressTasks = inProgress,
+                CompletedTasks = completed
             };
         }
 
@@ -171,7 +195,8 @@ namespace GorevTakip.Business.Services
                 Status = task.Status,
                 CreatedDate = task.CreatedDate,
                 DueDate = task.DueDate,
-                AssignedUserId = task.AssignedUserId
+                AssignedUserId = task.AssignedUserId,
+                AssignedUserName = task.AssignedUser != null ? $"{task.AssignedUser.FirstName} {task.AssignedUser.LastName}" : "Bilinmiyor" 
             };
         }
     }
