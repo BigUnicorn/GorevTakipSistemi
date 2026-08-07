@@ -19,29 +19,15 @@ namespace GorevTakip.API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterDto registerDto)
         {
-            try
-            {
-                await _authService.RegisterAsync(registerDto);
-                return Ok("Kayıt başarılı.");
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            await _authService.RegisterAsync(registerDto);
+            return Ok("Kayıt başarılı.");
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDto loginDto)
         {
-            try
-            {
-                var token = await _authService.LoginAsync(loginDto);
-                return Ok(new { Token = token }); // Başarılı girişte Token döner
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var token = await _authService.LoginAsync(loginDto);
+            return Ok(new { Token = token }); // Başarılı girişte Token döner
         }
     }
 }

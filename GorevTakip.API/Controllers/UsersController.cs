@@ -42,15 +42,9 @@ namespace GorevTakip.API.Controllers
             if (id != updateDto.UserId)
                 return BadRequest("URL içindeki ID ile gönderilen ID uyuşmuyor.");
 
-            try
-            {
-                await _userService.UpdateUserRoleAsync(updateDto);
-                return Ok("Kullanıcı rolü başarıyla güncellendi.");
-            }
-            catch (System.Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            // try-catch bloğu kaldırıldı, hata yönetimi Middleware'e devredildi.
+            await _userService.UpdateUserRoleAsync(updateDto);
+            return Ok("Kullanıcı rolü başarıyla güncellendi.");
         }
     }
 }

@@ -24,29 +24,22 @@ namespace GorevTakip.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllTasks([FromQuery] TaskFilterDto filter)
         {
-            try
-            {
-                // YENİ EKLENDİ: Token'dan kullanıcının rolünü okuyoruz
-                var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            // Token'dan kullanıcının rolünü okuyoruz
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-                // YENİ EKLENDİ: Eğer kullanıcı Admin değilse, ZORUNLU olarak sadece kendi görevlerini listele
-                if (role != "Admin") 
+            // Eğer kullanıcı Admin değilse, ZORUNLU olarak sadece kendi görevlerini listele
+            if (role != "Admin") 
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdStr, out int userId))
                 {
-                    var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                    if (int.TryParse(userIdStr, out int userId))
-                    {
-                        filter.AssignedUserId = userId; // Frontend'den ne gelirse gelsin, kendi ID'sini eziyoruz
-                    }
+                    filter.AssignedUserId = userId; // Frontend'den ne gelirse gelsin, kendi ID'sini eziyoruz
                 }
+            }
 
-                // İş katmanındaki GetFilteredTasksAsync metodunu çağırıyoruz
-                var result = await _taskService.GetFilteredTasksAsync(filter);
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Sunucu hatası: {ex.Message}");
-            }
+            // İş katmanındaki GetFilteredTasksAsync metodunu çağırıyoruz
+            var result = await _taskService.GetFilteredTasksAsync(filter);
+            return Ok(result);
         }
 
         // GET: api/Tasks/5
@@ -62,18 +55,11 @@ namespace GorevTakip.API.Controllers
 
         // POST: api/Tasks
         [HttpPost]
-        [Authorize(Roles = "Admin")] // YENİ EKLENDİ: Sadece Admin rolüne sahip olanlar yeni görev ekleyebilir
+        [Authorize(Roles = "Admin")] // Sadece Admin rolüne sahip olanlar yeni görev ekleyebilir
         public async Task<IActionResult> CreateTask([FromBody] TaskCreateDto taskDto)
         {
-            try
-            {
-                await _taskService.CreateTaskAsync(taskDto);
-                return Ok("Görev başarıyla oluşturuldu.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Görev eklenirken hata oluştu: {ex.Message}");
-            }
+            await _taskService.CreateTaskAsync(taskDto);
+            return Ok("Görev başarıyla oluşturuldu.");
         }
 
         // PUT: api/Tasks/5
@@ -83,77 +69,47 @@ namespace GorevTakip.API.Controllers
             if (id != taskDto.Id) 
                 return BadRequest("URL içindeki ID ile gönderilen görev ID'si uyuşmuyor.");
 
-            try
-            {
-                await _taskService.UpdateTaskAsync(taskDto);
-                return Ok("Görev başarıyla güncellendi.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Görev güncellenirken hata oluştu: {ex.Message}");
-            }
+            await _taskService.UpdateTaskAsync(taskDto);
+            return Ok("Görev başarıyla güncellendi.");
         }
 
         // DELETE: api/Tasks/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")] // YENİ EKLENDİ: Sadece Admin rolüne sahip olanlar görev silebilir
+        [Authorize(Roles = "Admin")] // Sadece Admin rolüne sahip olanlar görev silebilir
         public async Task<IActionResult> DeleteTask(int id)
         {
-            try
-            {
-                await _taskService.DeleteTaskAsync(id);
-                return Ok("Görev başarıyla silindi.");
-            }
-            catch (Exception ex)
-            {
-                return BadRequest($"Görev silinirken hata oluştu: {ex.Message}");
-            }
+            await _taskService.DeleteTaskAsync(id);
+            return Ok("Görev başarıyla silindi.");
         }
 
         // GET: api/Tasks/statistics?userId=5&categoryId=2
         [HttpGet("statistics")]
-        public async Task<IActionResult> GetTaskStatistics([FromQuery] int? userId, [FromQuery] int? categoryId) // <-- 1. BURAYA EKLENDİ
+        public async Task<IActionResult> GetTaskStatistics([FromQuery] int? userId, [FromQuery] int? categoryId)
         {
-            try
-            {
-                var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-                // Eğer kullanıcı Admin değilse, dışarıdan ne gönderilirse gönderilsin kendi ID'sini eziyoruz (Güvenlik)
-                if (role != "Admin")
+            // Eğer kullanıcı Admin değilse, dışarıdan ne gönderilirse gönderilsin kendi ID'sini eziyoruz (Güvenlik)
+            if (role != "Admin")
+            {
+                var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (int.TryParse(userIdStr, out int parsedUserId))
                 {
-                    var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                    if (int.TryParse(userIdStr, out int parsedUserId))
-                    {
-                        userId = parsedUserId;
-                    }
+                    userId = parsedUserId;
                 }
-                
-                // Admin ise ve parametre olarak bir userId gönderdiyse o kullanıcınınkini, 
-                // göndermediyse (veya 0/null ise) tüm sistemin istatistiğini getirir.
-
-                // <-- 2. BURAYA EKLENDİ: categoryId parametresini de servise gönderiyoruz
-                var stats = await _taskService.GetTaskStatisticsAsync(userId, categoryId);
-                return Ok(stats);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Sunucu hatası: {ex.Message}");
-            }
+            
+            // Admin ise ve parametre olarak bir userId gönderdiyse o kullanıcınınkini, 
+            // göndermediyse (veya 0/null ise) tüm sistemin istatistiğini getirir.
+            var stats = await _taskService.GetTaskStatisticsAsync(userId, categoryId);
+            return Ok(stats);
         }
 
         // GET: api/Tasks/5/history
         [HttpGet("{id}/history")]
         public async Task<IActionResult> GetTaskHistory(int id)
         {
-            try
-            {
-                var history = await _taskService.GetTaskHistoryAsync(id);
-                return Ok(history);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Sunucu hatası: {ex.Message}");
-            }
+            var history = await _taskService.GetTaskHistoryAsync(id);
+            return Ok(history);
         }
 
         [HttpGet("{id}/comments")]
