@@ -17,11 +17,13 @@ namespace GorevTakip.Business.Services
     {
         private readonly IGenericRepository<User> _userRepository;
         private readonly IConfiguration _configuration;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public AuthService(IGenericRepository<User> userRepository, IConfiguration configuration)
+        public AuthService(IGenericRepository<User> userRepository, IConfiguration configuration, IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
             _configuration = configuration;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task RegisterAsync(UserRegisterDto registerDto)
@@ -43,7 +45,7 @@ namespace GorevTakip.Business.Services
             };
 
             await _userRepository.AddAsync(newUser);
-            await _userRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<string> LoginAsync(UserLoginDto loginDto)

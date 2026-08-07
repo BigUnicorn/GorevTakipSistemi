@@ -8,13 +8,12 @@ namespace GorevTakip.DataAccess.Repositories
     {
         // Önceki metotların (GetAllAsync, GetByIdAsync vs.) burada durabilir.
         Task<IEnumerable<T>> GetAllAsync();
-        Task<T> GetByIdAsync(int id);
+        Task<T?> GetByIdAsync(int id);
         Task AddAsync(T entity);
         void Update(T entity);
         void Delete(T entity);
 
         // YENİ EKLENEN METOT:
         IQueryable<T> GetQueryable();
-        Task SaveChangesAsync();
     }
 }

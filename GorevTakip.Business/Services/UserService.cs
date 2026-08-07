@@ -9,10 +9,12 @@ namespace GorevTakip.Business.Services
     public class UserService : IUserService
     {
         private readonly IGenericRepository<User> _userRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public UserService(IGenericRepository<User> userRepository)
+        public UserService(IGenericRepository<User> userRepository, IUnitOfWork unitOfWork)
         {
             _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<User?> GetUserByIdAsync(int id)
@@ -34,7 +36,7 @@ namespace GorevTakip.Business.Services
 
             user.Role = updateDto.NewRole;
             _userRepository.Update(user);
-            await _userRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<User>> GetAllUsersAsync()
@@ -45,7 +47,7 @@ namespace GorevTakip.Business.Services
         public async Task<User> CreateUserAsync(User user)
         {
             await _userRepository.AddAsync(user);
-            await _userRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             return user;
         }
     }

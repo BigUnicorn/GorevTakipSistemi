@@ -38,6 +38,7 @@ builder.Services.AddAutoMapper(cfg => {
     cfg.AddProfile<GorevTakip.Business.Mapping.MappingProfile>();
 });
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 

@@ -20,7 +20,7 @@ namespace GorevTakip.DataAccess.Repositories
             return await _context.Set<T>().ToListAsync();
         }
 
-        public async Task<T> GetByIdAsync(int id)
+        public async Task<T?> GetByIdAsync(int id)
         {
             return await _context.Set<T>().FindAsync(id);
         }
@@ -44,11 +44,6 @@ namespace GorevTakip.DataAccess.Repositories
         public IQueryable<T> GetQueryable()
         {
             return _context.Set<T>().AsQueryable();
-        }
-
-        public async Task SaveChangesAsync()
-        {
-            await _context.SaveChangesAsync();
         }
     }
 }

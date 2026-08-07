@@ -17,18 +17,21 @@ namespace GorevTakip.Business.Services
         private readonly IGenericRepository<TaskHistory> _historyRepository;
         private readonly IGenericRepository<TaskComment> _commentRepository;
         private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
 
         public TaskService(
             IGenericRepository<TaskItem> taskRepository, 
             IGenericRepository<User> userRepository,
             IGenericRepository<TaskHistory> historyRepository,
             IGenericRepository<TaskComment> commentRepository,
-            IMapper mapper)
+            IMapper mapper,
+            IUnitOfWork unitOfWork)
         {
             _taskRepository = taskRepository;
             _userRepository = userRepository;
             _historyRepository = historyRepository;
             _commentRepository = commentRepository;
+            _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
 
@@ -174,21 +177,23 @@ namespace GorevTakip.Business.Services
             if (userExists == null)
                 throw new Exception("Atanan kullanıcı bulunamadı!");
 
-            // DEĞİŞİKLİK 5: "var taskItem = new TaskItem { ... }" bloğu silinip tek satıra düşürüldü.
+            // DTO'dan Entity'e çeviri
             var taskItem = _mapper.Map<TaskItem>(taskDto);
 
             await _taskRepository.AddAsync(taskItem);
-            await _taskRepository.SaveChangesAsync();
 
+            // ÇÖZÜM BURADA: TaskId = taskItem.Id YERİNE, doğrudan objeyi (Task = taskItem) veriyoruz.
             var history = new TaskHistory 
             { 
-                TaskId = taskItem.Id, 
+                Task = taskItem, // EF Core bu ilişkiyi algılayıp ID atamasını otomatik yapacak!
                 ActionMessage = "Görev oluşturuldu." 
             };
+            
             await _historyRepository.AddAsync(history);
-            await _historyRepository.SaveChangesAsync();
+            
+            // Her iki işlem de tek bir Transaction (işlem) olarak veritabanına sorunsuzca yansıtılacak.
+            await _unitOfWork.SaveChangesAsync();
 
-            // DEĞİŞİKLİK 6: MapToResponseDto yerine Mapper kullanıldı
             return _mapper.Map<TaskResponseDto>(taskItem);
         }
 
@@ -218,7 +223,7 @@ namespace GorevTakip.Business.Services
             };
             await _historyRepository.AddAsync(history);
 
-            await _taskRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task DeleteTaskAsync(int id)
@@ -227,7 +232,7 @@ namespace GorevTakip.Business.Services
             if (task != null)
             {
                 _taskRepository.Delete(task);
-                await _taskRepository.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
             }
         }
 
@@ -247,7 +252,7 @@ namespace GorevTakip.Business.Services
             };
             await _historyRepository.AddAsync(history);
 
-            await _taskRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<TaskHistoryDto>> GetTaskHistoryAsync(int taskId)
@@ -274,7 +279,7 @@ namespace GorevTakip.Business.Services
                 CreatedDate = DateTime.UtcNow
             };
             await _commentRepository.AddAsync(comment);
-            await _commentRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<TaskCommentDto>> GetCommentsAsync(int taskId)
