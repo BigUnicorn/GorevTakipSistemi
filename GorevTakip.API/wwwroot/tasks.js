@@ -226,8 +226,24 @@ function renderTasks(tasks) {
         const categoryBadge = `<span style="background-color: ${catBg}; color: ${catColor}; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">${categoryLabel}</span>`;
         // ---------------------------------------------
 
-        // YENİ EKLENEN: Gecikmiş Görev Kontrolü
-        const isOverdue = task.isOverdue || task.IsOverdue;
+        // --- YENİ EKLENEN: Gecikmiş Görev Kontrolü (TARAYICI TABANLI HESAPLAMA) ---
+        let isOverdue = false;
+        
+        // Eğer görev bitiş tarihi atanmışsa VE görev tamamlanmamışsa (3: Tamamlandı)
+        if (task.dueDate && task.status !== 3) { 
+            const today = new Date();
+            const due = new Date(task.dueDate);
+            
+            // Saatleri sıfırlayarak sadece "Gün" olarak karşılaştırma yapıyoruz
+            today.setHours(0, 0, 0, 0);
+            due.setHours(0, 0, 0, 0);
+            
+            // Bitiş tarihi bugünden küçükse görev gecikmiştir
+            if (due < today) {
+                isOverdue = true;
+            }
+        }
+
         const dateIcon = isOverdue 
             ? '<i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; margin-right:5px;" title="Gecikmiş Görev!"></i>' 
             : '<i class="fa-regular fa-calendar" style="margin-right:5px; color:#9ca3af;"></i>';
@@ -235,6 +251,7 @@ function renderTasks(tasks) {
         const dateStyle = isOverdue 
             ? 'color: #ef4444; font-weight: bold; background: #fee2e2; padding: 4px 8px; border-radius: 4px;' 
             : '';
+        // --------------------------------------------------------------------------
 
         // TABLO İÇERİĞİ OLUŞTURMA
         tr.innerHTML = `
