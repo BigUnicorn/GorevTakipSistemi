@@ -5,6 +5,7 @@ using GorevTakip.Business.Services;
 using GorevTakip.Entities.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using GorevTakip.Entities;
 
 namespace GorevTakip.API.Controllers
 {
@@ -27,8 +28,8 @@ namespace GorevTakip.API.Controllers
             // Token'dan kullanıcının rolünü okuyoruz
             var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-            // Eğer kullanıcı Admin değilse, ZORUNLU olarak sadece kendi görevlerini listele
-            if (role != "Admin") 
+            // YENİ HALİ: "Admin" string'i yerine nameof(UserRole.Admin) kullanıyoruz
+            if (role != nameof(UserRole.Admin)) 
             {
                 var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (int.TryParse(userIdStr, out int userId))
@@ -55,7 +56,8 @@ namespace GorevTakip.API.Controllers
 
         // POST: api/Tasks
         [HttpPost]
-        [Authorize(Roles = "Admin")] // Sadece Admin rolüne sahip olanlar yeni görev ekleyebilir
+        // YENİ HALİ: Sadece Admin rolüne sahip olanlar yeni görev ekleyebilir
+        [Authorize(Roles = nameof(UserRole.Admin))] 
         public async Task<IActionResult> CreateTask([FromBody] TaskCreateDto taskDto)
         {
             await _taskService.CreateTaskAsync(taskDto);
@@ -75,7 +77,8 @@ namespace GorevTakip.API.Controllers
 
         // DELETE: api/Tasks/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")] // Sadece Admin rolüne sahip olanlar görev silebilir
+        // YENİ HALİ: Sadece Admin rolüne sahip olanlar görev silebilir
+        [Authorize(Roles = nameof(UserRole.Admin))] 
         public async Task<IActionResult> DeleteTask(int id)
         {
             await _taskService.DeleteTaskAsync(id);
@@ -88,8 +91,8 @@ namespace GorevTakip.API.Controllers
         {
             var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-            // Eğer kullanıcı Admin değilse, dışarıdan ne gönderilirse gönderilsin kendi ID'sini eziyoruz (Güvenlik)
-            if (role != "Admin")
+            // YENİ HALİ: Eğer kullanıcı Admin değilse, dışarıdan ne gönderilirse gönderilsin kendi ID'sini eziyoruz (Güvenlik)
+            if (role != nameof(UserRole.Admin))
             {
                 var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (int.TryParse(userIdStr, out int parsedUserId))

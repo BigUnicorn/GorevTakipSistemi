@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using GorevTakip.Business.Services;
-using GorevTakip.Entities;
+using GorevTakip.Entities; // YENİ EKLENDİ: UserRole enum'u için
 using GorevTakip.Entities.DTOs;
 using System.Threading.Tasks;
 
@@ -12,7 +12,6 @@ namespace GorevTakip.API.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        // Artık Repository yok, sadece Service var!
         private readonly IUserService _userService;
 
         public UsersController(IUserService userService)
@@ -23,7 +22,6 @@ namespace GorevTakip.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllUsers()
         {
-            // Controller artık sadece Service'den veri istiyor
             var users = await _userService.GetAllUsersAsync();
             return Ok(users);
         }
@@ -36,13 +34,13 @@ namespace GorevTakip.API.Controllers
         }
 
         [HttpPut("{id}/role")]
-        [Authorize(Roles = "Admin")]
+        // YENİ HALİ: Enum üzerinden Authorize yapıyoruz, "Admin" string'ini kaldırdık
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<IActionResult> UpdateUserRole(int id, [FromBody] UserRoleUpdateDto updateDto)
         {
             if (id != updateDto.UserId)
                 return BadRequest("URL içindeki ID ile gönderilen ID uyuşmuyor.");
-
-            // try-catch bloğu kaldırıldı, hata yönetimi Middleware'e devredildi.
+            
             await _userService.UpdateUserRoleAsync(updateDto);
             return Ok("Kullanıcı rolü başarıyla güncellendi.");
         }
