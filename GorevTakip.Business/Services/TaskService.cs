@@ -6,6 +6,7 @@ using GorevTakip.DataAccess.Repositories;
 using GorevTakip.Entities;
 using GorevTakip.Entities.DTOs;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 namespace GorevTakip.Business.Services
 {
@@ -15,18 +16,20 @@ namespace GorevTakip.Business.Services
         private readonly IGenericRepository<User> _userRepository;
         private readonly IGenericRepository<TaskHistory> _historyRepository;
         private readonly IGenericRepository<TaskComment> _commentRepository;
+        private readonly IMapper _mapper;
 
-        // 2. CONSTRUCTOR GÜNCELLENDİ (historyRepository eklendi)
         public TaskService(
             IGenericRepository<TaskItem> taskRepository, 
             IGenericRepository<User> userRepository,
             IGenericRepository<TaskHistory> historyRepository,
-            IGenericRepository<TaskComment> commentRepository)
+            IGenericRepository<TaskComment> commentRepository,
+            IMapper mapper)
         {
             _taskRepository = taskRepository;
             _userRepository = userRepository;
             _historyRepository = historyRepository;
             _commentRepository = commentRepository;
+            _mapper = mapper;
         }
 
         public async Task<PagedResponseDto<TaskResponseDto>> GetFilteredTasksAsync(TaskFilterDto filter)
@@ -88,18 +91,9 @@ namespace GorevTakip.Business.Services
                 .Take(filter.PageSize)
                 .ToListAsync();
 
-            var mappedTasks = tasks.Select(t => new TaskResponseDto
-                {
-                    Id = t.Id,
-                    Title = t.Title,
-                    Description = t.Description,
-                    Status = t.Status,
-                    DueDate = t.DueDate,
-                    AssignedUserId = t.AssignedUserId,
-                    Category = t.Category,
-                    AssignedUserName = t.AssignedUser != null ? $"{t.AssignedUser.FirstName} {t.AssignedUser.LastName}" : "Bilinmiyor",
-                    IsOverdue = t.DueDate.HasValue && t.DueDate.Value < DateTime.UtcNow && t.Status != WorkStatus.Done
-                }).ToList();
+            // DEĞİŞİKLİK 1: Buradaki uzun "tasks.Select(t => new TaskResponseDto...)" kodunu sildik. 
+            // Yerine AutoMapper'ın tek satırlık çeviri kodunu yazdık.
+            var mappedTasks = _mapper.Map<List<TaskResponseDto>>(tasks);
                 
             return new PagedResponseDto<TaskResponseDto>
             {
@@ -142,7 +136,6 @@ namespace GorevTakip.Business.Services
                 TodoTasks = todo,
                 InProgressTasks = inProgress,
                 CompletedTasks = completed,
-
                 FrontendTasks = frontend,
                 BackendTasks = backend,
                 DatabaseTasks = database,
@@ -155,20 +148,24 @@ namespace GorevTakip.Business.Services
         public async Task<IEnumerable<TaskResponseDto>> GetAllTasksAsync()
         {
             var tasks = await _taskRepository.GetAllAsync();
-            return tasks.Select(MapToResponseDto);
+            // DEĞİŞİKLİK 2: MapToResponseDto yerine Mapper kullanıldı
+            return _mapper.Map<IEnumerable<TaskResponseDto>>(tasks);
         }
 
         public async Task<TaskResponseDto?> GetTaskByIdAsync(int id)
         {
             var task = await _taskRepository.GetByIdAsync(id);
             if (task == null) return null;
-            return MapToResponseDto(task);
+            // DEĞİŞİKLİK 3: MapToResponseDto yerine Mapper kullanıldı
+            return _mapper.Map<TaskResponseDto>(task);
         }
 
         public async Task<IEnumerable<TaskResponseDto>> GetTasksByUserIdAsync(int userId)
         {
             var tasks = await _taskRepository.GetAllAsync();
-            return tasks.Where(t => t.AssignedUserId == userId).Select(MapToResponseDto);
+            var userTasks = tasks.Where(t => t.AssignedUserId == userId);
+            // DEĞİŞİKLİK 4: MapToResponseDto yerine Mapper kullanıldı
+            return _mapper.Map<IEnumerable<TaskResponseDto>>(userTasks);
         }
 
         public async Task<TaskResponseDto> CreateTaskAsync(TaskCreateDto taskDto)
@@ -177,21 +174,12 @@ namespace GorevTakip.Business.Services
             if (userExists == null)
                 throw new Exception("Atanan kullanıcı bulunamadı!");
 
-            var taskItem = new TaskItem
-            {
-                Title = taskDto.Title,
-                Description = taskDto.Description,
-                DueDate = taskDto.DueDate,
-                AssignedUserId = taskDto.AssignedUserId,
-                Status = WorkStatus.Todo,
-                Category = taskDto.Category,
-                CreatedDate = DateTime.UtcNow
-            };
+            // DEĞİŞİKLİK 5: "var taskItem = new TaskItem { ... }" bloğu silinip tek satıra düşürüldü.
+            var taskItem = _mapper.Map<TaskItem>(taskDto);
 
             await _taskRepository.AddAsync(taskItem);
             await _taskRepository.SaveChangesAsync();
 
-            // 3. OLUŞTURMA İŞLEMİNİ LOGLAMA EKLENDİ
             var history = new TaskHistory 
             { 
                 TaskId = taskItem.Id, 
@@ -200,7 +188,8 @@ namespace GorevTakip.Business.Services
             await _historyRepository.AddAsync(history);
             await _historyRepository.SaveChangesAsync();
 
-            return MapToResponseDto(taskItem);
+            // DEĞİŞİKLİK 6: MapToResponseDto yerine Mapper kullanıldı
+            return _mapper.Map<TaskResponseDto>(taskItem);
         }
 
         public async Task UpdateTaskAsync(TaskUpdateDto taskDto)
@@ -222,7 +211,6 @@ namespace GorevTakip.Business.Services
 
             _taskRepository.Update(existingTask);
             
-            // 4. GÜNCELLEME İŞLEMİNİ LOGLAMA EKLENDİ
             var history = new TaskHistory 
             { 
                 TaskId = existingTask.Id, 
@@ -252,7 +240,6 @@ namespace GorevTakip.Business.Services
             task.Status = newStatus;
             _taskRepository.Update(task);
 
-            // 5. DURUM DEĞİŞİKLİĞİNİ LOGLAMA EKLENDİ (Hazır el atmışken buraya da ekledim)
             var history = new TaskHistory 
             { 
                 TaskId = task.Id, 
@@ -263,7 +250,6 @@ namespace GorevTakip.Business.Services
             await _taskRepository.SaveChangesAsync();
         }
 
-        // 6. GÖREV GEÇMİŞİNİ GETİRME METODU EKLENDİ
         public async Task<IEnumerable<TaskHistoryDto>> GetTaskHistoryAsync(int taskId)
         {
             var histories = await _historyRepository.GetQueryable()
@@ -308,21 +294,5 @@ namespace GorevTakip.Business.Services
             });
         }
 
-        private TaskResponseDto MapToResponseDto(TaskItem task)
-        {
-            return new TaskResponseDto
-            {
-                Id = task.Id,
-                Title = task.Title,
-                Description = task.Description,
-                Status = task.Status,
-                CreatedDate = task.CreatedDate,
-                DueDate = task.DueDate,
-                AssignedUserId = task.AssignedUserId,
-                Category = task.Category,
-                AssignedUserName = task.AssignedUser != null ? $"{task.AssignedUser.FirstName} {task.AssignedUser.LastName}" : "Bilinmiyor",
-                IsOverdue = task.DueDate.HasValue && task.DueDate.Value < DateTime.UtcNow && task.Status != WorkStatus.Done
-            };
-        }
     }
 }

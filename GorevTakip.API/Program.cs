@@ -34,6 +34,10 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+builder.Services.AddAutoMapper(cfg => {
+    cfg.AddProfile<GorevTakip.Business.Mapping.MappingProfile>();
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -103,7 +107,7 @@ app.MapControllers();
 
 app.Run();
 
-
+// cd ..
 // cd GorevTakip.API
 // dotnet run
 // docker start gorevtakip-postgres pgadmin
