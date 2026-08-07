@@ -13,20 +13,25 @@ namespace GorevTakip.Business.Services
     {
         private readonly IGenericRepository<TaskItem> _taskRepository;
         private readonly IGenericRepository<User> _userRepository;
+        
+        // 1. GÖREV GEÇMİŞİ İÇİN REPOSITORY EKLENDİ
+        private readonly IGenericRepository<TaskHistory> _historyRepository;
 
-        public TaskService(IGenericRepository<TaskItem> taskRepository, IGenericRepository<User> userRepository)
+        // 2. CONSTRUCTOR GÜNCELLENDİ (historyRepository eklendi)
+        public TaskService(
+            IGenericRepository<TaskItem> taskRepository, 
+            IGenericRepository<User> userRepository,
+            IGenericRepository<TaskHistory> historyRepository)
         {
             _taskRepository = taskRepository;
             _userRepository = userRepository;
+            _historyRepository = historyRepository;
         }
 
-        // --- YENİ EKLENEN FİLTRELEME VE SAYFALAMA METODU ---
         public async Task<PagedResponseDto<TaskResponseDto>> GetFilteredTasksAsync(TaskFilterDto filter)
         {
-            // 1. Sorguyu Başlat ve İlişkili Kullanıcı Tablosunu Dahil Et (YENİ EKLENDİ: .Include)
             IQueryable<TaskItem> query = _taskRepository.GetQueryable().Include(t => t.AssignedUser);
 
-            // 2. Metin Araması (SearchText)
             if (!string.IsNullOrWhiteSpace(filter.SearchText))
             {
                 var search = filter.SearchText.ToLower();
@@ -34,13 +39,11 @@ namespace GorevTakip.Business.Services
                                         x.Description.ToLower().Contains(search));
             }
 
-            // 3. Durum Filtresi (Status)
             if (filter.Status.HasValue && filter.Status.Value > 0)
             {
                 query = query.Where(x => (int)x.Status == filter.Status.Value);
             }
 
-            // 3.5. Atanan Kullanıcı Filtresi
             if (filter.AssignedUserId.HasValue && filter.AssignedUserId.Value > 0)
             {
                 query = query.Where(x => x.AssignedUserId == filter.AssignedUserId.Value);
@@ -48,7 +51,6 @@ namespace GorevTakip.Business.Services
 
             var totalRecords = await query.CountAsync();
 
-            // 3.8. DİNAMİK SIRALAMA (YENİ EKLENEN BLOK BURADA)
             if (!string.IsNullOrEmpty(filter.SortBy))
             {
                 switch (filter.SortBy.ToLower())
@@ -63,8 +65,6 @@ namespace GorevTakip.Business.Services
                         query = filter.SortDescending ? query.OrderByDescending(x => x.DueDate) : query.OrderBy(x => x.DueDate);
                         break;
                     case "assigneduser":
-                        // Kullanıcı ismine göre sıralama (İlişkili tablo üzerinden)
-                        // Ünlem (!) operatörü ile derleyiciye null kontrolünü es geçmesini söylüyoruz.
                         query = filter.SortDescending 
                             ? query.OrderByDescending(x => x.AssignedUser!.FirstName).ThenByDescending(x => x.AssignedUser!.LastName) 
                             : query.OrderBy(x => x.AssignedUser!.FirstName).ThenBy(x => x.AssignedUser!.LastName);
@@ -82,14 +82,11 @@ namespace GorevTakip.Business.Services
                 query = query.OrderByDescending(x => x.DueDate); 
             }
 
-            // 4. Sayfalama (Pagination) İşlemi
-            // DİKKAT: Buradan .OrderByDescending(...) satırını sildik!
             var tasks = await query
                 .Skip((filter.PageNumber - 1) * filter.PageSize)
                 .Take(filter.PageSize)
                 .ToListAsync();
 
-            // 5. Entity'den DTO'ya dönüşüm
             var mappedTasks = tasks.Select(t => new TaskResponseDto
                 {
                     Id = t.Id,
@@ -115,13 +112,11 @@ namespace GorevTakip.Business.Services
         {
             var query = _taskRepository.GetQueryable();
 
-            // 1. Personel Filtresi
             if (userId.HasValue && userId.Value > 0)
             {
                 query = query.Where(t => t.AssignedUserId == userId.Value);
             }
 
-            // 2. Kategori Filtresi (YENİ EKLENDİ)
             if (categoryId.HasValue && categoryId.Value > 0)
             {
                 query = query.Where(t => (int)t.Category == categoryId.Value);
@@ -180,7 +175,6 @@ namespace GorevTakip.Business.Services
             if (userExists == null)
                 throw new Exception("Atanan kullanıcı bulunamadı!");
 
-            // Dışarıdan gelen DTO'yu, veritabanına kaydedilecek Entity'ye dönüştürüyoruz
             var taskItem = new TaskItem
             {
                 Title = taskDto.Title,
@@ -194,6 +188,15 @@ namespace GorevTakip.Business.Services
 
             await _taskRepository.AddAsync(taskItem);
             await _taskRepository.SaveChangesAsync();
+
+            // 3. OLUŞTURMA İŞLEMİNİ LOGLAMA EKLENDİ
+            var history = new TaskHistory 
+            { 
+                TaskId = taskItem.Id, 
+                ActionMessage = "Görev oluşturuldu." 
+            };
+            await _historyRepository.AddAsync(history);
+            await _historyRepository.SaveChangesAsync();
 
             return MapToResponseDto(taskItem);
         }
@@ -216,6 +219,15 @@ namespace GorevTakip.Business.Services
             existingTask.Category = taskDto.Category;
 
             _taskRepository.Update(existingTask);
+            
+            // 4. GÜNCELLEME İŞLEMİNİ LOGLAMA EKLENDİ
+            var history = new TaskHistory 
+            { 
+                TaskId = existingTask.Id, 
+                ActionMessage = "Görevin detayları güncellendi." 
+            };
+            await _historyRepository.AddAsync(history);
+
             await _taskRepository.SaveChangesAsync();
         }
 
@@ -237,10 +249,33 @@ namespace GorevTakip.Business.Services
 
             task.Status = newStatus;
             _taskRepository.Update(task);
+
+            // 5. DURUM DEĞİŞİKLİĞİNİ LOGLAMA EKLENDİ (Hazır el atmışken buraya da ekledim)
+            var history = new TaskHistory 
+            { 
+                TaskId = task.Id, 
+                ActionMessage = $"Görev durumu güncellendi: {newStatus}" 
+            };
+            await _historyRepository.AddAsync(history);
+
             await _taskRepository.SaveChangesAsync();
         }
 
-        // YARDIMCI METOT: Veritabanından gelen Entity'i dışarıya verilecek DTO'ya dönüştürür
+        // 6. GÖREV GEÇMİŞİNİ GETİRME METODU EKLENDİ
+        public async Task<IEnumerable<TaskHistoryDto>> GetTaskHistoryAsync(int taskId)
+        {
+            var histories = await _historyRepository.GetQueryable()
+                .Where(h => h.TaskId == taskId)
+                .OrderByDescending(h => h.CreatedDate)
+                .ToListAsync();
+
+            return histories.Select(h => new TaskHistoryDto
+            {
+                ActionMessage = h.ActionMessage,
+                CreatedDate = h.CreatedDate
+            });
+        }
+
         private TaskResponseDto MapToResponseDto(TaskItem task)
         {
             return new TaskResponseDto

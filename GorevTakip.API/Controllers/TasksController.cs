@@ -140,5 +140,20 @@ namespace GorevTakip.API.Controllers
                 return StatusCode(500, $"Sunucu hatası: {ex.Message}");
             }
         }
+
+        // GET: api/Tasks/5/history
+        [HttpGet("{id}/history")]
+        public async Task<IActionResult> GetTaskHistory(int id)
+        {
+            try
+            {
+                var history = await _taskService.GetTaskHistoryAsync(id);
+                return Ok(history);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Sunucu hatası: {ex.Message}");
+            }
+        }
     }
 }

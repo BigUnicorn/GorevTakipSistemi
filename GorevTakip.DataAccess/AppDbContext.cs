@@ -27,5 +27,7 @@ namespace GorevTakip.DataAccess
 
             base.OnModelCreating(modelBuilder);
         }
+
+        public DbSet<TaskHistory> TaskHistories { get; set; }
     }
 }

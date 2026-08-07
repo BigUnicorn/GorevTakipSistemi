@@ -180,6 +180,14 @@ function renderTasks(tasks) {
 
         // Yetkiye göre butonları hazırlama
         let actionButtons = '';
+        
+        // Geçmiş butonu HERKES için oluşturulur
+        const historyBtn = `
+            <button onclick="openHistoryModal(${taskId})" class="action-btn" style="background-color: #6366f1; color: white;" title="Geçmişi Gör">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+            </button>
+        `;
+
         if (userRole === 'Admin') {
             actionButtons = `
                 <button onclick="openEditModal(${taskId})" class="action-btn btn-edit" title="Düzenle">
@@ -188,10 +196,11 @@ function renderTasks(tasks) {
                 <button onclick="openDeleteModal(${taskId})" class="action-btn btn-delete" title="Sil">
                     <i class="fa-solid fa-trash"></i>
                 </button>
+                ${historyBtn}
             `;
         } else {
-            // Normal kullanıcıysa sadece bir uyarı/boşluk göster
-            actionButtons = `<span style="color:#9ca3af; font-size:12px;">Yetkisiz İşlem</span>`;
+            // Normal kullanıcıysa sadece Geçmiş butonunu göster (Yetkisiz işlem yazısını kaldırdık)
+            actionButtons = historyBtn;
         }
 
         // --- YENİ EKLENEN: KATEGORİ BADGE MANTIĞI ---
@@ -660,32 +669,75 @@ async function saveUserRole(userId) {
     }
 }
 
-    // --- SIRALAMA (SORTING) FONKSİYONLARI ---
-    function handleSort(column) {
-        // Eğer aynı kolona tıklandıysa yönü değiştir, farklı kolonsa o kolonu seç ve A-Z yap
-        if (currentSortBy === column) {
-            isSortDescending = !isSortDescending; 
-        } else {
-            currentSortBy = column;
-            isSortDescending = false; // Yeni kolon seçildiğinde genelde Artan (A-Z) başlanır
-        }
-        
-        updateSortIcons();
-        currentPage = 1; // Sıralama değişince kafa karışıklığı olmaması için 1. sayfaya dönüyoruz
-        fetchTasks();
+// --- SIRALAMA (SORTING) FONKSİYONLARI ---
+function handleSort(column) {
+    // Eğer aynı kolona tıklandıysa yönü değiştir, farklı kolonsa o kolonu seç ve A-Z yap
+    if (currentSortBy === column) {
+        isSortDescending = !isSortDescending; 
+    } else {
+        currentSortBy = column;
+        isSortDescending = false; // Yeni kolon seçildiğinde genelde Artan (A-Z) başlanır
     }
+        
+    updateSortIcons();
+    currentPage = 1; // Sıralama değişince kafa karışıklığı olmaması için 1. sayfaya dönüyoruz
+    fetchTasks();
+}
 
-    function updateSortIcons() {
-        // 1. Bütün ok ikonlarını varsayılan (çift yönlü gri ok) haline getir
-        document.querySelectorAll('.sort-icon').forEach(icon => {
-            icon.className = 'fa-solid fa-sort sort-icon';
-        });
+function updateSortIcons() {
+    // 1. Bütün ok ikonlarını varsayılan (çift yönlü gri ok) haline getir
+    document.querySelectorAll('.sort-icon').forEach(icon => {
+        icon.className = 'fa-solid fa-sort sort-icon';
+    });
         
-        // 2. Sadece aktif olan kolondaki okun yönünü ve rengini değiştir
-        const activeIcon = document.getElementById(`icon-${currentSortBy}`);
-        if (activeIcon) {
-            activeIcon.className = isSortDescending 
-                ? 'fa-solid fa-arrow-down-z-a sort-icon active' 
-                : 'fa-solid fa-arrow-down-a-z sort-icon active';
-        }
+    // 2. Sadece aktif olan kolondaki okun yönünü ve rengini değiştir
+    const activeIcon = document.getElementById(`icon-${currentSortBy}`);
+    if (activeIcon) {
+        activeIcon.className = isSortDescending 
+            ? 'fa-solid fa-arrow-down-z-a sort-icon active' 
+            : 'fa-solid fa-arrow-down-a-z sort-icon active';
     }
+}
+
+// --- GÖREV GEÇMİŞİ (AUDIT LOG) İŞLEMLERİ ---
+async function openHistoryModal(taskId) {
+    document.getElementById('historyModal').style.display = 'flex';
+    const list = document.getElementById('historyList');
+    list.innerHTML = '<li style="text-align: center; color: #6b7280;">Yükleniyor...</li>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/Tasks/${taskId}/history`, {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const history = await response.json();
+            list.innerHTML = '';
+
+            if (history.length === 0) {
+                list.innerHTML = '<li style="color: #6b7280; font-style: italic;">Bu göreve ait geçmiş kaydı bulunamadı.</li>';
+                return;
+            }
+
+            history.forEach(h => {
+                const dateObj = new Date(h.createdDate || h.CreatedDate);
+                const dateStr = dateObj.toLocaleDateString('tr-TR') + ' ' + dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                
+                list.innerHTML += `
+                    <li style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+                        <span style="display: block; font-size: 12px; color: #9ca3af; margin-bottom: 4px;">${dateStr}</span>
+                        <span style="color: #374151; font-weight: 500;">${h.actionMessage || h.ActionMessage}</span>
+                    </li>
+                `;
+            });
+        }
+    } catch (error) {
+        console.error("Geçmiş çekilemedi:", error);
+        list.innerHTML = '<li style="color: #ef4444;">Veriler çekilirken bir hata oluştu.</li>';
+    }
+}
+
+function closeHistoryModal() {
+    document.getElementById('historyModal').style.display = 'none';
+}
