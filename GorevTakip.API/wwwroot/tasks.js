@@ -214,6 +214,8 @@ function renderTasks(tasks) {
         let categoryLabel = "Belirsiz";
         let catBg = "#f3f4f6", catColor = "#374151";
 
+        const currentCategory = task.category || task.Category;
+
         switch(task.category) {
             case 1: categoryLabel = "Frontend"; catBg = "#e0f2fe"; catColor = "#0284c7"; break;
             case 2: categoryLabel = "Backend"; catBg = "#ede9fe"; catColor = "#7c3aed"; break;
@@ -412,11 +414,12 @@ async function updateTaskStatus(taskId, newStatus) {
             },
             body: JSON.stringify({ 
                 id: parseInt(taskId), 
-                title: currentTask.title, 
+                title: currentTask.title || currentTask.Title, 
                 description: currentTask.description || "", 
                 status: parseInt(newStatus), 
                 dueDate: currentTask.dueDate || null,
-                assignedUserId: currentTask.assignedUserId || 1 
+                assignedUserId: currentTask.assignedUserId || 1 ,
+                category: currentTask.category || currentTask.Category
             })
         });
 
