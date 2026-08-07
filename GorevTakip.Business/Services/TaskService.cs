@@ -13,19 +13,20 @@ namespace GorevTakip.Business.Services
     {
         private readonly IGenericRepository<TaskItem> _taskRepository;
         private readonly IGenericRepository<User> _userRepository;
-        
-        // 1. GÖREV GEÇMİŞİ İÇİN REPOSITORY EKLENDİ
         private readonly IGenericRepository<TaskHistory> _historyRepository;
+        private readonly IGenericRepository<TaskComment> _commentRepository;
 
         // 2. CONSTRUCTOR GÜNCELLENDİ (historyRepository eklendi)
         public TaskService(
             IGenericRepository<TaskItem> taskRepository, 
             IGenericRepository<User> userRepository,
-            IGenericRepository<TaskHistory> historyRepository)
+            IGenericRepository<TaskHistory> historyRepository,
+            IGenericRepository<TaskComment> commentRepository)
         {
             _taskRepository = taskRepository;
             _userRepository = userRepository;
             _historyRepository = historyRepository;
+            _commentRepository = commentRepository;
         }
 
         public async Task<PagedResponseDto<TaskResponseDto>> GetFilteredTasksAsync(TaskFilterDto filter)
@@ -96,7 +97,8 @@ namespace GorevTakip.Business.Services
                     DueDate = t.DueDate,
                     AssignedUserId = t.AssignedUserId,
                     Category = t.Category,
-                    AssignedUserName = t.AssignedUser != null ? $"{t.AssignedUser.FirstName} {t.AssignedUser.LastName}" : "Bilinmiyor"
+                    AssignedUserName = t.AssignedUser != null ? $"{t.AssignedUser.FirstName} {t.AssignedUser.LastName}" : "Bilinmiyor",
+                    IsOverdue = t.DueDate.HasValue && t.DueDate.Value < DateTime.UtcNow && t.Status != WorkStatus.Done
                 }).ToList();
                 
             return new PagedResponseDto<TaskResponseDto>
@@ -276,6 +278,36 @@ namespace GorevTakip.Business.Services
             });
         }
 
+        public async Task AddCommentAsync(int taskId, int userId, string text)
+        {
+            var comment = new TaskComment
+            {
+                TaskId = taskId,
+                UserId = userId,
+                Text = text,
+                CreatedDate = DateTime.UtcNow
+            };
+            await _commentRepository.AddAsync(comment);
+            await _commentRepository.SaveChangesAsync();
+        }
+
+        public async Task<IEnumerable<TaskCommentDto>> GetCommentsAsync(int taskId)
+        {
+            var comments = await _commentRepository.GetQueryable()
+                .Include(c => c.User)
+                .Where(c => c.TaskId == taskId)
+                .OrderBy(c => c.CreatedDate)
+                .ToListAsync();
+
+            return comments.Select(c => new TaskCommentDto
+            {
+                Id = c.Id,
+                Text = c.Text,
+                UserName = c.User != null ? $"{c.User.FirstName} {c.User.LastName}" : "Bilinmiyor",
+                CreatedDate = c.CreatedDate
+            });
+        }
+
         private TaskResponseDto MapToResponseDto(TaskItem task)
         {
             return new TaskResponseDto
@@ -288,7 +320,8 @@ namespace GorevTakip.Business.Services
                 DueDate = task.DueDate,
                 AssignedUserId = task.AssignedUserId,
                 Category = task.Category,
-                AssignedUserName = task.AssignedUser != null ? $"{task.AssignedUser.FirstName} {task.AssignedUser.LastName}" : "Bilinmiyor" 
+                AssignedUserName = task.AssignedUser != null ? $"{task.AssignedUser.FirstName} {task.AssignedUser.LastName}" : "Bilinmiyor",
+                IsOverdue = task.DueDate.HasValue && task.DueDate.Value < DateTime.UtcNow && task.Status != WorkStatus.Done
             };
         }
     }

@@ -187,6 +187,13 @@ function renderTasks(tasks) {
                 <i class="fa-solid fa-clock-rotate-left"></i>
             </button>
         `;
+        
+        // YENİ: Yorum butonu HERKES için oluşturulur
+        const commentBtn = `
+            <button onclick="openCommentModal(${taskId})" class="action-btn" style="background-color: #3b82f6; color: white;" title="Yorumlar">
+                <i class="fa-regular fa-comments"></i>
+            </button>
+        `;
 
         if (userRole === 'Admin') {
             actionButtons = `
@@ -197,10 +204,10 @@ function renderTasks(tasks) {
                     <i class="fa-solid fa-trash"></i>
                 </button>
                 ${historyBtn}
+                ${commentBtn}
             `;
         } else {
-            // Normal kullanıcıysa sadece Geçmiş butonunu göster (Yetkisiz işlem yazısını kaldırdık)
-            actionButtons = historyBtn;
+            actionButtons = `${historyBtn} ${commentBtn}`;
         }
 
         // --- YENİ EKLENEN: KATEGORİ BADGE MANTIĞI ---
@@ -219,6 +226,16 @@ function renderTasks(tasks) {
         const categoryBadge = `<span style="background-color: ${catBg}; color: ${catColor}; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">${categoryLabel}</span>`;
         // ---------------------------------------------
 
+        // YENİ EKLENEN: Gecikmiş Görev Kontrolü
+        const isOverdue = task.isOverdue || task.IsOverdue;
+        const dateIcon = isOverdue 
+            ? '<i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; margin-right:5px;" title="Gecikmiş Görev!"></i>' 
+            : '<i class="fa-regular fa-calendar" style="margin-right:5px; color:#9ca3af;"></i>';
+
+        const dateStyle = isOverdue 
+            ? 'color: #ef4444; font-weight: bold; background: #fee2e2; padding: 4px 8px; border-radius: 4px;' 
+            : '';
+
         // TABLO İÇERİĞİ OLUŞTURMA
         tr.innerHTML = `
             <td><strong>${task.title}</strong></td>
@@ -227,7 +244,8 @@ function renderTasks(tasks) {
             <!-- YENİ EKLENEN KISIM: Kategori Sütunu -->
             <td>${categoryBadge}</td>
 
-            <td><i class="fa-regular fa-calendar" style="margin-right:5px; color:#9ca3af;"></i>${formatDate(task.dueDate)}</td>
+            <!-- YENİ EKLENEN KISIM: Gecikme Uyarılı Tarih -->
+            <td><span style="${dateStyle}">${dateIcon}${formatDate(task.dueDate)}</span></td>
             
             <!-- Atanan Kişi İkonu ve Adı -->
             <td>
@@ -740,4 +758,75 @@ async function openHistoryModal(taskId) {
 
 function closeHistoryModal() {
     document.getElementById('historyModal').style.display = 'none';
+}
+
+// --- YORUM (COMMENT) İŞLEMLERİ ---
+async function openCommentModal(taskId) {
+    document.getElementById('commentTaskId').value = taskId;
+    document.getElementById('commentModal').style.display = 'flex';
+    document.getElementById('newCommentText').value = '';
+    await loadComments(taskId);
+}
+
+function closeCommentModal() {
+    document.getElementById('commentModal').style.display = 'none';
+}
+
+async function loadComments(taskId) {
+    const list = document.getElementById('commentList');
+    list.innerHTML = '<p style="text-align:center; color:#6b7280;">Yükleniyor...</p>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/Tasks/${taskId}/comments`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const comments = await response.json();
+            list.innerHTML = '';
+            
+            if (comments.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#9ca3af; font-size: 13px;">Henüz not eklenmemiş.</p>';
+            }
+            
+            comments.forEach(c => {
+                const date = new Date(c.createdDate || c.CreatedDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                list.innerHTML += `
+                    <div style="margin-bottom: 10px; background: white; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb;">
+                        <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px; display: flex; justify-content: space-between;">
+                            <strong>${c.userName || c.UserName}</strong> <span>${date}</span>
+                        </div>
+                        <div style="font-size: 13px; color: #1f2937;">${c.text || c.Text}</div>
+                    </div>
+                `;
+            });
+            list.scrollTop = list.scrollHeight; // En alta kaydır
+        }
+    } catch (err) {
+        list.innerHTML = '<p style="color:red;">Hata oluştu.</p>';
+    }
+}
+
+async function postComment() {
+    const taskId = document.getElementById('commentTaskId').value;
+    const text = document.getElementById('newCommentText').value;
+
+    if (!text.trim()) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/Tasks/${taskId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: text })
+        });
+
+        if (response.ok) {
+            document.getElementById('newCommentText').value = '';
+            await loadComments(taskId); // Listeyi yenile
+        }
+    } catch (err) {
+        console.error("Yorum gönderilemedi:", err);
+    }
 }

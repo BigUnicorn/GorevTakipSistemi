@@ -15,6 +15,8 @@ namespace GorevTakip.DataAccess
         // İsimleri çoğul yaparız ki tablolar "Users" ve "Tasks" olarak oluşsun.
         public DbSet<User> Users { get; set; }
         public DbSet<TaskItem> Tasks { get; set; }
+        public DbSet<TaskComment> Comments { get; set; }
+        public DbSet<TaskHistory> TaskHistories { get; set; }
 
         // Tablo ilişkilerini ve kısıtlamalarını detaylı ayarladığımız (Fluent API) metot
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,7 +29,5 @@ namespace GorevTakip.DataAccess
 
             base.OnModelCreating(modelBuilder);
         }
-
-        public DbSet<TaskHistory> TaskHistories { get; set; }
     }
 }

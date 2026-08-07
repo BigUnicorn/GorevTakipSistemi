@@ -16,5 +16,7 @@ namespace GorevTakip.Business.Services
         Task DeleteTaskAsync(int id);
         Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null, int? categoryId = null);
         Task<IEnumerable<TaskHistoryDto>> GetTaskHistoryAsync(int taskId);
+        Task AddCommentAsync(int taskId, int userId, string text);
+        Task<IEnumerable<TaskCommentDto>> GetCommentsAsync(int taskId);
     }
 }

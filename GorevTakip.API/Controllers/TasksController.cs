@@ -155,5 +155,25 @@ namespace GorevTakip.API.Controllers
                 return StatusCode(500, $"Sunucu hatası: {ex.Message}");
             }
         }
+
+        [HttpGet("{id}/comments")]
+        public async Task<IActionResult> GetComments(int id)
+        {
+            var comments = await _taskService.GetCommentsAsync(id);
+            return Ok(comments);
+        }
+
+        [HttpPost("{id}/comments")]
+        public async Task<IActionResult> AddComment(int id, [FromBody] TaskCommentCreateDto dto)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Text)) return BadRequest("Yorum boş olamaz.");
+            
+            // Yorumu yapan kişiyi tokenden güvenli bir şekilde alıyoruz
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
+
+            await _taskService.AddCommentAsync(id, userId, dto.Text);
+            return Ok("Yorum eklendi.");
+        }
     }
 }
