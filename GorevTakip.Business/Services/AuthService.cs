@@ -2,7 +2,6 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using GorevTakip.DataAccess.Repositories;
@@ -10,6 +9,7 @@ using GorevTakip.Entities;
 using GorevTakip.Entities.DTOs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+// BCrypt kütüphanesini kullanacağımız için ekstra bir using eklememize gerek yok, doğrudan çağırabiliriz.
 
 namespace GorevTakip.Business.Services
 {
@@ -32,8 +32,8 @@ namespace GorevTakip.Business.Services
             if (existingUsers.Any(u => u.Email == registerDto.Email))
                 throw new Exception("Bu email adresi zaten kullanılıyor.");
 
-            // Şifreyi Hash'leme işlemi (Basit SHA256)
-            var passwordHash = HashPassword(registerDto.Password);
+            // YENİ: BCrypt ile şifreleme işlemi
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
 
             var newUser = new User
             {
@@ -53,37 +53,25 @@ namespace GorevTakip.Business.Services
             var allUsers = await _userRepository.GetAllAsync();
             var user = allUsers.FirstOrDefault(u => u.Email == loginDto.Email);
 
-            if (user == null || user.PasswordHash != HashPassword(loginDto.Password))
+            // YENİ: BCrypt.Verify ile düz metin şifreyi, veritabanındaki hash ile karşılaştırıyoruz
+            if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
                 throw new Exception("Kullanıcı adı veya şifre hatalı.");
 
             return GenerateJwtToken(user);
         }
 
-        private string HashPassword(string password)
-        {
-            using var sha256 = SHA256.Create();
-            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(bytes);
-        }
+        // ESKİ HASH METODUNU BURADAN SİLDİK
 
         private string GenerateJwtToken(User user)
         {
-            // appsettings.json'dan gizli anahtarı alıyoruz
             var jwtKey = _configuration["Jwt:Key"] ?? "GorevTakipSistemi_SuperGizliAnahtar_12345!!";
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // DEĞİŞTİRİLEN KISIM BURASI:
-            // Token içine kullanıcının kimlik bilgilerini (Id, Email, Rol) gömüyoruz
             var claims = new[]
             {
-                // Controller tarafında User.FindFirst(ClaimTypes.NameIdentifier) ile okuyabilmek için:
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                
-                // E-posta bilgisi:
                 new Claim(ClaimTypes.Email, user.Email),
-                
-                // Rol bilgisi (Admin veya Employee/User):
                 new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
@@ -91,7 +79,7 @@ namespace GorevTakip.Business.Services
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(2), // Token 2 saat geçerli
+                expires: DateTime.UtcNow.AddHours(2), 
                 signingCredentials: creds
             );
 
