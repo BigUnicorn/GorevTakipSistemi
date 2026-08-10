@@ -26,6 +26,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       # Host kısmını localhost yerine container adı olan 'db' ile değiştiriyoruz
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=GorevTakipDb;Username=postgres;Password=12345
+    volumes:
+      - ./GorevTakip.API/wwwroot:/app/wwwroot # YENİ: Host'taki klasörü container'a bağladık
 
 volumes:
   postgres_data:
