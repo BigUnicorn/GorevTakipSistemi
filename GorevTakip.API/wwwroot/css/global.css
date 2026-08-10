@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
 :root {
     --primary-color: #3b82f6;
     --success-color: #10b981;
@@ -9,44 +11,75 @@
     --font-family: 'Inter', sans-serif;
 }
 
-body {
-    font-family: var(--font-family);
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    margin: 0;
-    padding: 20px; /* index ve register için özel class'larda sıfırlanabilir */
+/* Tüm Sayfalar İçin Genel Gövde */
+body { 
+    font-family: var(--font-family); 
+    background-color: var(--bg-color); 
+    color: var(--text-color); 
+    margin: 0; 
+    padding: 20px; 
 }
 
-/* Ortak Buton Stilleri */
-.btn-primary {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-}
-.btn-primary:hover { background-color: #2563eb; }
-
-.btn-success {
-    background-color: var(--success-color);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    cursor: pointer;
-    font-weight: 600;
+/* Sadece İçinde login-container Olan Sayfaların (Giriş/Kayıt) Gövdesi */
+body:has(.login-container) {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    padding: 0;
 }
 
-/* Toast Container */
-#toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+/* --- LOGİN / KAYIT SAYFASI --- */
+.login-container { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); width: 320px; text-align: center; }
+.login-container h2 { margin-top: 0; font-weight: 600; margin-bottom: 25px; }
+.input-group { position: relative; margin-bottom: 20px; text-align: left; }
+.input-group i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9ca3af; }
+.input-group input { width: 100%; padding: 12px 12px 12px 40px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; transition: all 0.3s; background-color: #f9fafb; font-family: var(--font-family); }
+.input-group input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); background-color: white; }
+.login-container button { width: 100%; padding: 12px; background-color: var(--success-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 15px; transition: all 0.2s; margin-top: 10px; }
+.login-container button:hover { background-color: #059669; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); }
+
+/* --- ORTAK ELEMANLAR (Header, Toast, Butonlar) --- */
+#toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.header { display: flex; justify-content: space-between; align-items: center; background: #111827; color: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+.header h2 { margin: 0; font-weight: 500; }
+.logout-btn { background-color: var(--danger-color); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+.logout-btn:hover { background-color: #dc2626; transform: translateY(-1px); }
+.btn-link { color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; transition: background 0.2s; background: #374151; margin-right: 10px; display: inline-block; }
+.btn-link:hover { background: #4b5563; }
+
+/* --- TASKS SAYFASI ÖZEL (Grid, Form, Tablo) --- */
+.container { display: flex; gap: 25px; margin-top: 25px; flex-wrap: wrap; }
+.form-section, .list-section { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; }
+.form-section { flex: 1; min-width: 300px; }
+.list-section { flex: 2.5; min-width: 500px; }
+h3 { margin-top: 0; color: #111827; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px; }
+.form-section input, .form-section textarea, .form-section select { width: 100%; padding: 12px; margin: 10px 0 15px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; background-color: #f9fafb; transition: all 0.3s; font-family: var(--font-family); }
+.form-section input:focus, .form-section textarea:focus, .form-section select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); background-color: white; }
+.btn-success { width: 100%; padding: 12px; background-color: var(--success-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 15px; transition: all 0.2s; }
+.btn-success:hover { background-color: #059669; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2); }
+
+/* --- TABLO TASARIMI --- */
+table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; }
+th, td { padding: 15px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+th { background-color: #f9fafb; font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; }
+tr { transition: background-color 0.2s; }
+tr:hover td { background-color: #f9fafb; }
+.status-select { padding: 6px 12px; border-radius: 9999px; font-weight: 600; font-size: 13px; border: none; cursor: pointer; appearance: none; text-align: center; width: auto; margin: 0; }
+.action-btn { border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; margin-right: 5px; font-size: 13px; font-weight: 500; }
+.btn-edit { background-color: var(--warning-color); color: white; }
+.btn-edit:hover { background-color: #d97706; }
+.btn-delete { background-color: var(--danger-color); color: white; }
+.btn-delete:hover { background-color: #dc2626; }
+th.sortable { cursor: pointer; user-select: none; transition: background-color 0.2s; white-space: nowrap; }
+th.sortable:hover { background-color: #e5e7eb; }
+.sort-icon { margin-left: 5px; font-size: 11px; color: #9ca3af; transition: color 0.2s; }
+.sort-icon.active { color: var(--primary-color); }
+
+/* --- DASHBOARD SAYFASI ÖZEL --- */
+.dashboard-container { display: flex; gap: 25px; margin-top: 25px; flex-wrap: wrap; justify-content: center; }
+.stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); flex: 1; min-width: 200px; text-align: center; }
+.stat-card h3 { margin: 0 0 10px 0; color: #6b7280; font-size: 16px; }
+.stat-card .value { font-size: 32px; font-weight: bold; color: #111827; }
+.chart-section { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); width: 100%; max-width: 600px; margin-top: 25px; }

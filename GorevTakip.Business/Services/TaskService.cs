@@ -7,6 +7,7 @@ using GorevTakip.Entities;
 using GorevTakip.Entities.DTOs;
 using Microsoft.EntityFrameworkCore;
 using AutoMapper;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace GorevTakip.Business.Services
 {
@@ -18,6 +19,7 @@ namespace GorevTakip.Business.Services
         private readonly IGenericRepository<TaskComment> _commentRepository;
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMemoryCache _memoryCache;
 
         public TaskService(
             IGenericRepository<TaskItem> taskRepository, 
@@ -25,7 +27,8 @@ namespace GorevTakip.Business.Services
             IGenericRepository<TaskHistory> historyRepository,
             IGenericRepository<TaskComment> commentRepository,
             IMapper mapper,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IMemoryCache memoryCache)
         {
             _taskRepository = taskRepository;
             _userRepository = userRepository;
@@ -33,6 +36,7 @@ namespace GorevTakip.Business.Services
             _commentRepository = commentRepository;
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _memoryCache = memoryCache;
         }
 
         public async Task<PagedResponseDto<TaskResponseDto>> GetFilteredTasksAsync(TaskFilterDto filter)
@@ -109,43 +113,64 @@ namespace GorevTakip.Business.Services
 
         public async Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null, int? categoryId = null)
         {
-            var query = _taskRepository.GetQueryable();
+            // 1. Her sorgu varyasyonu için benzersiz bir Cache Key (Önbellek Anahtarı) oluşturuyoruz.
+            // Örnek: "TaskStats_User_5_Cat_2" veya parametresizse "TaskStats_User_0_Cat_0"
+            string cacheKey = $"TaskStats_User_{userId ?? 0}_Cat_{categoryId ?? 0}";
 
-            if (userId.HasValue && userId.Value > 0)
+            // 2. Cache içinde bu anahtara ait veri var mı diye kontrol ediyoruz.
+            // Veri varsa, metot veritabanına hiç gitmeden doğrudan 'cachedStats' nesnesini dönecek.
+            if (!_memoryCache.TryGetValue(cacheKey, out TaskStatisticsDto? cachedStats))
             {
-                query = query.Where(t => t.AssignedUserId == userId.Value);
+                // 3. EĞER CACHE'DE YOKSA: Veritabanından verileri çekiyoruz (Senin orijinal kodların)
+                var query = _taskRepository.GetQueryable();
+
+                if (userId.HasValue && userId.Value > 0)
+                {
+                    query = query.Where(t => t.AssignedUserId == userId.Value);
+                }
+
+                if (categoryId.HasValue && categoryId.Value > 0)
+                {
+                    query = query.Where(t => (int)t.Category == categoryId.Value);
+                }
+
+                var total = await query.CountAsync();
+                var todo = await query.CountAsync(t => t.Status == WorkStatus.Todo);
+                var inProgress = await query.CountAsync(t => t.Status == WorkStatus.InProgress);
+                var completed = await query.CountAsync(t => t.Status == WorkStatus.Done);
+                
+                var frontend = await query.CountAsync(t => t.Category == TaskCategory.Frontend);
+                var backend = await query.CountAsync(t => t.Category == TaskCategory.Backend);
+                var database = await query.CountAsync(t => t.Category == TaskCategory.Database);
+                var bugFix = await query.CountAsync(t => t.Category == TaskCategory.BugFix);
+                var mobile = await query.CountAsync(t => t.Category == TaskCategory.Mobile);
+                var devOps = await query.CountAsync(t => t.Category == TaskCategory.DevOps);
+
+                // Orijinal DTO'nu oluşturuyorsun
+                cachedStats = new TaskStatisticsDto
+                {
+                    TotalTasks = total,
+                    TodoTasks = todo,
+                    InProgressTasks = inProgress,
+                    CompletedTasks = completed,
+                    FrontendTasks = frontend,
+                    BackendTasks = backend,
+                    DatabaseTasks = database,
+                    BugFixTasks = bugFix,
+                    MobileTasks = mobile,
+                    DevOpsTasks = devOps
+                };
+
+                // 4. Veriyi Cache'e yazıyoruz.
+                // Verinin RAM'de ne kadar süre kalacağını belirliyoruz (Örn: 1 dakika)
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromMinutes(1)); // 1 Dakika sonra cache otomatik silinir
+
+                _memoryCache.Set(cacheKey, cachedStats, cacheEntryOptions);
             }
 
-            if (categoryId.HasValue && categoryId.Value > 0)
-            {
-                query = query.Where(t => (int)t.Category == categoryId.Value);
-            }
-
-            var total = await query.CountAsync();
-            var todo = await query.CountAsync(t => t.Status == WorkStatus.Todo);
-            var inProgress = await query.CountAsync(t => t.Status == WorkStatus.InProgress);
-            var completed = await query.CountAsync(t => t.Status == WorkStatus.Done);
-
-            var frontend = await query.CountAsync(t => t.Category == TaskCategory.Frontend);
-            var backend = await query.CountAsync(t => t.Category == TaskCategory.Backend);
-            var database = await query.CountAsync(t => t.Category == TaskCategory.Database);
-            var bugFix = await query.CountAsync(t => t.Category == TaskCategory.BugFix);
-            var mobile = await query.CountAsync(t => t.Category == TaskCategory.Mobile);
-            var devOps = await query.CountAsync(t => t.Category == TaskCategory.DevOps);
-
-            return new TaskStatisticsDto
-            {
-                TotalTasks = total,
-                TodoTasks = todo,
-                InProgressTasks = inProgress,
-                CompletedTasks = completed,
-                FrontendTasks = frontend,
-                BackendTasks = backend,
-                DatabaseTasks = database,
-                BugFixTasks = bugFix,
-                MobileTasks = mobile,
-                DevOpsTasks = devOps
-            };
+            // Cache'den gelen veya yeni oluşturulup Cache'e eklenen veriyi döndür
+            return cachedStats!;
         }
 
         public async Task<IEnumerable<TaskResponseDto>> GetAllTasksAsync()

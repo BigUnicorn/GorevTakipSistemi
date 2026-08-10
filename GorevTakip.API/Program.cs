@@ -19,10 +19,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
                 errorCodesToAdd: null);
         }));
 
-// 2. Extension Metotlar ile Temizlenmiş Kayıtlar (Az önce yazdığımız metotlar)
+// 2. Extension Metotlar ile Temizlenmiş Kayıtlar 
 builder.Services.AddApplicationServices();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddSwaggerConfiguration();
+
+//In-Memory Caching servisini aktif ediyoruz.
+builder.Services.AddMemoryCache();
 
 // 3. Varsayılan Ayarlar
 builder.Services.AddControllers();
@@ -94,3 +97,34 @@ app.Run();
 
 //docker-compose stop --> Duraklatmak için
 //docker-compose start --> Başlatmak için
+
+/* 
+Soft Delete (Yumuşak Silme) Mekanizması: 
+Şu anda DeleteTaskAsync metodu görevi veritabanından tamamen (Remove) siliyor. 
+Entity Framework'teki Cascade kuralları gereği, görev silindiğinde ona bağlı olan TaskHistory ve TaskComment kayıtları da uçacaktır. 
+Kurumsal sistemlerde veri kaybedilmez. 
+TaskItem entity'sine public bool IsDeleted { get; set; } ekleyip, silme işlemini sadece bu bayrağı true yaparak (Soft Delete) güncellemelisin. 
+Ayrıca Repository katmanındaki sorgulara !IsDeleted filtresi (Global Query Filter) ekleyebilirsin.
+
+
+Refresh Token Entegrasyonu: 
+Şu an JWT süresi bittiğinde (2 saat) kullanıcı 401 hatası alıyor ve sistem onu doğrudan login sayfasına atıyor. 
+Kullanıcı deneyimini artırmak için bir Refresh Token mekanizması ekleyebilir ve arka planda yeni bir token alarak oturumu kesintisiz sürdürebilirsin.
+
+
+Caching (Önbellekleme): 
+dashboard.html açıldığında GetTaskStatistics endpointe istek atılıyor. 
+Bu istatistikler her saniye değişmeyen yoğun veritabanı sorguları içeriyor (Count vb.).
+.NET içindeki IMemoryCache veya Redis kullanarak bu istatistik verilerini örneğin 1 dakikalığına önbelleğe alarak veritabanı yükünü hafifletebilirsin.
+
+
+Global Exception Handling Standardı: 
+ExceptionMiddleware yazarak harika bir iş çıkarmışsın. 
+Bunu bir adım öteye taşıyıp, API standartları olan ProblemDetails formatında (RFC 7807) yanıt dönmesini sağlayabilirsin. 
+Bu, frontend tarafında hataları karşılarken çok daha standart bir yapı sunar.
+
+
+Güvenlik: 
+Docker compose dosyasında ve appsettings.json'da veritabanı şifresi ve JWT key'leri açıkça duruyor. 
+Bunları .env dosyalarına taşıyıp Docker üzerinden environment variable olarak okumak güvenlik açısından en doğru yaklaşımdır.
+*/
