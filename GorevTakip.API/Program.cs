@@ -112,12 +112,6 @@ Refresh Token Entegrasyonu:
 Kullanıcı deneyimini artırmak için bir Refresh Token mekanizması ekleyebilir ve arka planda yeni bir token alarak oturumu kesintisiz sürdürebilirsin.
 
 
-Caching (Önbellekleme): 
-dashboard.html açıldığında GetTaskStatistics endpointe istek atılıyor. 
-Bu istatistikler her saniye değişmeyen yoğun veritabanı sorguları içeriyor (Count vb.).
-.NET içindeki IMemoryCache veya Redis kullanarak bu istatistik verilerini örneğin 1 dakikalığına önbelleğe alarak veritabanı yükünü hafifletebilirsin.
-
-
 Global Exception Handling Standardı: 
 ExceptionMiddleware yazarak harika bir iş çıkarmışsın. 
 Bunu bir adım öteye taşıyıp, API standartları olan ProblemDetails formatında (RFC 7807) yanıt dönmesini sağlayabilirsin. 

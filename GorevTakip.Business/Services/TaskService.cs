@@ -219,6 +219,7 @@ namespace GorevTakip.Business.Services
             // Her iki işlem de tek bir Transaction (işlem) olarak veritabanına sorunsuzca yansıtılacak.
             await _unitOfWork.SaveChangesAsync();
 
+            InvalidateTaskCache(taskItem.AssignedUserId, (int)taskItem.Category);
             return _mapper.Map<TaskResponseDto>(taskItem);
         }
 
@@ -249,6 +250,7 @@ namespace GorevTakip.Business.Services
             await _historyRepository.AddAsync(history);
 
             await _unitOfWork.SaveChangesAsync();
+            InvalidateTaskCache(existingTask.AssignedUserId, (int)existingTask.Category);
         }
 
         public async Task DeleteTaskAsync(int id)
@@ -257,6 +259,7 @@ namespace GorevTakip.Business.Services
             if (task != null)
             {
                 _taskRepository.Delete(task);
+                InvalidateTaskCache(task.AssignedUserId, (int)task.Category);
                 await _unitOfWork.SaveChangesAsync();
             }
         }
@@ -278,6 +281,7 @@ namespace GorevTakip.Business.Services
             await _historyRepository.AddAsync(history);
 
             await _unitOfWork.SaveChangesAsync();
+            InvalidateTaskCache(task.AssignedUserId, (int)task.Category);
         }
 
         public async Task<IEnumerable<TaskHistoryDto>> GetTaskHistoryAsync(int taskId)
@@ -322,6 +326,30 @@ namespace GorevTakip.Business.Services
                 UserName = c.User != null ? $"{c.User.FirstName} {c.User.LastName}" : "Bilinmiyor",
                 CreatedDate = c.CreatedDate
             });
+        }
+
+        private void InvalidateTaskCache(int? userId = null, int? categoryId = null)
+        {
+            // Genel (sistemdeki herkesin) istatistiklerini temizle
+            _memoryCache.Remove("TaskStats_User_0_Cat_0");
+
+            // Eğer belirli bir kullanıcıya ait işlem yapıldıysa onun cache'ini temizle
+            if (userId.HasValue)
+            {
+                _memoryCache.Remove($"TaskStats_User_{userId.Value}_Cat_0");
+            }
+
+            // Kategoriye özel istatistikleri temizle
+            if (categoryId.HasValue)
+            {
+                _memoryCache.Remove($"TaskStats_User_0_Cat_{categoryId.Value}");
+            }
+
+            // Hem kullanıcı hem kategori bazlı çapraz filtreleri temizle
+            if (userId.HasValue && categoryId.HasValue)
+            {
+                _memoryCache.Remove($"TaskStats_User_{userId.Value}_Cat_{categoryId.Value}");
+            }
         }
 
     }
