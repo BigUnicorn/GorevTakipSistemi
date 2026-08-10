@@ -70,8 +70,16 @@ registerBtn.addEventListener('click', async () => {
                 window.location.href = 'index.html';
             }, 1500);
         } else {
-            const errorText = await response.text();
-            showToast(errorText || "Kayıt işlemi başarısız oldu.", "error");
+            if (response.status === 400) {
+                const errorData = await response.json();
+                if (errorData.errors) {
+                    // Objeden ilk hatayı alıp Toast ile gösteriyoruz
+                    const firstErrorKey = Object.keys(errorData.errors)[0];
+                    const errorMessage = errorData.errors[firstErrorKey][0];
+                    showToast(errorMessage, "error");
+                    return;
+                }
+            }
         }
     } catch (error) {
         console.error('Hata:', error);
