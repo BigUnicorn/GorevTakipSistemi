@@ -85,6 +85,12 @@ app.Run();
 // cd GorevTakip.API
 // dotnet run
 // docker start gorevtakip-postgres pgadmin
+// docker stop gorevtakip-postgres pgadmin
 
-//docker-compose up -d
-//docker-compose down
+//docker-compose up -d --> Başlatmak için
+//docker-compose up -d --build --> Kodları güncelleyip başlatmak için
+//docker-compose down --> Durdurmak için
+//docker-compose down -v --> Durdurmak ve veritabanını silmek için
+
+//docker-compose stop --> Duraklatmak için
+//docker-compose start --> Başlatmak için
