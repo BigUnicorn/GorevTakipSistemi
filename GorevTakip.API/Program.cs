@@ -112,12 +112,6 @@ Refresh Token Entegrasyonu:
 Kullanıcı deneyimini artırmak için bir Refresh Token mekanizması ekleyebilir ve arka planda yeni bir token alarak oturumu kesintisiz sürdürebilirsin.
 
 
-Global Exception Handling Standardı: 
-ExceptionMiddleware yazarak harika bir iş çıkarmışsın. 
-Bunu bir adım öteye taşıyıp, API standartları olan ProblemDetails formatında (RFC 7807) yanıt dönmesini sağlayabilirsin. 
-Bu, frontend tarafında hataları karşılarken çok daha standart bir yapı sunar.
-
-
 Güvenlik: 
 Docker compose dosyasında ve appsettings.json'da veritabanı şifresi ve JWT key'leri açıkça duruyor. 
 Bunları .env dosyalarına taşıyıp Docker üzerinden environment variable olarak okumak güvenlik açısından en doğru yaklaşımdır.

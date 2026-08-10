@@ -5,7 +5,8 @@ using System.Linq;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
-using FluentValidation; // YENİ EKLENDİ
+using FluentValidation; 
+using Microsoft.AspNetCore.Mvc; // ProblemDetails sınıfları için gerekli
 
 namespace GorevTakip.API.Middlewares
 {
@@ -24,12 +25,10 @@ namespace GorevTakip.API.Middlewares
         {
             try
             {
-                // İstek sorunsuzsa bir sonraki adıma geç
                 await _next(httpContext);
             }
             catch (Exception ex)
             {
-                // Hata oluşursa logla ve yakala
                 _logger.LogError($"Bir hata oluştu: {ex.Message}");
                 await HandleExceptionAsync(httpContext, ex);
             }
@@ -37,43 +36,53 @@ namespace GorevTakip.API.Middlewares
 
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            context.Response.ContentType = "application/json";
+            // İçerik tipini RFC 7807 standardına (Problem Details) göre ayarlıyoruz
+            context.Response.ContentType = "application/problem+json";
 
-            object response;
+            ProblemDetails problemDetails;
 
-            // YENİ EKLENEN KISIM: FluentValidation Hatası Yakalama
+            // 1. FluentValidation Hatalarını Yakalama ve Formatlama
             if (exception is ValidationException validationException)
             {
-                context.Response.StatusCode = (int)HttpStatusCode.BadRequest; // 400
-                
-                // Hataları gruplayıp frontend'in kolayca okuyabileceği bir listeye çeviriyoruz
-                var errors = validationException.Errors
-                    .Select(e => new { e.PropertyName, e.ErrorMessage })
-                    .ToList();
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 
-                response = new
+                // FluentValidation hatalarını ProblemDetails'ın beklediği Dictionary yapısına çeviriyoruz
+                var errors = validationException.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(e => e.ErrorMessage).ToArray()
+                    );
+
+                problemDetails = new ValidationProblemDetails(errors)
                 {
-                    StatusCode = context.Response.StatusCode,
-                    Message = "Doğrulama hataları oluştu.",
-                    Errors = errors
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Doğrulama Hatası",
+                    Detail = "İstekte bir veya daha fazla doğrulama kuralı ihlal edildi.",
+                    Instance = context.Request.Path
                 };
             }
+            // 2. Beklenmeyen Genel Sistem Hataları (500)
             else
             {
-                // Diğer tüm sistem hataları (500)
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                response = new
+
+                problemDetails = new ProblemDetails
                 {
-                    StatusCode = context.Response.StatusCode,
-                    Message = "İşlem sırasında sunucuda bir hata oluştu.",
-                    Detailed = exception.Message // Sadece geliştirme aşamasında tutulmalı
+                    Status = StatusCodes.Status500InternalServerError,
+                    Title = "Sunucu Hatası",
+                    Detail = "İşlem sırasında sunucuda beklenmeyen bir hata oluştu.",
+                    Instance = context.Request.Path
                 };
+
+                // Geliştirme ortamında detayı okuyabilmek için Extensions içine ekliyoruz
+                problemDetails.Extensions["detailedMessage"] = exception.Message;
             }
 
-            // JSON formatını camelCase (küçük harfle başlama) standardına uygun hale getiriyoruz
+            // JSON formatını dönüştürüp frontend'e gönderiyoruz
             var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var json = JsonSerializer.Serialize(response, options);
-            
+            var json = JsonSerializer.Serialize(problemDetails, options);
+
             return context.Response.WriteAsync(json);
         }
     }
