@@ -6,24 +6,9 @@
     <title>Görev Takip Sistemi - Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/global.css">
     <!-- Chart.js Kütüphanesi CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1f2937; padding: 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: #111827; color: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .header h2 { margin: 0; font-weight: 500; }
-        .btn-link { color: white; text-decoration: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; transition: background 0.2s; background: #374151; margin-right: 10px; }
-        .btn-link:hover { background: #4b5563; }
-        .logout-btn { background-color: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
-        .logout-btn:hover { background-color: #dc2626; }
-        
-        .dashboard-container { display: flex; gap: 25px; margin-top: 25px; flex-wrap: wrap; justify-content: center; }
-        .stat-card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); flex: 1; min-width: 200px; text-align: center; }
-        .stat-card h3 { margin: 0 0 10px 0; color: #6b7280; font-size: 16px; }
-        .stat-card .value { font-size: 32px; font-weight: bold; color: #111827; }
-        
-        .chart-section { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); width: 100%; max-width: 600px; margin-top: 25px; }
-    </style>
 </head>
 <body>
     <div class="header">
@@ -92,6 +77,6 @@
         </div>
     </div>
 
-    <script src="dashboard.js"></script>
+    <script type="module" src="js/dashboard.js"></script>
 </body>
 </html>

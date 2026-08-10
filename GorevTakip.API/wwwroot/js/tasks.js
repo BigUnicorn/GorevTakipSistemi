@@ -1,102 +1,96 @@
-const API_BASE_URL = '/api'; 
+// js/tasks.js
+import { showToast, parseJwt, formatDate, logout } from './utils.js';
+import { fetchWithAuth } from './api.js';
+
 const token = localStorage.getItem('token');
 
-let allTasks = [];          // Tüm görevleri hafızada tutuyoruz
-let currentFilter = 'all';  // Aktif filtre durumu
-let currentSearchQuery = ''; // Aktif arama metni
-let taskToDeleteId = null;  // Silinecek görevin ID'sini tutar
-let currentPage = 1;
-const pageSize = 5; // Sayfa başına 5 görev gösterelim
-let totalPages = 1;
-let currentSortBy = 'duedate'; // Varsayılan sıralama kolonu
-let isSortDescending = true;   // Varsayılan sıralama yönü (Yeni eklenenler en üstte)
-
 if (!token) {
-    window.location.href = 'index.html';
+    logout();
 }
 
-// Token'ı çözen (Decode eden) fonksiyon
-function parseJwt(token) {
-    try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
-    } catch (e) {
-        return null;
-    }
-}
+let allTasks = [];          
+let currentFilter = 'all';  
+let currentSearchQuery = ''; 
+let taskToDeleteId = null;  
+let currentPage = 1;
+const pageSize = 5; 
+let totalPages = 1;
+let currentSortBy = 'duedate'; 
+let isSortDescending = true;   
 
-// Global kullanıcı rolü değişkeni
 let userRole = '';
 const tokenData = token ? parseJwt(token) : null;
-// API'den gelen Claim isimlendirmeleri (URL şeklinde olabilir, bu yüzden kapsayıcı bir atama yapıyoruz)
 if (tokenData) {
     userRole = tokenData['role'] || tokenData['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || 'User';
 }
+
+// HTML'den tetiklenen (inline) fonksiyonları global window nesnesine bağlıyoruz
+Object.assign(window, {
+    logout,
+    filterTasks,
+    handleSearch,
+    createTask,
+    openDeleteModal,
+    closeDeleteModal,
+    confirmDeleteAction,
+    updateTaskStatus,
+    openEditModal,
+    closeEditModal,
+    saveTaskEdit,
+    openUsersModal,
+    closeUsersModal,
+    saveUserRole,
+    handleSort,
+    openHistoryModal,
+    closeHistoryModal,
+    openCommentModal,
+    closeCommentModal,
+    postComment
+});
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchTasks();
     fetchUsers();
 
-    // Silme onay butonuna tıklanma olayını dinle
     const confirmBtn = document.getElementById('confirmDeleteBtn');
     if(confirmBtn) {
         confirmBtn.addEventListener('click', confirmDeleteAction);
     }
 
-    // YENİ: Kullanıcı rolü "Admin" ise Kullanıcı Yönetimi butonunu görünür yap
-    if (typeof userRole !== 'undefined' && userRole === 'Admin') {
+    if (userRole === 'Admin') {
         const adminBtn = document.getElementById('adminUsersBtn');
         if (adminBtn) {
-            // Butonun CSS display özelliğini inline-block (veya flex) yaparak görünür hale getiriyoruz
             adminBtn.style.display = 'inline-block'; 
         }
+    } else {
+        // Admin değilse form alanını gizle ve listeyi genişlet
+        const formSection = document.querySelector('.form-section');
+        const listSection = document.querySelector('.list-section');
+        if (formSection) formSection.style.display = 'none';
+        if (listSection) listSection.style.flex = '100%';
     }
 });
 
-// 1. Tarih Formatlama Yardımcı Fonksiyonu
-function formatDate(dateString) {
-    if (!dateString) return '-';
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('tr-TR', options);
-}
-
-// 2. Görevleri Listeleme (GET İstemi + Loading Efekti)
 async function fetchTasks() {
     const tbody = document.getElementById('tasksTableBody');
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #6b7280;"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #6b7280;"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</td></tr>`;
     
-    // API için sorgu parametrelerini hazırla
     const params = new URLSearchParams({
         PageNumber: currentPage,
         PageSize: pageSize
     });
 
-    if (currentFilter !== 'all') {
-        params.append('Status', currentFilter);
-    }
-    if (currentSearchQuery) {
-        params.append('SearchText', currentSearchQuery);
-    }
-    // YENİ EKLENENLER: API'ye sıralama bilgisini gönderiyoruz
+    if (currentFilter !== 'all') params.append('Status', currentFilter);
+    if (currentSearchQuery) params.append('SearchText', currentSearchQuery);
     if (currentSortBy) {
         params.append('SortBy', currentSortBy);
         params.append('SortDescending', isSortDescending);
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/Tasks?${params.toString()}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await fetchWithAuth(`/Tasks?${params.toString()}`, { method: 'GET' });
 
-        if (response.ok) {
+        if (response && response.ok) {
             const result = await response.json();
             
             allTasks = result.data || result.Data || []; 
@@ -109,41 +103,34 @@ async function fetchTasks() {
             const statTotal = document.getElementById('statTotal');
             if (statTotal) statTotal.textContent = `Bulunan Görev: ${totalRecords}`;
 
-        } else if (response.status === 401) {
-            showToast('Oturumunuz süresi dolmuş. Lütfen tekrar giriş yapın.', 'error');
-            setTimeout(logout, 1500);
-        } else {
-            // EKSİK OLAN VE YÜKLENİYOR'DA BIRAKAN KISIM BURASIYDI
+        } else if (response) {
             const errText = await response.text();
             console.error("API Hatası:", errText);
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444; font-weight: bold;">Sunucu Hatası: Hata detayını görmek için F12 Konsola bakın.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444; font-weight: bold;">Sunucu Hatası: Hata detayını görmek için F12 Konsola bakın.</td></tr>`;
             showToast("Tüm görevler çekilirken sunucuda bir hata oluştu.", "error");
         }
     } catch (error) {
         console.error('Görevler çekilirken hata oluştu:', error);
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #ef4444;">Görevler yüklenirken sunucuya ulaşılamadı!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444;">Görevler yüklenirken sunucuya ulaşılamadı!</td></tr>`;
     }
 }
 
-// 3. Filtreleme ve Arama Mekanizmaları
 function filterTasks(status) {
     currentFilter = status;
-    currentPage = 1; // Filtre değişince 1. sayfaya dön
+    currentPage = 1; 
     fetchTasks();
 }
 
-// Arama için kullanıcı yazmayı bitirene kadar bekleme (Debounce) ekliyoruz
 let searchTimeout;
 function handleSearch(query) {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
         currentSearchQuery = query.toLowerCase().trim();
-        currentPage = 1; // Arama yapınca 1. sayfaya dön
+        currentPage = 1; 
         fetchTasks();
-    }, 400); // Kullanıcı tuşa basmayı bıraktıktan 400ms sonra istek at
+    }, 400); 
 }
 
-// 4. İstatistik Sayaçlarını Güncelleme
 function updateStats() {
     const total = allTasks.length;
     const completed = allTasks.filter(t => t.status === 3).length;
@@ -155,13 +142,11 @@ function updateStats() {
     if (statCompleted) statCompleted.textContent = `Tamamlanan: ${completed}`;
 }
 
-// 5. Görevleri Tabloya Yazdırma (Modern Tasarım)
 function renderTasks(tasks) {
     const tbody = document.getElementById('tasksTableBody');
     tbody.innerHTML = '';
 
     if (tasks.length === 0) {
-        // DİKKAT: Sütun sayısı 7'ye (Kategori eklendiği için) çıktığı için colspan 7 yapıldı
         tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #6b7280; padding: 20px;">Görev bulunamadı.</td></tr>`;
         return;
     }
@@ -170,25 +155,21 @@ function renderTasks(tasks) {
         const tr = document.createElement('tr');
         const taskId = task.id || task.Id;
 
-        // Seçili duruma göre badge renkleri
-        let statusClass = "background-color: #e5e7eb; color: #374151;"; // Varsayılan (Yapılacak)
-        if (task.status === 2) statusClass = "background-color: #fef08a; color: #854d0e;"; // Devam Ediyor
-        if (task.status === 3) statusClass = "background-color: #bbf7d0; color: #166534;"; // Tamamlandı
+        let statusClass = "background-color: #e5e7eb; color: #374151;"; 
+        if (task.status === 2) statusClass = "background-color: #fef08a; color: #854d0e;"; 
+        if (task.status === 3) statusClass = "background-color: #bbf7d0; color: #166534;"; 
 
         let rowStyle = task.status === 3 ? "opacity: 0.7;" : "";
         tr.style = rowStyle;
 
-        // Yetkiye göre butonları hazırlama
         let actionButtons = '';
         
-        // Geçmiş butonu HERKES için oluşturulur
         const historyBtn = `
             <button onclick="openHistoryModal(${taskId})" class="action-btn" style="background-color: #6366f1; color: white;" title="Geçmişi Gör">
                 <i class="fa-solid fa-clock-rotate-left"></i>
             </button>
         `;
         
-        // YENİ: Yorum butonu HERKES için oluşturulur
         const commentBtn = `
             <button onclick="openCommentModal(${taskId})" class="action-btn" style="background-color: #3b82f6; color: white;" title="Yorumlar">
                 <i class="fa-regular fa-comments"></i>
@@ -210,13 +191,10 @@ function renderTasks(tasks) {
             actionButtons = `${historyBtn} ${commentBtn}`;
         }
 
-        // --- YENİ EKLENEN: KATEGORİ BADGE MANTIĞI ---
         let categoryLabel = "Belirsiz";
         let catBg = "#f3f4f6", catColor = "#374151";
 
-        const currentCategory = task.category || task.Category;
-
-        switch(task.category) {
+        switch(task.category || task.Category) {
             case 1: categoryLabel = "Frontend"; catBg = "#e0f2fe"; catColor = "#0284c7"; break;
             case 2: categoryLabel = "Backend"; catBg = "#ede9fe"; catColor = "#7c3aed"; break;
             case 3: categoryLabel = "Veritabanı"; catBg = "#fce7f3"; catColor = "#db2777"; break;
@@ -226,24 +204,14 @@ function renderTasks(tasks) {
         }
 
         const categoryBadge = `<span style="background-color: ${catBg}; color: ${catColor}; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">${categoryLabel}</span>`;
-        // ---------------------------------------------
 
-        // --- YENİ EKLENEN: Gecikmiş Görev Kontrolü (TARAYICI TABANLI HESAPLAMA) ---
         let isOverdue = false;
-        
-        // Eğer görev bitiş tarihi atanmışsa VE görev tamamlanmamışsa (3: Tamamlandı)
         if (task.dueDate && task.status !== 3) { 
             const today = new Date();
             const due = new Date(task.dueDate);
-            
-            // Saatleri sıfırlayarak sadece "Gün" olarak karşılaştırma yapıyoruz
             today.setHours(0, 0, 0, 0);
             due.setHours(0, 0, 0, 0);
-            
-            // Bitiş tarihi bugünden küçükse görev gecikmiştir
-            if (due < today) {
-                isOverdue = true;
-            }
+            if (due < today) isOverdue = true;
         }
 
         const dateIcon = isOverdue 
@@ -253,20 +221,12 @@ function renderTasks(tasks) {
         const dateStyle = isOverdue 
             ? 'color: #ef4444; font-weight: bold; background: #fee2e2; padding: 4px 8px; border-radius: 4px;' 
             : '';
-        // --------------------------------------------------------------------------
 
-        // TABLO İÇERİĞİ OLUŞTURMA
         tr.innerHTML = `
             <td><strong>${task.title}</strong></td>
             <td style="color: #6b7280;">${task.description || '-'}</td>
-            
-            <!-- YENİ EKLENEN KISIM: Kategori Sütunu -->
             <td>${categoryBadge}</td>
-
-            <!-- YENİ EKLENEN KISIM: Gecikme Uyarılı Tarih -->
             <td><span style="${dateStyle}">${dateIcon}${formatDate(task.dueDate)}</span></td>
-            
-            <!-- Atanan Kişi İkonu ve Adı -->
             <td>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #3b82f6; color: white; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold;">
@@ -275,7 +235,6 @@ function renderTasks(tasks) {
                     <span>${task.assignedUserName || 'Bilinmiyor'}</span>
                 </div>
             </td>
-
             <td>
                 <select onchange="updateTaskStatus(${taskId}, this.value)" class="status-select" style="${statusClass}">
                     <option value="1" ${task.status === 1 ? 'selected' : ''}>Yapılacak</option>
@@ -283,28 +242,22 @@ function renderTasks(tasks) {
                     <option value="3" ${task.status === 3 ? 'selected' : ''}>Tamamlandı</option>
                 </select>
             </td>
-            <td>
-                ${actionButtons}
-            </td>
+            <td>${actionButtons}</td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-// 6. Yeni Görev Ekleme (POST + Loading)
 async function createTask() {
     const title = document.getElementById('taskTitle').value;
     const description = document.getElementById('taskDescription').value;
     const assignedUserId = document.getElementById('taskAssignedUserId').value;
     const dueDate = document.getElementById('taskDueDate').value;
-    
-    // YENİ EKLENDİ: Kategori değerini arayüzden alıyoruz
     const category = document.getElementById('taskCategory').value;
     
     const submitBtn = document.querySelector('.btn-success');
     const originalBtnText = submitBtn ? submitBtn.innerText : 'Ekle';
 
-    // YENİ EKLENDİ: category değişkenini de boş mu diye kontrol ediyoruz
     if (!title || !assignedUserId || !category) {
         showToast("Lütfen başlık, atanacak kullanıcı ve kategoriyi seçin.", "error");
         return;
@@ -316,35 +269,28 @@ async function createTask() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/Tasks`, {
+        const response = await fetchWithAuth('/Tasks', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({ 
                 title: title, 
                 description: description,
                 assignedUserId: parseInt(assignedUserId),
-                category: parseInt(category), // YENİ EKLENDİ: Veriyi JSON'a ekliyoruz
+                category: parseInt(category), 
                 dueDate: dueDate ? new Date(dueDate).toISOString() : null 
             })
         });
 
-        if (response.ok) {
+        if (response && response.ok) {
             showToast("Görev başarıyla eklendi!", "success");
             
-            // İnputları temizle
             document.getElementById('taskTitle').value = '';
             document.getElementById('taskDescription').value = '';
             document.getElementById('taskAssignedUserId').value = '';
             document.getElementById('taskDueDate').value = '';
-            
-            // YENİ EKLENDİ: Kayıt başarılı olunca kategori seçimini de sıfırla
             document.getElementById('taskCategory').value = '';
             
             fetchTasks();
-        } else {
+        } else if (response) {
             const errorText = await response.text();
             showToast(`Görev eklenemedi: ${errorText}`, "error");
         }
@@ -359,13 +305,6 @@ async function createTask() {
     }
 }
 
-// 7. Çıkış Yapma
-function logout() {
-    localStorage.removeItem('token');
-    window.location.href = 'index.html';
-}
-
-// 8. Görevi Silme İşlemleri (Özel Modal ile)
 function openDeleteModal(taskId) {
     taskToDeleteId = taskId;
     document.getElementById('deleteConfirmModal').style.display = 'flex';
@@ -383,15 +322,12 @@ async function confirmDeleteAction() {
     closeDeleteModal(); 
 
     try {
-        const response = await fetch(`${API_BASE_URL}/Tasks/${taskId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await fetchWithAuth(`/Tasks/${taskId}`, { method: 'DELETE' });
         
-        if (response.ok) {
+        if (response && response.ok) {
             showToast("Görev başarıyla silindi.", "success");
             fetchTasks(); 
-        } else {
+        } else if (response) {
             showToast('Görev silinirken hata oluştu.', 'error');
         }
     } catch (error) {
@@ -400,33 +336,28 @@ async function confirmDeleteAction() {
     }
 }
 
-// 9. Görev Durumunu Güncelleme
 async function updateTaskStatus(taskId, newStatus) {
     const currentTask = allTasks.find(t => (t.id || t.Id) == taskId);
     if (!currentTask) return;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/Tasks/${taskId}`, {
+        const response = await fetchWithAuth(`/Tasks/${taskId}`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({ 
                 id: parseInt(taskId), 
                 title: currentTask.title || currentTask.Title, 
                 description: currentTask.description || "", 
                 status: parseInt(newStatus), 
                 dueDate: currentTask.dueDate || null,
-                assignedUserId: currentTask.assignedUserId || 1 ,
+                assignedUserId: currentTask.assignedUserId || 1,
                 category: currentTask.category || currentTask.Category
             })
         });
 
-        if (response.ok) {
+        if (response && response.ok) {
             showToast("Görev durumu güncellendi.", "success");
             fetchTasks(); 
-        } else {
+        } else if (response) {
             const errorText = await response.text();
             showToast(`Güncelleme yapılamadı: ${errorText}`, "error");
             fetchTasks();
@@ -437,18 +368,11 @@ async function updateTaskStatus(taskId, newStatus) {
     }
 }
 
-// 10. Kullanıcıları Çekme
 async function fetchUsers() {
     try {
-        const response = await fetch(`${API_BASE_URL}/Users`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await fetchWithAuth('/Users', { method: 'GET' });
 
-        if (response.ok) {
+        if (response && response.ok) {
             const users = await response.json();
             const userSelect = document.getElementById('taskAssignedUserId');
             userSelect.innerHTML = '<option value="" disabled selected>Atanacak Kişiyi Seçin</option>';
@@ -468,7 +392,6 @@ async function fetchUsers() {
     }
 }
 
-// 11.1 Düzenleme Modalını Aç ve Verileri Doldur
 function openEditModal(taskId) {
     const task = allTasks.find(t => (t.id || t.Id) == taskId);
     if (!task) return;
@@ -476,8 +399,6 @@ function openEditModal(taskId) {
     document.getElementById('editTaskId').value = taskId;
     document.getElementById('editTaskTitle').value = task.title || '';
     document.getElementById('editTaskDescription').value = task.description || '';
-    
-    // YENİ EKLENEN SATIR: Kategori bilgisini modaldaki seçiciye (select) atıyoruz
     document.getElementById('editTaskCategory').value = task.category || 2;
     
     if (task.dueDate) {
@@ -490,19 +411,15 @@ function openEditModal(taskId) {
     document.getElementById('editModal').style.display = 'flex';
 }
 
-// 11.2 Modalı Kapat
 function closeEditModal() {
     document.getElementById('editModal').style.display = 'none';
 }
 
-// 11.3 Düzenlenen Verileri API'ye Gönder (PUT)
 async function saveTaskEdit() {
     const taskId = document.getElementById('editTaskId').value;
     const title = document.getElementById('editTaskTitle').value;
     const description = document.getElementById('editTaskDescription').value;
     const dueDate = document.getElementById('editTaskDueDate').value;
-    
-    // YENİ EKLENEN: Modal'daki kategori seçimini okuyoruz
     const category = document.getElementById('editTaskCategory').value;
 
     if (!title) {
@@ -514,12 +431,8 @@ async function saveTaskEdit() {
     if (!currentTask) return;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/Tasks/${taskId}`, {
+        const response = await fetchWithAuth(`/Tasks/${taskId}`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({ 
                 id: parseInt(taskId), 
                 title: title, 
@@ -527,16 +440,15 @@ async function saveTaskEdit() {
                 status: currentTask.status, 
                 dueDate: dueDate ? new Date(dueDate).toISOString() : null,
                 assignedUserId: currentTask.assignedUserId || 1,
-                // YENİ EKLENEN: Kategoriyi API'ye gönderiyoruz
                 category: parseInt(category)
             })
         });
 
-        if (response.ok) {
+        if (response && response.ok) {
             showToast("Görev başarıyla güncellendi.", "success");
             closeEditModal();
             fetchTasks();
-        } else {
+        } else if (response) {
             const errorText = await response.text();
             showToast(`Güncellenemedi: ${errorText}`, 'error');
         }
@@ -546,57 +458,14 @@ async function saveTaskEdit() {
     }
 }
 
-// 12. Modern Toast Bildirim Fonksiyonu
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
-    if (!container) return; // HTML'de container yoksa çalışmasın
-
-    const toast = document.createElement('div');
-    
-    // Tip'e göre renk ayarları
-    const bgColor = type === 'success' ? '#10b981' : (type === 'error' ? '#ef4444' : '#f59e0b');
-    const color = 'white';
-
-    toast.style.cssText = `
-        background-color: ${bgColor};
-        color: ${color};
-        padding: 12px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-        font-size: 14px;
-        font-weight: 500;
-        opacity: 0;
-        transform: translateX(100%);
-        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    `;
-    toast.textContent = message;
-
-    container.appendChild(toast);
-
-    // Fade-in ve Slide-in animasyonu (Küçük bir gecikme ile)
-    setTimeout(() => { 
-        toast.style.opacity = '1'; 
-        toast.style.transform = 'translateX(0)';
-    }, 10);
-
-    // 3 saniye sonra silinme efekti
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => { toast.remove(); }, 300);
-    }, 3000);
-}
-
-//13. Sayfalama (Pagination) Çizim Fonksiyonu
 function renderPagination() {
     const paginationDiv = document.getElementById('pagination-controls');
     if (!paginationDiv) return;
     
     paginationDiv.innerHTML = '';
     
-    if (totalPages <= 1) return; // Tek sayfa varsa numaraları gizle
+    if (totalPages <= 1) return; 
     
-    // Önceki Butonu
     const prevBtn = document.createElement('button');
     prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i>';
     prevBtn.className = 'action-btn';
@@ -605,7 +474,6 @@ function renderPagination() {
     prevBtn.onclick = () => { if (currentPage > 1) { currentPage--; fetchTasks(); } };
     paginationDiv.appendChild(prevBtn);
     
-    // Sayfa Numaraları
     for (let i = 1; i <= totalPages; i++) {
         const pageBtn = document.createElement('button');
         pageBtn.textContent = i;
@@ -615,7 +483,6 @@ function renderPagination() {
         paginationDiv.appendChild(pageBtn);
     }
     
-    // Sonraki Butonu
     const nextBtn = document.createElement('button');
     nextBtn.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
     nextBtn.className = 'action-btn';
@@ -625,7 +492,6 @@ function renderPagination() {
     paginationDiv.appendChild(nextBtn);
 }
 
-// 14. Kullanıcı Moadlı Fonksiyonları
 function openUsersModal() {
     document.getElementById('usersModal').style.display = 'flex';
     loadUsersList();
@@ -640,15 +506,9 @@ async function loadUsersList() {
     tbody.innerHTML = `<tr><td colspan="4" style="text-align: center;"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</td></tr>`;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/Users`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const response = await fetchWithAuth('/Users', { method: 'GET' });
 
-        if (response.ok) {
+        if (response && response.ok) {
             const users = await response.json();
             tbody.innerHTML = '';
             
@@ -683,21 +543,17 @@ async function saveUserRole(userId) {
     const newRole = document.getElementById(`userRoleSelect_${userId}`).value;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/Users/${userId}/role`, {
+        const response = await fetchWithAuth(`/Users/${userId}/role`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({ 
                 userId: parseInt(userId), 
                 newRole: parseInt(newRole) 
             })
         });
 
-        if (response.ok) {
+        if (response && response.ok) {
             showToast("Kullanıcı rolü başarıyla güncellendi.", "success");
-        } else {
+        } else if (response) {
             const errorText = await response.text();
             showToast(`Hata: ${errorText}`, "error");
         }
@@ -707,28 +563,24 @@ async function saveUserRole(userId) {
     }
 }
 
-// --- SIRALAMA (SORTING) FONKSİYONLARI ---
 function handleSort(column) {
-    // Eğer aynı kolona tıklandıysa yönü değiştir, farklı kolonsa o kolonu seç ve A-Z yap
     if (currentSortBy === column) {
         isSortDescending = !isSortDescending; 
     } else {
         currentSortBy = column;
-        isSortDescending = false; // Yeni kolon seçildiğinde genelde Artan (A-Z) başlanır
+        isSortDescending = false; 
     }
         
     updateSortIcons();
-    currentPage = 1; // Sıralama değişince kafa karışıklığı olmaması için 1. sayfaya dönüyoruz
+    currentPage = 1; 
     fetchTasks();
 }
 
 function updateSortIcons() {
-    // 1. Bütün ok ikonlarını varsayılan (çift yönlü gri ok) haline getir
     document.querySelectorAll('.sort-icon').forEach(icon => {
         icon.className = 'fa-solid fa-sort sort-icon';
     });
         
-    // 2. Sadece aktif olan kolondaki okun yönünü ve rengini değiştir
     const activeIcon = document.getElementById(`icon-${currentSortBy}`);
     if (activeIcon) {
         activeIcon.className = isSortDescending 
@@ -737,19 +589,15 @@ function updateSortIcons() {
     }
 }
 
-// --- GÖREV GEÇMİŞİ (AUDIT LOG) İŞLEMLERİ ---
 async function openHistoryModal(taskId) {
     document.getElementById('historyModal').style.display = 'flex';
     const list = document.getElementById('historyList');
     list.innerHTML = '<li style="text-align: center; color: #6b7280;">Yükleniyor...</li>';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/Tasks/${taskId}/history`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await fetchWithAuth(`/Tasks/${taskId}/history`, { method: 'GET' });
 
-        if (response.ok) {
+        if (response && response.ok) {
             const history = await response.json();
             list.innerHTML = '';
 
@@ -780,7 +628,6 @@ function closeHistoryModal() {
     document.getElementById('historyModal').style.display = 'none';
 }
 
-// --- YORUM (COMMENT) İŞLEMLERİ ---
 async function openCommentModal(taskId) {
     document.getElementById('commentTaskId').value = taskId;
     document.getElementById('commentModal').style.display = 'flex';
@@ -797,10 +644,8 @@ async function loadComments(taskId) {
     list.innerHTML = '<p style="text-align:center; color:#6b7280;">Yükleniyor...</p>';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/Tasks/${taskId}/comments`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
+        const response = await fetchWithAuth(`/Tasks/${taskId}/comments`, { method: 'GET' });
+        if (response && response.ok) {
             const comments = await response.json();
             list.innerHTML = '';
             
@@ -819,7 +664,7 @@ async function loadComments(taskId) {
                     </div>
                 `;
             });
-            list.scrollTop = list.scrollHeight; // En alta kaydır
+            list.scrollTop = list.scrollHeight; 
         }
     } catch (err) {
         list.innerHTML = '<p style="color:red;">Hata oluştu.</p>';
@@ -833,18 +678,14 @@ async function postComment() {
     if (!text.trim()) return;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/Tasks/${taskId}/comments`, {
+        const response = await fetchWithAuth(`/Tasks/${taskId}/comments`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({ text: text })
         });
 
-        if (response.ok) {
+        if (response && response.ok) {
             document.getElementById('newCommentText').value = '';
-            await loadComments(taskId); // Listeyi yenile
+            await loadComments(taskId); 
         }
     } catch (err) {
         console.error("Yorum gönderilemedi:", err);
@@ -852,40 +693,33 @@ async function postComment() {
 }
 
 // --- SIGNALR GERÇEK ZAMANLI İLETİŞİM KODLARI ---
-
 const connection = new signalR.HubConnectionBuilder()
     .withUrl("/taskhub")
     .configureLogging(signalR.LogLevel.Information)
     .build();
 
-// 1. Görev güncellenme sinyalini dinle
 connection.on("ReceiveTaskUpdate", function (message) {
-    // Sadece tabloyu arka planda yenile (kullanıcıyı rahatsız etmeden)
     console.log("Sunucudan güncelleme geldi:", message);
     fetchTasks(); 
 });
 
-// 2. Yeni yorum sinyalini dinle
 connection.on("ReceiveNewComment", function (taskId) {
     const commentModal = document.getElementById('commentModal');
     const activeTaskId = document.getElementById('commentTaskId').value;
     
-    // Eğer yorum modalı açıksa ve aynı görevin yorumlarına bakılıyorsa ekranı yenile
     if (commentModal.style.display === 'flex' && activeTaskId == taskId) {
         loadComments(taskId);
     }
 });
 
-// Bağlantıyı başlat
 async function startSignalR() {
     try {
         await connection.start();
         console.log("SignalR bağlantısı başarıyla kuruldu.");
     } catch (err) {
         console.error("SignalR bağlantı hatası: ", err);
-        setTimeout(startSignalR, 5000); // Hata durumunda 5 saniye sonra tekrar dene
+        setTimeout(startSignalR, 5000); 
     }
 };
 
-// Uygulama yüklendiğinde bağlantıyı tetikle
 startSignalR();

@@ -6,45 +6,7 @@
     <title>Görev Takip Sistemi - Kayıt Ol</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-            display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; 
-        }
-        .login-container { 
-            background: white; padding: 40px; border-radius: 16px; 
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); width: 320px; text-align: center; 
-        }
-        .login-container h2 { margin-top: 0; color: #111827; font-weight: 600; margin-bottom: 25px; }
-        
-        .input-group { position: relative; margin-bottom: 20px; text-align: left; }
-        .input-group i { 
-            position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9ca3af; 
-        }
-        input { 
-            width: 100%; padding: 12px 12px 12px 40px; 
-            border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; 
-            font-family: 'Inter', sans-serif; transition: all 0.3s; background-color: #f9fafb; 
-        }
-        input:focus { 
-            outline: none; border-color: #3b82f6; 
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); background-color: white; 
-        }
-        
-        button { 
-            width: 100%; padding: 12px; background-color: #3b82f6; color: white; 
-            border: none; border-radius: 8px; cursor: pointer; font-weight: 600; 
-            font-size: 15px; transition: all 0.2s; margin-top: 10px; 
-        }
-        button:hover { background-color: #2563eb; transform: translateY(-2px); box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2); }
-        button:disabled { background-color: #9ca3af; cursor: not-allowed; transform: none; box-shadow: none; }
-        
-        .link-text {
-            display: block; margin-top: 20px; font-size: 13px; color: #6b7280; text-decoration: none; transition: color 0.2s;
-        }
-        .link-text:hover { color: #3b82f6; }
-    </style>
+    <link rel="stylesheet" href="css/global.css">
 </head>
 <body>
     <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
@@ -78,6 +40,6 @@
         <a href="index.html" class="link-text">Zaten hesabınız var mı? Giriş Yapın</a>
     </div>
 
-    <script src="register.js"></script>
+    <script type="module" src="js/register.js"></script>
 </body>
 </html>
