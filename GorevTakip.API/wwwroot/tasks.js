@@ -850,3 +850,42 @@ async function postComment() {
         console.error("Yorum gönderilemedi:", err);
     }
 }
+
+// --- SIGNALR GERÇEK ZAMANLI İLETİŞİM KODLARI ---
+
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/taskhub")
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
+
+// 1. Görev güncellenme sinyalini dinle
+connection.on("ReceiveTaskUpdate", function (message) {
+    // Sadece tabloyu arka planda yenile (kullanıcıyı rahatsız etmeden)
+    console.log("Sunucudan güncelleme geldi:", message);
+    fetchTasks(); 
+});
+
+// 2. Yeni yorum sinyalini dinle
+connection.on("ReceiveNewComment", function (taskId) {
+    const commentModal = document.getElementById('commentModal');
+    const activeTaskId = document.getElementById('commentTaskId').value;
+    
+    // Eğer yorum modalı açıksa ve aynı görevin yorumlarına bakılıyorsa ekranı yenile
+    if (commentModal.style.display === 'flex' && activeTaskId == taskId) {
+        loadComments(taskId);
+    }
+});
+
+// Bağlantıyı başlat
+async function startSignalR() {
+    try {
+        await connection.start();
+        console.log("SignalR bağlantısı başarıyla kuruldu.");
+    } catch (err) {
+        console.error("SignalR bağlantı hatası: ", err);
+        setTimeout(startSignalR, 5000); // Hata durumunda 5 saniye sonra tekrar dene
+    }
+};
+
+// Uygulama yüklendiğinde bağlantıyı tetikle
+startSignalR();

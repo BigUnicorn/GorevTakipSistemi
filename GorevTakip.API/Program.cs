@@ -16,6 +16,7 @@ builder.Services.AddSwaggerConfiguration();
 
 // 3. Varsayılan Ayarlar
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddCors(options =>
 {
@@ -45,6 +46,8 @@ app.UseAuthorization();
 
 app.UseCors("AllowAll");
 app.MapControllers();
+
+app.MapHub<GorevTakip.API.Hubs.TaskHub>("/taskhub");
 
 app.Run();
 

@@ -6,6 +6,8 @@ using GorevTakip.Entities.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GorevTakip.Entities;
+using Microsoft.AspNetCore.SignalR;
+using GorevTakip.API.Hubs;
 
 namespace GorevTakip.API.Controllers
 {
@@ -15,10 +17,12 @@ namespace GorevTakip.API.Controllers
     public class TasksController : ControllerBase
     {
         private readonly ITaskService _taskService;
+        private readonly IHubContext<TaskHub> _hubContext;
 
-        public TasksController(ITaskService taskService)
+        public TasksController(ITaskService taskService, IHubContext<TaskHub> hubContext)
         {
             _taskService = taskService;
+            _hubContext = hubContext;
         }
 
         // GET: api/Tasks
@@ -61,6 +65,7 @@ namespace GorevTakip.API.Controllers
         public async Task<IActionResult> CreateTask([FromBody] TaskCreateDto taskDto)
         {
             await _taskService.CreateTaskAsync(taskDto);
+            await _hubContext.Clients.All.SendAsync("ReceiveTaskUpdate", "Yeni bir görev eklendi.");
             return Ok("Görev başarıyla oluşturuldu.");
         }
 
@@ -72,6 +77,7 @@ namespace GorevTakip.API.Controllers
                 return BadRequest("URL içindeki ID ile gönderilen görev ID'si uyuşmuyor.");
 
             await _taskService.UpdateTaskAsync(taskDto);
+            await _hubContext.Clients.All.SendAsync("ReceiveTaskUpdate", "Bir görev güncellendi!");
             return Ok("Görev başarıyla güncellendi.");
         }
 
@@ -82,6 +88,7 @@ namespace GorevTakip.API.Controllers
         public async Task<IActionResult> DeleteTask(int id)
         {
             await _taskService.DeleteTaskAsync(id);
+            await _hubContext.Clients.All.SendAsync("ReceiveTaskUpdate", "Bir görev silindi.");
             return Ok("Görev başarıyla silindi.");
         }
 
@@ -132,6 +139,7 @@ namespace GorevTakip.API.Controllers
             if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
 
             await _taskService.AddCommentAsync(id, userId, dto.Text);
+            await _hubContext.Clients.All.SendAsync("ReceiveNewComment", id);
             return Ok("Yorum eklendi.");
         }
     }
