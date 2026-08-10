@@ -55,3 +55,6 @@ app.Run();
 // cd GorevTakip.API
 // dotnet run
 // docker start gorevtakip-postgres pgadmin
+
+//docker-compose up -d
+//docker-compose down

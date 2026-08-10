@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: gorevtakip-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345 # appsettings.json'daki ile aynı olmalı
+      POSTGRES_DB: GorevTakipDb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Verilerin kalıcı olması için volume
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gorevtakip-api
+    depends_on:
+      - db
+    ports:
+      - "5074:8080" # Dışarıdan localhost:5074, içeride 8080
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Host kısmını localhost yerine container adı olan 'db' ile değiştiriyoruz
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=GorevTakipDb;Username=postgres;Password=12345
+
+volumes:
+  postgres_data:
