@@ -1,6 +1,7 @@
 // js/tasks.js
-import { showToast, parseJwt, formatDate, logout } from './utils.js';
+import { showToast, parseJwt, formatDate, logout, escapeHtml } from './utils.js';
 import { fetchWithAuth } from './api.js';
+
 
 const token = localStorage.getItem('token');
 
@@ -223,16 +224,16 @@ function renderTasks(tasks) {
             : '';
 
         tr.innerHTML = `
-            <td><strong>${task.title}</strong></td>
-            <td style="color: #6b7280;">${task.description || '-'}</td>
+            <td><strong>${escapeHtml(task.title)}</strong></td>
+            <td style="color: #6b7280;">${escapeHtml(task.description)}</td>
             <td>${categoryBadge}</td>
             <td><span style="${dateStyle}">${dateIcon}${formatDate(task.dueDate)}</span></td>
             <td>
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <div style="width: 28px; height: 28px; border-radius: 50%; background-color: #3b82f6; color: white; display: flex; justify-content: center; align-items: center; font-size: 12px; font-weight: bold;">
-                        ${(task.assignedUserName || 'B').charAt(0).toUpperCase()}
+                        ${escapeHtml(task.assignedUserName || 'B').charAt(0).toUpperCase()}
                     </div>
-                    <span>${task.assignedUserName || 'Bilinmiyor'}</span>
+                    <span>${escapeHtml(task.assignedUserName || 'Bilinmiyor')}</span>
                 </div>
             </td>
             <td>
@@ -609,11 +610,11 @@ async function openHistoryModal(taskId) {
             history.forEach(h => {
                 const dateObj = new Date(h.createdDate || h.CreatedDate);
                 const dateStr = dateObj.toLocaleDateString('tr-TR') + ' ' + dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-                
+                                
                 list.innerHTML += `
                     <li style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
                         <span style="display: block; font-size: 12px; color: #9ca3af; margin-bottom: 4px;">${dateStr}</span>
-                        <span style="color: #374151; font-weight: 500;">${h.actionMessage || h.ActionMessage}</span>
+                        <span style="color: #374151; font-weight: 500;">${escapeHtml(h.actionMessage || h.ActionMessage)}</span>
                     </li>
                 `;
             });
@@ -658,9 +659,9 @@ async function loadComments(taskId) {
                 list.innerHTML += `
                     <div style="margin-bottom: 10px; background: white; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb;">
                         <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px; display: flex; justify-content: space-between;">
-                            <strong>${c.userName || c.UserName}</strong> <span>${date}</span>
+                            <strong>${escapeHtml(c.userName || c.UserName)}</strong> <span>${date}</span>
                         </div>
-                        <div style="font-size: 13px; color: #1f2937;">${c.text || c.Text}</div>
+                        <div style="font-size: 13px; color: #1f2937;">${escapeHtml(c.text || c.Text)}</div>
                     </div>
                 `;
             });

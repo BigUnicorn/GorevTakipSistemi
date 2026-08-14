@@ -55,3 +55,13 @@ export function logout() {
     localStorage.removeItem('token');
     window.location.href = 'index.html';
 }
+
+export function escapeHtml(unsafeText) {
+    if (!unsafeText) return '';
+    return unsafeText.toString()
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+}

@@ -99,13 +99,6 @@ app.Run();
 //docker-compose start --> Başlatmak için
 
 /* 
-1. Güvenlik Geliştirmeleri (Kritik)Hassas Verilerin Gizlenmesi (Secrets Management): 
-
-docker-compose.yml, appsettings.json ve AuthService.cs dosyalarında veritabanı şifresi (12345) ve JWT gizli anahtarı doğrudan kodun içinde yer alıyor.  
-Geliştirme: Kendi notlarınızda da belirttiğiniz gibi, bu verileri .env dosyalarına taşımalı ve projede Environment Variables üzerinden okumalısınız. 
-Geliştirme ortamı için .NET'in User Secrets aracını kullanabilirsiniz.  
-
-
 XSS (Cross-Site Scripting) Riski: 
 
 Frontend tarafında, özellikle tasks.js dosyasında tablo satırlarını oluştururken doğrudan innerHTML kullanarak verileri DOM'a basıyorsunuz (<td><strong>${task.title}</strong></td> gibi). 
