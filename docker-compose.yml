@@ -13,6 +13,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data # Verilerin kalıcı olması için volume
 
+  redis:
+    image: redis:alpine
+    container_name: gorevtakip-redis
+    ports:
+      - "6379:6379"
+
   api:
     build:
       context: .
@@ -20,12 +26,14 @@ services:
     container_name: gorevtakip-api
     depends_on:
       - db
+      - redis
     ports:
       - "5074:8080" # Dışarıdan localhost:5074, içeride 8080
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       # Host kısmını localhost yerine container adı olan 'db' ile değiştiriyoruz
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=GorevTakipDb;Username=postgres;Password=${DB_PASSWORD}
+      - ConnectionStrings__RedisConnection=redis:6379
       - Jwt__Key=${JWT_SECRET_KEY}
     volumes:
       - ./GorevTakip.API/wwwroot:/app/wwwroot # YENİ: Host'taki klasörü container'a bağladık

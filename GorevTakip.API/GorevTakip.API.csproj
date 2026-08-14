@@ -17,6 +17,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.11" />
     
     <!-- Çakışma yaratan paketi sildik ve Swashbuckle için zorunlu olan stabil sürümü ekledik -->
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />

@@ -24,8 +24,14 @@ builder.Services.AddApplicationServices();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddSwaggerConfiguration();
 
-//In-Memory Caching servisini aktif ediyoruz.
-builder.Services.AddMemoryCache();
+// Redis Distributed Cache Yapılandırması
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    // Bağlantı bilgisini environment variables / appsettings'den alıyor
+    options.Configuration = builder.Configuration.GetConnectionString("RedisConnection") ?? "localhost:6379";
+    // Redis içinde anahtarların karışmaması için bir ön ek (prefix) koyuyoruz
+    options.InstanceName = "GorevTakipCache_"; 
+});
 
 // 3. Varsayılan Ayarlar
 builder.Services.AddControllers();
@@ -108,13 +114,6 @@ app.Run();
 //docker-compose start --> Başlatmak için
 
 /* 
-2. Mimari ve Performans İyileştirmeleriDistributed Caching (Redis) Geçişi: 
-
-TaskService.cs içerisinde önbellekleme için IMemoryCache kullanmışsınız. 
-Uygulamanızı Docker üzerinde birden fazla instance (container) olarak ayağa kaldırırsanız, her instance'ın kendi RAM'indeki önbellek farklı olacağı için veri tutarsızlıkları yaşanır.  
-Geliştirme: Veritabanını PostgreSQL ile Docker'a aldığınız gibi, bir Redis container'ı ekleyerek IDistributedCache yapısına geçiş yapabilirsiniz.
-
-
 IQueryable Sızıntısının Önlenmesi: 
 
 IGenericRepository içerisinde IQueryable<T> GetQueryable() metodu bulunuyor. 
