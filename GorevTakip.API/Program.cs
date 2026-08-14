@@ -4,8 +4,45 @@ using GorevTakip.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
+using Serilog.Sinks.PostgreSQL;
+using NpgsqlTypes;
+using System.Collections.Generic;
+using GorevTakip.API.HostedServices;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Veritabanı bağlantı cümlesini alıyoruz
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// Log tablosundaki sütunların veri tiplerini ve isimlerini belirliyoruz
+var columnWriters = new Dictionary<string, ColumnWriterBase>
+{
+    { "timestamp", new TimestampColumnWriter(NpgsqlDbType.TimestampTz) },
+    { "level", new LevelColumnWriter(true, NpgsqlDbType.Varchar) },
+    { "message", new RenderedMessageColumnWriter(NpgsqlDbType.Text) },
+    { "exception", new ExceptionColumnWriter(NpgsqlDbType.Text) },
+    { "properties", new LogEventSerializedColumnWriter(NpgsqlDbType.Jsonb) } // Detaylı veriler JSON olarak tutulur
+};
+
+// Serilog Yapılandırması
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning) // Microsoft'un gereksiz loglarını gizler
+    .Enrich.FromLogContext()
+    .WriteTo.Console() // Geliştirme aşamasında terminalde görmeye devam etmek için
+    .WriteTo.PostgreSQL(
+        connectionString: connectionString,
+        tableName: "Logs",
+        columnOptions: columnWriters,
+        needAutoCreateTable: true,
+        // SADECE Error ve daha üstü (Fatal) seviyedeki logları veritabanına yaz:
+        restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Error 
+    )
+    .CreateLogger();
+
+// .NET Core'un varsayılan loglayıcısı yerine Serilog'u kullanmasını söylüyoruz
+builder.Host.UseSerilog();
 
 // 1. Veritabanı Bağlantısı
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -57,6 +94,9 @@ builder.Services.AddCors(options =>
         }
     });
 });
+
+// Arka plan log temizleme servisini sisteme ekliyoruz
+builder.Services.AddHostedService<LogCleanupService>();
 
 var app = builder.Build();
 
@@ -118,10 +158,4 @@ app.Run();
 
 JWT süresi dolduğunda (mevcut durumda 2 saat) sistem kullanıcıyı dışarı atıyor.  
 Geliştirme: Kullanıcı tablosuna RefreshToken ve RefreshTokenExpiryTime kolonları ekleyerek, frontend tarafında Axios (veya mevcut fetch yapınıza bir interceptor) yazarak token süresi dolduğunda kullanıcı hissetmeden arka planda yeni bir token alınmasını sağlayabilirsiniz.
-
-
-Loglama Altyapısı: 
-
-Hata yönetimi (Exception Middleware) çok güzel kurgulanmış, ancak hatalar şu an sadece konsola yazılıyor.  
-Geliştirme: Serilog entegrasyonu yaparak hataları ve sistem akışını Elasticsearch veya doğrudan PostgreSQL üzerinde ayrı bir tabloya yazdırabilirsiniz.
 */
