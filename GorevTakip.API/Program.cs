@@ -37,9 +37,18 @@ builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("StrictCorsPolicy", policy =>
     {
-        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+        // appsettings.json'dan izin verilen adresleri dizi olarak okuyoruz
+        var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+        
+        if (allowedOrigins != null && allowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(allowedOrigins) // Sadece listedeki adreslere izin ver
+                  .AllowAnyHeader()            // Gelen istek başlıklarına (Authorization, Content-Type vs.) izin ver
+                  .AllowAnyMethod()            // GET, POST, PUT, DELETE metotlarına izin ver
+                  .AllowCredentials();         // SignalR ve Cookie kullanımı için gerekli
+        }
     });
 });
 
@@ -77,7 +86,7 @@ app.UseDefaultFiles();
 app.UseStaticFiles();  
 app.UseAuthorization();
 
-app.UseCors("AllowAll");
+app.UseCors("StrictCorsPolicy");
 app.MapControllers();
 
 app.MapHub<GorevTakip.API.Hubs.TaskHub>("/taskhub");
@@ -99,20 +108,6 @@ app.Run();
 //docker-compose start --> Başlatmak için
 
 /* 
-XSS (Cross-Site Scripting) Riski: 
-
-Frontend tarafında, özellikle tasks.js dosyasında tablo satırlarını oluştururken doğrudan innerHTML kullanarak verileri DOM'a basıyorsunuz (<td><strong>${task.title}</strong></td> gibi). 
-Eğer kötü niyetli bir kullanıcı görev başlığına <script>...</script> yazarsa, bu kod diğer kullanıcıların tarayıcısında çalışabilir.  
-Geliştirme: JavaScript ile DOM manipülasyonu yaparken innerHTML yerine textContent kullanmalı veya verileri HTML'e basmadan önce bir "sanitizer" (örn. DOMPurify) kütüphanesinden geçirmelisiniz.
-
-
-CORS Politikasının Daraltılması: 
-
-Program.cs içinde CORS ayarları AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader() şeklinde yapılandırılmış. 
-Bu geliştirme aşamasında kolaylık sağlasa da canlı ortamda ciddi bir güvenlik açığıdır.  
-Geliştirme: appsettings.json üzerinden sadece frontend uygulamanızın çalışacağı domain adreslerine izin verecek şekilde konfigüre etmelisiniz.
-
-
 2. Mimari ve Performans İyileştirmeleriDistributed Caching (Redis) Geçişi: 
 
 TaskService.cs içerisinde önbellekleme için IMemoryCache kullanmışsınız. 
