@@ -99,20 +99,49 @@ app.Run();
 //docker-compose start --> Başlatmak için
 
 /* 
-Soft Delete (Yumuşak Silme) Mekanizması: 
-Şu anda DeleteTaskAsync metodu görevi veritabanından tamamen (Remove) siliyor. 
-Entity Framework'teki Cascade kuralları gereği, görev silindiğinde ona bağlı olan TaskHistory ve TaskComment kayıtları da uçacaktır. 
-Kurumsal sistemlerde veri kaybedilmez. 
-TaskItem entity'sine public bool IsDeleted { get; set; } ekleyip, silme işlemini sadece bu bayrağı true yaparak (Soft Delete) güncellemelisin. 
-Ayrıca Repository katmanındaki sorgulara !IsDeleted filtresi (Global Query Filter) ekleyebilirsin.
+1. Güvenlik Geliştirmeleri (Kritik)Hassas Verilerin Gizlenmesi (Secrets Management): 
+
+docker-compose.yml, appsettings.json ve AuthService.cs dosyalarında veritabanı şifresi (12345) ve JWT gizli anahtarı doğrudan kodun içinde yer alıyor.  
+Geliştirme: Kendi notlarınızda da belirttiğiniz gibi, bu verileri .env dosyalarına taşımalı ve projede Environment Variables üzerinden okumalısınız. 
+Geliştirme ortamı için .NET'in User Secrets aracını kullanabilirsiniz.  
 
 
-Refresh Token Entegrasyonu: 
-Şu an JWT süresi bittiğinde (2 saat) kullanıcı 401 hatası alıyor ve sistem onu doğrudan login sayfasına atıyor. 
-Kullanıcı deneyimini artırmak için bir Refresh Token mekanizması ekleyebilir ve arka planda yeni bir token alarak oturumu kesintisiz sürdürebilirsin.
+XSS (Cross-Site Scripting) Riski: 
+
+Frontend tarafında, özellikle tasks.js dosyasında tablo satırlarını oluştururken doğrudan innerHTML kullanarak verileri DOM'a basıyorsunuz (<td><strong>${task.title}</strong></td> gibi). 
+Eğer kötü niyetli bir kullanıcı görev başlığına <script>...</script> yazarsa, bu kod diğer kullanıcıların tarayıcısında çalışabilir.  
+Geliştirme: JavaScript ile DOM manipülasyonu yaparken innerHTML yerine textContent kullanmalı veya verileri HTML'e basmadan önce bir "sanitizer" (örn. DOMPurify) kütüphanesinden geçirmelisiniz.
 
 
-Güvenlik: 
-Docker compose dosyasında ve appsettings.json'da veritabanı şifresi ve JWT key'leri açıkça duruyor. 
-Bunları .env dosyalarına taşıyıp Docker üzerinden environment variable olarak okumak güvenlik açısından en doğru yaklaşımdır.
+CORS Politikasının Daraltılması: 
+
+Program.cs içinde CORS ayarları AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader() şeklinde yapılandırılmış. 
+Bu geliştirme aşamasında kolaylık sağlasa da canlı ortamda ciddi bir güvenlik açığıdır.  
+Geliştirme: appsettings.json üzerinden sadece frontend uygulamanızın çalışacağı domain adreslerine izin verecek şekilde konfigüre etmelisiniz.
+
+
+2. Mimari ve Performans İyileştirmeleriDistributed Caching (Redis) Geçişi: 
+
+TaskService.cs içerisinde önbellekleme için IMemoryCache kullanmışsınız. 
+Uygulamanızı Docker üzerinde birden fazla instance (container) olarak ayağa kaldırırsanız, her instance'ın kendi RAM'indeki önbellek farklı olacağı için veri tutarsızlıkları yaşanır.  
+Geliştirme: Veritabanını PostgreSQL ile Docker'a aldığınız gibi, bir Redis container'ı ekleyerek IDistributedCache yapısına geçiş yapabilirsiniz.
+
+
+IQueryable Sızıntısının Önlenmesi: 
+
+IGenericRepository içerisinde IQueryable<T> GetQueryable() metodu bulunuyor. 
+Bu durum, Business katmanının DataAccess katmanına (ve spesifik olarak EF Core'un sorgu yapısına) çok fazla bağımlı olmasına yol açar.  
+Geliştirme: IQueryable dönmek yerine, filtreleme işlemlerini doğrudan repository içinde yapacak spesifik metotlar (örn. ITaskRepository içinde GetTasksWithAssignedUsersAsync) tanımlamak mimariyi daha "Clean" hale getirir.
+
+
+3. Kullanıcı Deneyimi ve GenişletilebilirlikRefresh Token Mekanizması: 
+
+JWT süresi dolduğunda (mevcut durumda 2 saat) sistem kullanıcıyı dışarı atıyor.  
+Geliştirme: Kullanıcı tablosuna RefreshToken ve RefreshTokenExpiryTime kolonları ekleyerek, frontend tarafında Axios (veya mevcut fetch yapınıza bir interceptor) yazarak token süresi dolduğunda kullanıcı hissetmeden arka planda yeni bir token alınmasını sağlayabilirsiniz.
+
+
+Loglama Altyapısı: 
+
+Hata yönetimi (Exception Middleware) çok güzel kurgulanmış, ancak hatalar şu an sadece konsola yazılıyor.  
+Geliştirme: Serilog entegrasyonu yaparak hataları ve sistem akışını Elasticsearch veya doğrudan PostgreSQL üzerinde ayrı bir tabloya yazdırabilirsiniz.
 */

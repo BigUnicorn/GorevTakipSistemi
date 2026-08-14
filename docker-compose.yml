@@ -6,7 +6,7 @@ services:
     container_name: gorevtakip-postgres
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 12345 # appsettings.json'daki ile aynı olmalı
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: GorevTakipDb
     ports:
       - "5432:5432"
@@ -25,7 +25,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       # Host kısmını localhost yerine container adı olan 'db' ile değiştiriyoruz
-      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=GorevTakipDb;Username=postgres;Password=12345
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=GorevTakipDb;Username=postgres;Password=${DB_PASSWORD}
+      - Jwt__Key=${JWT_SECRET_KEY}
     volumes:
       - ./GorevTakip.API/wwwroot:/app/wwwroot # YENİ: Host'taki klasörü container'a bağladık
 

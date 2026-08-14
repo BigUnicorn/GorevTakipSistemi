@@ -35,8 +35,9 @@ namespace GorevTakip.API.Extensions
 
         public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
-            // Senin mevcut JWT ayarların
-            var jwtKey = configuration["Jwt:Key"] ?? "GorevTakipSistemi_SuperGizliAnahtar_12345!!";
+            
+            // Eğer JWT key bulunamazsa, sistem varsayılan bir şifre atamak yerine direkt çöksün.
+            var jwtKey = configuration["Jwt:Key"] ?? throw new ArgumentNullException("Jwt:Key", "Kritik Hata: JWT Key konfigürasyon dosyasında veya .env içinde bulunamadı!");
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
