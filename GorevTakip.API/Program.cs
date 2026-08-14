@@ -114,13 +114,6 @@ app.Run();
 //docker-compose start --> Başlatmak için
 
 /* 
-IQueryable Sızıntısının Önlenmesi: 
-
-IGenericRepository içerisinde IQueryable<T> GetQueryable() metodu bulunuyor. 
-Bu durum, Business katmanının DataAccess katmanına (ve spesifik olarak EF Core'un sorgu yapısına) çok fazla bağımlı olmasına yol açar.  
-Geliştirme: IQueryable dönmek yerine, filtreleme işlemlerini doğrudan repository içinde yapacak spesifik metotlar (örn. ITaskRepository içinde GetTasksWithAssignedUsersAsync) tanımlamak mimariyi daha "Clean" hale getirir.
-
-
 3. Kullanıcı Deneyimi ve GenişletilebilirlikRefresh Token Mekanizması: 
 
 JWT süresi dolduğunda (mevcut durumda 2 saat) sistem kullanıcıyı dışarı atıyor.  

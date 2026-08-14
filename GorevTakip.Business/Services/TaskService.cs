@@ -14,19 +14,20 @@ namespace GorevTakip.Business.Services
 {
     public class TaskService : ITaskService
     {
-        private readonly IGenericRepository<TaskItem> _taskRepository;
-        private readonly IGenericRepository<User> _userRepository;
-        private readonly IGenericRepository<TaskHistory> _historyRepository;
-        private readonly IGenericRepository<TaskComment> _commentRepository;
-        private readonly IMapper _mapper;
+        private readonly ITaskRepository _taskRepository;
+        private readonly IGenericRepository<User> _userRepository; 
+        private readonly ITaskHistoryRepository _historyRepository;
+        private readonly ITaskCommentRepository _commentRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper _mapper;
         private readonly IDistributedCache _cache;
 
+        // Güncellenmiş Constructor:
         public TaskService(
-            IGenericRepository<TaskItem> taskRepository, 
-            IGenericRepository<User> userRepository,
-            IGenericRepository<TaskHistory> historyRepository,
-            IGenericRepository<TaskComment> commentRepository,
+            ITaskRepository taskRepository,          // <-- GÜNCELLENDİ
+            IGenericRepository<User> userRepository, 
+            ITaskHistoryRepository historyRepository, // <-- GÜNCELLENDİ
+            ITaskCommentRepository commentRepository, // <-- GÜNCELLENDİ
             IMapper mapper,
             IUnitOfWork unitOfWork,
             IDistributedCache cache)
@@ -42,67 +43,13 @@ namespace GorevTakip.Business.Services
 
         public async Task<PagedResponseDto<TaskResponseDto>> GetFilteredTasksAsync(TaskFilterDto filter)
         {
-            IQueryable<TaskItem> query = _taskRepository.GetQueryable().Include(t => t.AssignedUser);
+            // 1. Repository'den veriyi ve sayıyı al (Veritabanı işlemleri gizlendi)
+            var (tasks, totalRecords) = await _taskRepository.GetFilteredTasksAsync(filter);
 
-            if (!string.IsNullOrWhiteSpace(filter.SearchText))
-            {
-                var search = filter.SearchText.ToLower();
-                query = query.Where(x => x.Title.ToLower().Contains(search) ||
-                                        x.Description.ToLower().Contains(search));
-            }
-
-            if (filter.Status.HasValue && filter.Status.Value > 0)
-            {
-                query = query.Where(x => (int)x.Status == filter.Status.Value);
-            }
-
-            if (filter.AssignedUserId.HasValue && filter.AssignedUserId.Value > 0)
-            {
-                query = query.Where(x => x.AssignedUserId == filter.AssignedUserId.Value);
-            }
-
-            var totalRecords = await query.CountAsync();
-
-            if (!string.IsNullOrEmpty(filter.SortBy))
-            {
-                switch (filter.SortBy.ToLower())
-                {
-                    case "title":
-                        query = filter.SortDescending ? query.OrderByDescending(x => x.Title) : query.OrderBy(x => x.Title);
-                        break;
-                    case "description":
-                        query = filter.SortDescending ? query.OrderByDescending(x => x.Description) : query.OrderBy(x => x.Description);
-                        break;
-                    case "duedate":
-                        query = filter.SortDescending ? query.OrderByDescending(x => x.DueDate) : query.OrderBy(x => x.DueDate);
-                        break;
-                    case "assigneduser":
-                        query = filter.SortDescending 
-                            ? query.OrderByDescending(x => x.AssignedUser!.FirstName).ThenByDescending(x => x.AssignedUser!.LastName) 
-                            : query.OrderBy(x => x.AssignedUser!.FirstName).ThenBy(x => x.AssignedUser!.LastName);
-                        break;
-                    case "status":
-                        query = filter.SortDescending ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status);
-                        break;
-                    default:
-                        query = query.OrderByDescending(x => x.DueDate); 
-                        break;
-                }
-            }
-            else
-            {
-                query = query.OrderByDescending(x => x.DueDate); 
-            }
-
-            var tasks = await query
-                .Skip((filter.PageNumber - 1) * filter.PageSize)
-                .Take(filter.PageSize)
-                .ToListAsync();
-
-            // DEĞİŞİKLİK 1: Buradaki uzun "tasks.Select(t => new TaskResponseDto...)" kodunu sildik. 
-            // Yerine AutoMapper'ın tek satırlık çeviri kodunu yazdık.
+            // 2. DTO'ya dönüştür
             var mappedTasks = _mapper.Map<List<TaskResponseDto>>(tasks);
                 
+            // 3. İstemciye (Frontend) gönder
             return new PagedResponseDto<TaskResponseDto>
             {
                 Data = mappedTasks,
@@ -114,53 +61,21 @@ namespace GorevTakip.Business.Services
 
         public async Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null, int? categoryId = null)
         {
+            // 1. Cache Anahtarını oluştur
             string cacheKey = $"TaskStats_User_{userId ?? 0}_Cat_{categoryId ?? 0}";
             
+            // 2. Redis'ten kontrol et
             var cachedDataString = await _cache.GetStringAsync(cacheKey);
-
             if (!string.IsNullOrEmpty(cachedDataString))
             {
                 return JsonSerializer.Deserialize<TaskStatisticsDto>(cachedDataString)!;
             }
 
-            var query = _taskRepository.GetQueryable();
+            // 3. EĞER CACHE'DE YOKSA: Veritabanı işlemini Repository'e devret!
+            // (Aşağıdaki tek satır, eskiden burada olan 15 satırlık IQueryable ve CountAsync yığınının yerini aldı)
+            var stats = await _taskRepository.GetTaskStatisticsAsync(userId, categoryId);
 
-            if (userId.HasValue && userId.Value > 0)
-            {
-                query = query.Where(t => t.AssignedUserId == userId.Value);
-            }
-
-            if (categoryId.HasValue && categoryId.Value > 0)
-            {
-                query = query.Where(t => (int)t.Category == categoryId.Value);
-            }
-
-            var total = await query.CountAsync();
-            var todo = await query.CountAsync(t => t.Status == WorkStatus.Todo);
-            var inProgress = await query.CountAsync(t => t.Status == WorkStatus.InProgress);
-            var completed = await query.CountAsync(t => t.Status == WorkStatus.Done);
-            
-            var frontend = await query.CountAsync(t => t.Category == TaskCategory.Frontend);
-            var backend = await query.CountAsync(t => t.Category == TaskCategory.Backend);
-            var database = await query.CountAsync(t => t.Category == TaskCategory.Database);
-            var bugFix = await query.CountAsync(t => t.Category == TaskCategory.BugFix);
-            var mobile = await query.CountAsync(t => t.Category == TaskCategory.Mobile);
-            var devOps = await query.CountAsync(t => t.Category == TaskCategory.DevOps);
-
-            var stats = new TaskStatisticsDto
-            {
-                TotalTasks = total,
-                TodoTasks = todo,
-                InProgressTasks = inProgress,
-                CompletedTasks = completed,
-                FrontendTasks = frontend,
-                BackendTasks = backend,
-                DatabaseTasks = database,
-                BugFixTasks = bugFix,
-                MobileTasks = mobile,
-                DevOpsTasks = devOps
-            };
-
+            // 4. Redis'e kaydet
             var cacheOptions = new DistributedCacheEntryOptions()
                 .SetAbsoluteExpiration(TimeSpan.FromMinutes(1));
 
@@ -282,11 +197,11 @@ namespace GorevTakip.Business.Services
 
         public async Task<IEnumerable<TaskHistoryDto>> GetTaskHistoryAsync(int taskId)
         {
-            var histories = await _historyRepository.GetQueryable()
-                .Where(h => h.TaskId == taskId)
-                .OrderByDescending(h => h.CreatedDate)
-                .ToListAsync();
+            // 1. Veritabanı sorgulama mantığını tamamen Repository'ye devrettik.
+            // Artık Business katmanı "Where" veya "OrderByDescending" gibi EF Core komutlarını bilmiyor.
+            var histories = await _historyRepository.GetHistoryByTaskIdAsync(taskId);
 
+            // 2. Gelen saf veriyi DTO'ya dönüştürüp döndürüyoruz.
             return histories.Select(h => new TaskHistoryDto
             {
                 ActionMessage = h.ActionMessage,
@@ -309,12 +224,9 @@ namespace GorevTakip.Business.Services
 
         public async Task<IEnumerable<TaskCommentDto>> GetCommentsAsync(int taskId)
         {
-            var comments = await _commentRepository.GetQueryable()
-                .Include(c => c.User)
-                .Where(c => c.TaskId == taskId)
-                .OrderBy(c => c.CreatedDate)
-                .ToListAsync();
-
+            // EF Core'un "Include" (Join işlemi) mantığını Business katmanından gizledik.
+            var comments = await _commentRepository.GetCommentsWithUserByTaskIdAsync(taskId);
+            
             return comments.Select(c => new TaskCommentDto
             {
                 Id = c.Id,

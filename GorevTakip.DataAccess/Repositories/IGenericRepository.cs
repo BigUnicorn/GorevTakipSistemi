@@ -12,8 +12,5 @@ namespace GorevTakip.DataAccess.Repositories
         Task AddAsync(T entity);
         void Update(T entity);
         void Delete(T entity);
-
-        // YENİ EKLENEN METOT:
-        IQueryable<T> GetQueryable();
     }
 }

@@ -39,11 +39,5 @@ namespace GorevTakip.DataAccess.Repositories
         {
             _context.Set<T>().Remove(entity);
         }
-
-        // YENİ EKLENEN METOT BURADA:
-        public IQueryable<T> GetQueryable()
-        {
-            return _context.Set<T>().AsQueryable();
-        }
     }
 }
