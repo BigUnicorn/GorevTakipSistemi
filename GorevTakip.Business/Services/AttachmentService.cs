@@ -7,6 +7,7 @@ using GorevTakip.Business.DTOs;
 using GorevTakip.DataAccess.Repositories;
 using GorevTakip.Entities;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace GorevTakip.Business.Services
 {
@@ -14,7 +15,8 @@ namespace GorevTakip.Business.Services
     {
         private readonly ITaskAttachmentRepository _attachmentRepository;
         private readonly ITaskRepository _taskRepository;
-        private readonly IUserRepository _userRepository;
+        private readonly IGenericRepository<User> _userRepository;
+        private readonly IUnitOfWork _unitOfWork;
 
         // Dosyaların kaydedileceği klasör
         private readonly string _uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
@@ -22,11 +24,13 @@ namespace GorevTakip.Business.Services
         public AttachmentService(
             ITaskAttachmentRepository attachmentRepository,
             ITaskRepository taskRepository,
-            IUserRepository userRepository)
+            IGenericRepository<User> userRepository,
+            IUnitOfWork unitOfWork)
         {
             _attachmentRepository = attachmentRepository;
             _taskRepository = taskRepository;
             _userRepository = userRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<TaskAttachmentDto> UploadAttachmentAsync(int taskId, int userId, IFormFile file)
@@ -71,13 +75,16 @@ namespace GorevTakip.Business.Services
             };
 
             await _attachmentRepository.AddAsync(attachment);
+            await _unitOfWork.SaveChangesAsync();
 
             return await MapToDtoAsync(attachment);
         }
 
         public async Task<IEnumerable<TaskAttachmentDto>> GetAttachmentsByTaskIdAsync(int taskId)
         {
-            var attachments = await _attachmentRepository.GetAllAsync(a => a.TaskId == taskId);
+            var attachments = await _attachmentRepository.GetQueryable()
+                                .Where(a => a.TaskId == taskId)
+                                .ToListAsync();
             
             var dtos = new List<TaskAttachmentDto>();
             foreach(var att in attachments.OrderByDescending(a => a.UploadedAt))
@@ -135,7 +142,8 @@ namespace GorevTakip.Business.Services
             }
 
             // DB'den sil
-            _attachmentRepository.Delete(attachment); // GenericRepository'deki Delete metodu
+            _attachmentRepository.Delete(attachment);
+            await _unitOfWork.SaveChangesAsync();
         }
 
         private async Task<TaskAttachmentDto> MapToDtoAsync(TaskAttachment attachment)
