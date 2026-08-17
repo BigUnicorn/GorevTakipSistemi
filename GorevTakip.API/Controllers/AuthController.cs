@@ -26,8 +26,20 @@ namespace GorevTakip.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginDto loginDto)
         {
-            var token = await _authService.LoginAsync(loginDto);
-            return Ok(new { Token = token }); // Başarılı girişte Token döner
+            var tokenDto = await _authService.LoginAsync(loginDto);
+            return Ok(tokenDto); // Return TokenDto (AccessToken and RefreshToken)
+        }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenDto tokenDto)
+        {
+            if (tokenDto == null || string.IsNullOrEmpty(tokenDto.AccessToken) || string.IsNullOrEmpty(tokenDto.RefreshToken))
+            {
+                return BadRequest("Invalid client request");
+            }
+
+            var newTokenDto = await _authService.RefreshTokenAsync(tokenDto.AccessToken, tokenDto.RefreshToken);
+            return Ok(newTokenDto);
         }
     }
 }

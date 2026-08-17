@@ -83,3 +83,23 @@ th.sortable:hover { background-color: #e5e7eb; }
 .stat-card h3 { margin: 0 0 10px 0; color: #6b7280; font-size: 16px; }
 .stat-card .value { font-size: 32px; font-weight: bold; color: #111827; }
 .chart-section { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); width: 100%; max-width: 600px; margin-top: 25px; }
+
+/* --- KANBAN BOARD --- */
+.kanban-board { display: none; gap: 20px; align-items: flex-start; margin-top: 15px; }
+.kanban-column { flex: 1; background-color: #f9fafb; border-radius: 12px; padding: 15px; border: 1px solid #e5e7eb; min-height: 400px; display: flex; flex-direction: column; gap: 15px; }
+.kanban-column h4 { margin: 0 0 10px 0; padding-bottom: 10px; border-bottom: 2px solid #e5e7eb; color: #374151; display: flex; justify-content: space-between; align-items: center; }
+.kanban-column h4 span { background: #e5e7eb; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+.kanban-column.drag-over { background-color: #e0f2fe; border: 2px dashed var(--primary-color); }
+.kanban-card { background: white; border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); cursor: grab; transition: transform 0.2s, box-shadow 0.2s; border-left: 4px solid #9ca3af; }
+.kanban-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+.kanban-card:active { cursor: grabbing; }
+.kanban-card.status-1 { border-left-color: #9ca3af; }
+.kanban-card.status-2 { border-left-color: var(--warning-color); }
+.kanban-card.status-3 { border-left-color: var(--success-color); opacity: 0.8; }
+.kanban-card-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; color: #111827; }
+.kanban-card-desc { font-size: 12px; color: #6b7280; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.kanban-card-footer { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+.kanban-card-footer .assigned { background: #dbeafe; color: #1d4ed8; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+.kanban-card-actions { display: flex; gap: 5px; margin-top: 10px; border-top: 1px solid #f3f4f6; padding-top: 10px; justify-content: flex-end; }
+.view-toggle-btn { background: #f3f4f6; border: 1px solid #d1d5db; padding: 6px 12px; border-radius: 6px; cursor: pointer; color: #4b5563; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+.view-toggle-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }

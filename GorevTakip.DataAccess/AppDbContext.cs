@@ -1,4 +1,4 @@
-﻿using GorevTakip.Entities;
+using GorevTakip.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace GorevTakip.DataAccess
@@ -26,6 +26,8 @@ namespace GorevTakip.DataAccess
                 .HasOne(t => t.AssignedUser) // Bir TaskItem'ın bir AssignedUser'ı vardır.
                 .WithMany(u => u.Tasks)      // Bir User'ın birden çok Task'i olabilir.
                 .HasForeignKey(t => t.AssignedUserId); // Bağlantıyı kuran sütun (Foreign Key).
+                
+            modelBuilder.Entity<TaskItem>().HasQueryFilter(t => !t.IsDeleted);
 
             base.OnModelCreating(modelBuilder);
         }

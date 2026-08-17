@@ -6,6 +6,7 @@ namespace GorevTakip.Business.Services
     public interface IAuthService
     {
         Task RegisterAsync(UserRegisterDto registerDto);
-        Task<string> LoginAsync(UserLoginDto loginDto);
+        Task<TokenDto> LoginAsync(UserLoginDto loginDto);
+        Task<TokenDto> RefreshTokenAsync(string token, string refreshToken);
     }
 }

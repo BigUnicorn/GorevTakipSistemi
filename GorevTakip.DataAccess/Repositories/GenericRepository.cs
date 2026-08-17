@@ -37,7 +37,30 @@ namespace GorevTakip.DataAccess.Repositories
 
         public void Delete(T entity)
         {
-            _context.Set<T>().Remove(entity);
+            if (entity is GorevTakip.Entities.TaskItem taskItem)
+            {
+                taskItem.IsDeleted = true;
+                _context.Set<T>().Update(entity);
+            }
+            else
+            {
+                _context.Set<T>().Remove(entity);
+            }
+        }
+
+        public System.Linq.IQueryable<T> GetQueryable()
+        {
+            return _context.Set<T>().AsQueryable();
+        }
+
+        public async Task<T?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().FirstOrDefaultAsync(predicate);
+        }
+
+        public async Task<bool> AnyAsync(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().AnyAsync(predicate);
         }
 
         public async Task<T?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate)

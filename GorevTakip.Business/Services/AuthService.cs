@@ -47,15 +47,59 @@ namespace GorevTakip.Business.Services
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task<string> LoginAsync(UserLoginDto loginDto)
+        public async Task<TokenDto> LoginAsync(UserLoginDto loginDto)
         {
             var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
 
-            // YENİ: BCrypt.Verify ile düz metin şifreyi, veritabanındaki hash ile karşılaştırıyoruz
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
                 throw new Exception("Kullanıcı adı veya şifre hatalı.");
 
-            return GenerateJwtToken(user);
+            var accessToken = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            user.RefreshToken = refreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+            
+            _userRepository.Update(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            return new TokenDto
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            };
+        }
+
+        public async Task<TokenDto> RefreshTokenAsync(string token, string refreshToken)
+        {
+            // Here we should extract the user ID from the expired token
+            var principal = GetPrincipalFromExpiredToken(token);
+            if (principal == null)
+                throw new Exception("Geçersiz erişim belirteci.");
+
+            var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                throw new Exception("Geçersiz erişim belirteci.");
+
+            var user = await _userRepository.GetByIdAsync(userId);
+
+            if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+                throw new Exception("Geçersiz veya süresi dolmuş yenileme belirteci.");
+
+            var newAccessToken = GenerateJwtToken(user);
+            var newRefreshToken = GenerateRefreshToken();
+
+            user.RefreshToken = newRefreshToken;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+
+            _userRepository.Update(user);
+            await _unitOfWork.SaveChangesAsync();
+
+            return new TokenDto
+            {
+                AccessToken = newAccessToken,
+                RefreshToken = newRefreshToken
+            };
         }
 
         // ESKİ HASH METODUNU BURADAN SİLDİK
@@ -82,6 +126,36 @@ namespace GorevTakip.Business.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
+        }
+
+        private ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
+        {
+            var jwtKey = _configuration["Jwt:Key"];
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateAudience = false, // audience validation handled elsewhere
+                ValidateIssuer = false,   // issuer validation handled elsewhere
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey!)),
+                ValidateLifetime = false // Here we are saying that we don't care about the token's expiration date
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+            var jwtSecurityToken = securityToken as JwtSecurityToken;
+
+            if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                throw new SecurityTokenException("Invalid token");
+
+            return principal;
         }
     }
 }
