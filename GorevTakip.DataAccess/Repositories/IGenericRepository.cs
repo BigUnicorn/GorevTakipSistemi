@@ -12,5 +12,8 @@ namespace GorevTakip.DataAccess.Repositories
         Task AddAsync(T entity);
         void Update(T entity);
         void Delete(T entity);
+        
+        Task<T?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate);
+        Task<bool> AnyAsync(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate);
     }
 }

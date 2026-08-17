@@ -24,8 +24,7 @@ namespace GorevTakip.Business.Services
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            var allUsers = await _userRepository.GetAllAsync();
-            return allUsers.FirstOrDefault(u => u.Email == email);
+            return await _userRepository.FirstOrDefaultAsync(u => u.Email == email);
         }
 
         public async Task UpdateUserRoleAsync(UserRoleUpdateDto updateDto)

@@ -40,6 +40,10 @@ namespace GorevTakip.API.Controllers
                 {
                     filter.AssignedUserId = userId; // Frontend'den ne gelirse gelsin, kendi ID'sini eziyoruz
                 }
+                else
+                {
+                    return Unauthorized();
+                }
             }
 
             // İş katmanındaki GetFilteredTasksAsync metodunu çağırıyoruz
@@ -71,6 +75,7 @@ namespace GorevTakip.API.Controllers
 
         // PUT: api/Tasks/5
         [HttpPut("{id}")]
+        [Authorize(Roles = nameof(UserRole.Admin))]
         public async Task<IActionResult> UpdateTask(int id, [FromBody] TaskUpdateDto taskDto)
         {
             if (id != taskDto.Id) 
@@ -79,6 +84,31 @@ namespace GorevTakip.API.Controllers
             await _taskService.UpdateTaskAsync(taskDto);
             await _hubContext.Clients.All.SendAsync("ReceiveTaskUpdate", "Bir görev güncellendi!");
             return Ok("Görev başarıyla güncellendi.");
+        }
+
+        // PATCH: api/Tasks/5/status
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateTaskStatus(int id, [FromBody] WorkStatus newStatus)
+        {
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (!int.TryParse(userIdStr, out int userId))
+                return Unauthorized();
+
+            // Eğer Admin değilse, sadece kendi görevini güncelleyebilir
+            if (role != nameof(UserRole.Admin))
+            {
+                var task = await _taskService.GetTaskByIdAsync(id);
+                if (task == null) return NotFound("Görev bulunamadı.");
+                
+                if (task.AssignedUserId != userId)
+                    return Forbid("Sadece size atanan görevlerin durumunu güncelleyebilirsiniz."); 
+            }
+
+            await _taskService.UpdateTaskStatusAsync(id, newStatus);
+            await _hubContext.Clients.All.SendAsync("ReceiveTaskUpdate", "Görev durumu güncellendi.");
+            return Ok("Görev durumu başarıyla güncellendi.");
         }
 
         // DELETE: api/Tasks/5
@@ -105,6 +135,10 @@ namespace GorevTakip.API.Controllers
                 if (int.TryParse(userIdStr, out int parsedUserId))
                 {
                     userId = parsedUserId;
+                }
+                else
+                {
+                    return Unauthorized();
                 }
             }
             

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using GorevTakip.Entities;
 using GorevTakip.Entities.DTOs;
 
 namespace GorevTakip.Business.Services
@@ -13,6 +14,7 @@ namespace GorevTakip.Business.Services
         Task<TaskResponseDto?> GetTaskByIdAsync(int id);
         Task<TaskResponseDto> CreateTaskAsync(TaskCreateDto taskCreateDto);
         Task UpdateTaskAsync(TaskUpdateDto taskUpdateDto);
+        Task UpdateTaskStatusAsync(int id, WorkStatus newStatus);
         Task DeleteTaskAsync(int id);
         Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null, int? categoryId = null);
         Task<IEnumerable<TaskHistoryDto>> GetTaskHistoryAsync(int taskId);
