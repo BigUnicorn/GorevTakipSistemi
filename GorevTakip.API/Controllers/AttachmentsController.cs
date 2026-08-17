@@ -1,9 +1,11 @@
 using System.Security.Claims;
 using System.Threading.Tasks;
+using GorevTakip.API.Hubs;
 using GorevTakip.Business.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace GorevTakip.API.Controllers
 {
@@ -13,10 +15,12 @@ namespace GorevTakip.API.Controllers
     public class AttachmentsController : ControllerBase
     {
         private readonly IAttachmentService _attachmentService;
+        private readonly IHubContext<TaskHub> _hubContext;
 
-        public AttachmentsController(IAttachmentService attachmentService)
+        public AttachmentsController(IAttachmentService attachmentService, IHubContext<TaskHub> hubContext)
         {
             _attachmentService = attachmentService;
+            _hubContext = hubContext;
         }
 
         // POST: api/attachments/task/5
@@ -29,6 +33,10 @@ namespace GorevTakip.API.Controllers
             try
             {
                 var attachment = await _attachmentService.UploadAttachmentAsync(taskId, userId, file);
+                
+                // SignalR ile arayüzü güncelle
+                await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveTaskUpdate, new { Action = "AttachmentAdded", TaskId = taskId });
+
                 return Ok(attachment);
             }
             catch (System.Exception ex)
@@ -73,6 +81,10 @@ namespace GorevTakip.API.Controllers
             try
             {
                 await _attachmentService.DeleteAttachmentAsync(id, userId, role ?? "");
+                
+                // SignalR ile arayüzü güncelle (dosyanın ait olduğu görevi bilmiyoruz ama Frontend genel tetikleme yakalayabilir)
+                await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveTaskUpdate, new { Action = "AttachmentDeleted" });
+
                 return Ok(new { Message = "Dosya başarıyla silindi." });
             }
             catch (System.Exception ex)

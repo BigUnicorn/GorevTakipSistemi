@@ -16,6 +16,7 @@ namespace GorevTakip.Business.Services
         private readonly ITaskAttachmentRepository _attachmentRepository;
         private readonly ITaskRepository _taskRepository;
         private readonly IGenericRepository<User> _userRepository;
+        private readonly ITaskHistoryRepository _historyRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         // Dosyaların kaydedileceği klasör
@@ -25,11 +26,13 @@ namespace GorevTakip.Business.Services
             ITaskAttachmentRepository attachmentRepository,
             ITaskRepository taskRepository,
             IGenericRepository<User> userRepository,
+            ITaskHistoryRepository historyRepository,
             IUnitOfWork unitOfWork)
         {
             _attachmentRepository = attachmentRepository;
             _taskRepository = taskRepository;
             _userRepository = userRepository;
+            _historyRepository = historyRepository;
             _unitOfWork = unitOfWork;
         }
 
@@ -75,6 +78,15 @@ namespace GorevTakip.Business.Services
             };
 
             await _attachmentRepository.AddAsync(attachment);
+
+            // Geçmişe ekle
+            var history = new TaskHistory
+            {
+                TaskId = taskId,
+                ActionMessage = $"'{file.FileName}' adlı dosya eklendi."
+            };
+            await _historyRepository.AddAsync(history);
+
             await _unitOfWork.SaveChangesAsync();
 
             return await MapToDtoAsync(attachment);
@@ -143,6 +155,15 @@ namespace GorevTakip.Business.Services
 
             // DB'den sil
             _attachmentRepository.Delete(attachment);
+
+            // Geçmişe ekle
+            var history = new TaskHistory
+            {
+                TaskId = attachment.TaskId,
+                ActionMessage = $"'{attachment.FileName}' adlı dosya silindi."
+            };
+            await _historyRepository.AddAsync(history);
+
             await _unitOfWork.SaveChangesAsync();
         }
 
