@@ -174,37 +174,39 @@ function renderTasks(tasks) {
         let actionButtons = '';
         
         const historyBtn = `
-            <button onclick="openHistoryModal(${taskId})" class="action-btn" style="background-color: #6366f1; color: white;" title="Geçmişi Gör">
+            <button onclick="openHistoryModal(${taskId})" class="btn-icon history" title="Geçmişi Gör">
                 <i class="fa-solid fa-clock-rotate-left"></i>
             </button>
         `;
         
         const commentBtn = `
-            <button onclick="openCommentModal(${taskId})" class="action-btn" style="background-color: #3b82f6; color: white;" title="Yorumlar">
+            <button onclick="openCommentModal(${taskId})" class="btn-icon comment" title="Yorumlar">
                 <i class="fa-regular fa-comments"></i>
             </button>
         `;
 
         const attachmentBtn = `
-            <button onclick="openAttachmentModal(${taskId})" class="action-btn" style="background-color: #10b981; color: white;" title="Ekler">
+            <button onclick="openAttachmentModal(${taskId})" class="btn-icon attach" title="Ekler">
                 <i class="fa-solid fa-paperclip"></i>
             </button>
         `;
 
         if (userRole === 'Admin') {
             actionButtons = `
-                <button onclick="openEditModal(${taskId})" class="action-btn btn-edit" title="Düzenle">
-                    <i class="fa-solid fa-pen"></i>
-                </button>
-                <button onclick="openDeleteModal(${taskId})" class="action-btn btn-delete" title="Sil">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-                ${historyBtn}
-                ${commentBtn}
-                ${attachmentBtn}
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="openEditModal(${taskId})" class="btn-icon edit" title="Düzenle">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button onclick="openDeleteModal(${taskId})" class="btn-icon delete" title="Sil">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                    ${historyBtn}
+                    ${commentBtn}
+                    ${attachmentBtn}
+                </div>
             `;
         } else {
-            actionButtons = `${historyBtn} ${commentBtn} ${attachmentBtn}`;
+            actionButtons = `<div style="display: flex; gap: 10px; flex-wrap: wrap;">${historyBtn} ${commentBtn} ${attachmentBtn}</div>`;
         }
 
         let categoryLabel = "Belirsiz";
@@ -294,8 +296,8 @@ function renderKanban(tasks) {
         let actionButtons = '';
         if (userRole === 'Admin') {
             actionButtons = `
-                <button onclick="openEditModal(${taskId})" class="action-btn btn-edit" title="Düzenle"><i class="fa-solid fa-pen"></i></button>
-                <button onclick="openDeleteModal(${taskId})" class="action-btn btn-delete" title="Sil"><i class="fa-solid fa-trash"></i></button>
+                <button onclick="openEditModal(${taskId})" class="btn-icon edit" title="Düzenle"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="openDeleteModal(${taskId})" class="btn-icon delete" title="Sil"><i class="fa-solid fa-trash"></i></button>
             `;
         }
 
@@ -306,10 +308,10 @@ function renderKanban(tasks) {
                 <span class="assigned"><i class="fa-regular fa-user"></i> ${assigned}</span>
                 <span style="color: #9ca3af; font-size: 11px;"><i class="fa-regular fa-calendar"></i> ${formatDate(task.dueDate)}</span>
             </div>
-            <div class="kanban-card-actions">
-                <button onclick="openHistoryModal(${taskId})" class="action-btn" style="background-color: #6366f1; color: white;" title="Geçmiş"><i class="fa-solid fa-clock-rotate-left"></i></button>
-                <button onclick="openCommentModal(${taskId})" class="action-btn" style="background-color: #3b82f6; color: white;" title="Yorumlar"><i class="fa-regular fa-comments"></i></button>
-                <button onclick="openAttachmentModal(${taskId})" class="action-btn" style="background-color: #10b981; color: white;" title="Ekler"><i class="fa-solid fa-paperclip"></i></button>
+            <div class="kanban-card-actions" style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
+                <button onclick="openHistoryModal(${taskId})" class="btn-icon history" title="Geçmiş"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                <button onclick="openCommentModal(${taskId})" class="btn-icon comment" title="Yorumlar"><i class="fa-regular fa-comments"></i></button>
+                <button onclick="openAttachmentModal(${taskId})" class="btn-icon attach" title="Ekler"><i class="fa-solid fa-paperclip"></i></button>
                 ${actionButtons}
             </div>
         `;
