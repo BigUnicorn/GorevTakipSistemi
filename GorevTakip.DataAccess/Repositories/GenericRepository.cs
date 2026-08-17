@@ -62,5 +62,15 @@ namespace GorevTakip.DataAccess.Repositories
         {
             return await _context.Set<T>().AnyAsync(predicate);
         }
+
+        public async Task<T?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().FirstOrDefaultAsync(predicate);
+        }
+
+        public async Task<bool> AnyAsync(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate)
+        {
+            return await _context.Set<T>().AnyAsync(predicate);
+        }
     }
 }
