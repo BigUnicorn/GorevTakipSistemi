@@ -57,10 +57,10 @@
             <h3>Görevlerim</h3>
             <!-- Filtreleme Butonları (Tablonun hemen üstüne ekleyebilirsin) -->
             <div style="margin-bottom: 15px; display: flex; gap: 10px;">
-                <button onclick="filterTasks('all')" style="padding: 8px 12px; cursor: pointer; background: #6c757d; color: white; border: none; border-radius: 4px;">Tümü</button>
-                <button onclick="filterTasks(1)" style="padding: 8px 12px; cursor: pointer; background: #17a2b8; color: white; border: none; border-radius: 4px;">Yapılacaklar</button>
-                <button onclick="filterTasks(2)" style="padding: 8px 12px; cursor: pointer; background: #ffc107; color: black; border: none; border-radius: 4px;">Devam Edenler</button>
-                <button onclick="filterTasks(3)" style="padding: 8px 12px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 4px;">Tamamlananlar</button>
+                <button onclick="filterTasks('all')" class="filter-btn all">Tümü</button>
+                <button onclick="filterTasks(1)" class="filter-btn todo">Yapılacaklar</button>
+                <button onclick="filterTasks(2)" class="filter-btn inprogress">Devam Edenler</button>
+                <button onclick="filterTasks(3)" class="filter-btn done">Tamamlananlar</button>
                 <div style="flex: 1;"></div>
                 <button id="toggleTableView" class="view-toggle-btn active" onclick="toggleView('table')"><i class="fa-solid fa-list"></i> Tablo</button>
                 <button id="toggleKanbanView" class="view-toggle-btn" onclick="toggleView('kanban')"><i class="fa-solid fa-table-columns"></i> Kanban</button>
@@ -150,8 +150,8 @@
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button onclick="closeEditModal()" style="padding: 8px 14px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">İptal</button>
-                <button onclick="saveTaskEdit()" style="padding: 8px 14px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Kaydet</button>
+                <button onclick="closeEditModal()" class="action-btn" style="background: var(--text-muted); color: white;">İptal</button>
+                <button onclick="saveTaskEdit()" class="action-btn" style="background: var(--success-color); color: white;">Kaydet</button>
             </div>
         </div>
     </div>
@@ -219,8 +219,8 @@
 
             <div style="display: flex; gap: 10px;">
                 <input type="hidden" id="commentTaskId">
-                <input type="text" id="newCommentText" placeholder="Bir not yazın..." style="flex: 1; margin: 0; padding: 8px;">
-                <button onclick="postComment()" style="background: #10b981; color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer;">Gönder</button>
+                <input type="text" id="newCommentText" placeholder="Bir not yazın..." style="flex: 1; margin: 0; padding: 10px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: var(--font-family);">
+                <button onclick="postComment()" class="action-btn" style="background: var(--success-color); color: white; padding: 10px 20px;">Gönder</button>
             </div>
         </div>
     </div>
@@ -239,8 +239,8 @@
 
             <div style="display: flex; gap: 10px; flex-direction: column;">
                 <input type="hidden" id="attachmentTaskId">
-                <input type="file" id="newAttachmentFile" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                <button onclick="uploadAttachment()" style="background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;"><i class="fa-solid fa-upload"></i> Dosya Yükle</button>
+                <input type="file" id="newAttachmentFile" style="padding: 8px; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                <button onclick="uploadAttachment()" class="action-btn" style="background: var(--primary-color); color: white; padding: 12px;"><i class="fa-solid fa-upload"></i> Dosya Yükle</button>
             </div>
         </div>
     </div>

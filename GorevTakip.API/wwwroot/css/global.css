@@ -70,8 +70,12 @@ body:has(.login-container) {
     box-shadow: var(--shadow-md); border: 1px solid rgba(255,255,255,0.1);
 }
 .header h2 { margin: 0; font-weight: 600; font-size: 20px; letter-spacing: -0.02em; }
-.logout-btn { background-color: var(--danger-color); color: white; border: none; padding: 10px 20px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 500; transition: all 0.2s; }
+.logout-btn { background-color: var(--danger-color); color: white; border: none; padding: 10px 20px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;}
 .logout-btn:hover { background-color: var(--danger-hover); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2); }
+.btn-link { color: white; text-decoration: none; padding: 10px 20px; border-radius: var(--radius-sm); font-weight: 500; transition: all 0.2s; background: var(--primary-color); margin-right: 10px; display: inline-flex; align-items: center; gap: 8px; }
+.btn-link:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2); }
+.link-text { display: block; margin-top: 20px; font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+.link-text:hover { color: var(--primary-color); }
 
 /* --- TASKS SAYFASI ÖZEL --- */
 .container { display: flex; gap: 25px; margin-top: 25px; flex-wrap: wrap; }
@@ -83,6 +87,13 @@ h3 { margin-top: 0; color: var(--text-color); border-bottom: 2px solid var(--bg-
 .form-section input:focus, .form-section textarea:focus, .form-section select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); background-color: var(--surface-color); }
 .btn-success { width: 100%; padding: 12px; background-color: var(--primary-color); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; font-size: 15px; transition: all 0.2s; }
 .btn-success:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25); }
+
+.filter-btn { padding: 8px 14px; cursor: pointer; border: none; border-radius: var(--radius-sm); font-family: var(--font-family); font-weight: 500; font-size: 13px; transition: all 0.2s; color: white; }
+.filter-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); filter: brightness(1.1); }
+.filter-btn.all { background-color: var(--text-muted); }
+.filter-btn.todo { background-color: #0ea5e9; }
+.filter-btn.inprogress { background-color: var(--warning-color); color: white; }
+.filter-btn.done { background-color: var(--success-color); }
 
 /* --- TABLO TASARIMI --- */
 table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; }
