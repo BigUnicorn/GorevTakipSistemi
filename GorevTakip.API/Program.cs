@@ -9,6 +9,7 @@ using Serilog.Sinks.PostgreSQL;
 using NpgsqlTypes;
 using System.Collections.Generic;
 using GorevTakip.API.HostedServices;
+using GorevTakip.API.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,7 +72,12 @@ builder.Services.AddStackExchangeRedisCache(options =>
 });
 
 // 3. Varsayılan Ayarlar
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // Yazdığımız doğrulama filtresini tüm API'ye global olarak uyguluyoruz
+    options.Filters.Add<ValidationFilter>(); 
+});
+
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.SuppressModelStateInvalidFilter = true;

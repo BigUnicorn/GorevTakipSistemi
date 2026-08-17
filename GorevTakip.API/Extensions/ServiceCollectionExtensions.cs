@@ -19,6 +19,10 @@ namespace GorevTakip.API.Extensions
             // 1. Genel Repository (Generic) ve UnitOfWork Kayıtları (Mevcut kodunuz)
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            services.AddFluentValidationAutoValidation();
+
+            services.AddValidatorsFromAssemblyContaining<TaskCreateDtoValidator>();
             
             // 2. YENİ EKLENEN SPESİFİK REPOSITORY KAYITLARI (İşte burası!)
             services.AddScoped<ITaskRepository, TaskRepository>();
@@ -34,7 +38,6 @@ namespace GorevTakip.API.Extensions
             services.AddAutoMapper(cfg => {
                 cfg.AddProfile<GorevTakip.Business.Mapping.MappingProfile>();
             });
-            // ... diğer kodlar
 
             return services;
         }
