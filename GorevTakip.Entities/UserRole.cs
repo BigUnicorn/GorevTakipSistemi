@@ -1,4 +1,4 @@
-﻿namespace GorevTakip.Entities
+namespace GorevTakip.Entities
 {
     public enum UserRole
     {
