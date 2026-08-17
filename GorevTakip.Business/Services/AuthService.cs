@@ -28,8 +28,7 @@ namespace GorevTakip.Business.Services
 
         public async Task RegisterAsync(UserRegisterDto registerDto)
         {
-            var existingUsers = await _userRepository.GetAllAsync();
-            if (existingUsers.Any(u => u.Email == registerDto.Email))
+            if (await _userRepository.AnyAsync(u => u.Email == registerDto.Email))
                 throw new Exception("Bu email adresi zaten kullanılıyor.");
 
             // YENİ: BCrypt ile şifreleme işlemi
@@ -50,8 +49,7 @@ namespace GorevTakip.Business.Services
 
         public async Task<string> LoginAsync(UserLoginDto loginDto)
         {
-            var allUsers = await _userRepository.GetAllAsync();
-            var user = allUsers.FirstOrDefault(u => u.Email == loginDto.Email);
+            var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
 
             // YENİ: BCrypt.Verify ile düz metin şifreyi, veritabanındaki hash ile karşılaştırıyoruz
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
