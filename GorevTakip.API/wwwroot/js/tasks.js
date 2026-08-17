@@ -18,6 +18,7 @@ const pageSize = 5;
 let totalPages = 1;
 let currentSortBy = 'duedate'; 
 let isSortDescending = true;   
+let currentView = 'table'; 
 
 let userRole = '';
 const tokenData = token ? parseJwt(token) : null;
@@ -46,7 +47,11 @@ Object.assign(window, {
     closeHistoryModal,
     openCommentModal,
     closeCommentModal,
-    postComment
+    postComment,
+    toggleView,
+    dragStartKanban,
+    allowDropKanban,
+    dropKanban
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -78,7 +83,7 @@ async function fetchTasks() {
     
     const params = new URLSearchParams({
         PageNumber: currentPage,
-        PageSize: pageSize
+        PageSize: currentView === 'kanban' ? 1000 : pageSize
     });
 
     if (currentFilter !== 'all') params.append('Status', currentFilter);
@@ -99,6 +104,7 @@ async function fetchTasks() {
             const totalRecords = result.totalRecords || result.TotalRecords || 0;
             
             renderTasks(allTasks);
+            renderKanban(allTasks);
             renderPagination();
             
             const statTotal = document.getElementById('statTotal');
@@ -248,6 +254,115 @@ function renderTasks(tasks) {
         tbody.appendChild(tr);
     });
 }
+
+function renderKanban(tasks) {
+    const todoContainer = document.getElementById('kanban-items-1');
+    const inprogressContainer = document.getElementById('kanban-items-2');
+    const doneContainer = document.getElementById('kanban-items-3');
+
+    if (!todoContainer || !inprogressContainer || !doneContainer) return;
+
+    todoContainer.innerHTML = '';
+    inprogressContainer.innerHTML = '';
+    doneContainer.innerHTML = '';
+
+    let countTodo = 0, countInprogress = 0, countDone = 0;
+
+    tasks.forEach(task => {
+        const taskId = task.id || task.Id;
+        const status = task.status;
+        const title = escapeHtml(task.title);
+        const desc = escapeHtml(task.description);
+        const assigned = escapeHtml(task.assignedUserName || 'Bilinmiyor');
+
+        const card = document.createElement('div');
+        card.className = `kanban-card status-${status}`;
+        card.draggable = userRole === 'Admin'; 
+        if(card.draggable) {
+            card.ondragstart = (e) => dragStartKanban(e, taskId);
+        }
+
+        let actionButtons = '';
+        if (userRole === 'Admin') {
+            actionButtons = `
+                <button onclick="openEditModal(${taskId})" class="action-btn btn-edit" title="Düzenle"><i class="fa-solid fa-pen"></i></button>
+                <button onclick="openDeleteModal(${taskId})" class="action-btn btn-delete" title="Sil"><i class="fa-solid fa-trash"></i></button>
+            `;
+        }
+
+        card.innerHTML = `
+            <div class="kanban-card-title">${title}</div>
+            <div class="kanban-card-desc">${desc}</div>
+            <div class="kanban-card-footer">
+                <span class="assigned"><i class="fa-regular fa-user"></i> ${assigned}</span>
+                <span style="color: #9ca3af; font-size: 11px;"><i class="fa-regular fa-calendar"></i> ${formatDate(task.dueDate)}</span>
+            </div>
+            <div class="kanban-card-actions">
+                <button onclick="openHistoryModal(${taskId})" class="action-btn" style="background-color: #6366f1; color: white;" title="Geçmiş"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                <button onclick="openCommentModal(${taskId})" class="action-btn" style="background-color: #3b82f6; color: white;" title="Yorumlar"><i class="fa-regular fa-comments"></i></button>
+                ${actionButtons}
+            </div>
+        `;
+
+        if (status === 1) { todoContainer.appendChild(card); countTodo++; }
+        else if (status === 2) { inprogressContainer.appendChild(card); countInprogress++; }
+        else if (status === 3) { doneContainer.appendChild(card); countDone++; }
+    });
+
+    document.getElementById('count-todo').textContent = countTodo;
+    document.getElementById('count-inprogress').textContent = countInprogress;
+    document.getElementById('count-done').textContent = countDone;
+}
+
+function toggleView(view) {
+    currentView = view;
+    
+    const tableEl = document.querySelector('table');
+    const paginationEl = document.getElementById('pagination-controls');
+    const kanbanEl = document.getElementById('kanbanBoard');
+    const btnTable = document.getElementById('toggleTableView');
+    const btnKanban = document.getElementById('toggleKanbanView');
+
+    if (view === 'kanban') {
+        tableEl.style.display = 'none';
+        if(paginationEl) paginationEl.style.display = 'none';
+        kanbanEl.style.display = 'flex';
+        btnTable.classList.remove('active');
+        btnKanban.classList.add('active');
+        currentPage = 1;
+        fetchTasks(); 
+    } else {
+        tableEl.style.display = 'table';
+        if(paginationEl) paginationEl.style.display = 'flex';
+        kanbanEl.style.display = 'none';
+        btnTable.classList.add('active');
+        btnKanban.classList.remove('active');
+        fetchTasks();
+    }
+}
+
+function dragStartKanban(event, taskId) {
+    event.dataTransfer.setData("taskId", taskId);
+}
+
+function allowDropKanban(event) {
+    event.preventDefault();
+}
+
+async function dropKanban(event) {
+    event.preventDefault();
+    const taskId = event.dataTransfer.getData("taskId");
+    const column = event.target.closest('.kanban-column');
+    if (!column || !taskId) return;
+
+    const newStatus = column.getAttribute('data-status');
+    const currentTask = allTasks.find(t => (t.id || t.Id) == taskId);
+
+    if (currentTask && currentTask.status != newStatus) {
+        await updateTaskStatus(taskId, newStatus);
+    }
+}
+
 
 async function createTask() {
     const title = document.getElementById('taskTitle').value;
