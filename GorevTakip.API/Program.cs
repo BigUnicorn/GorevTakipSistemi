@@ -133,12 +133,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("StrictCorsPolicy");
+
 app.UseAuthentication();
 app.UseDefaultFiles(); 
 app.UseStaticFiles();  
 app.UseAuthorization();
 
-app.UseCors("StrictCorsPolicy");
 app.MapControllers();
 
 app.MapHub<GorevTakip.API.Hubs.TaskHub>("/taskhub");
@@ -155,6 +156,7 @@ app.Run();
 //docker-compose up -d --build --> Kodları güncelleyip başlatmak için
 //docker-compose down --> Durdurmak için
 //docker-compose down -v --> Durdurmak ve veritabanını silmek için
+//docker builder prune -a -f --> Gereksiz docker image'larını silmek için
 
 //docker-compose stop --> Duraklatmak için
 //docker-compose start --> Başlatmak için

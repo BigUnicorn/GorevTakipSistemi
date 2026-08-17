@@ -69,7 +69,7 @@ namespace GorevTakip.API.Controllers
         public async Task<IActionResult> CreateTask([FromBody] TaskCreateDto taskDto)
         {
             var createdTask = await _taskService.CreateTaskAsync(taskDto);
-            await _hubContext.Clients.All.SendAsync("ReceiveTaskUpdate", new { Action = "Create", Task = createdTask });
+            await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveTaskUpdate, new { Action = "Create", Task = createdTask });
             return Ok("Görev başarıyla oluşturuldu.");
         }
 
@@ -83,7 +83,7 @@ namespace GorevTakip.API.Controllers
 
             await _taskService.UpdateTaskAsync(taskDto);
             var updatedTask = await _taskService.GetTaskByIdAsync(taskDto.Id);
-            await _hubContext.Clients.All.SendAsync("ReceiveTaskUpdate", new { Action = "Update", Task = updatedTask });
+            await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveTaskUpdate, new { Action = "Update", Task = updatedTask });
             return Ok("Görev başarıyla güncellendi.");
         }
 
@@ -109,7 +109,7 @@ namespace GorevTakip.API.Controllers
 
             await _taskService.UpdateTaskStatusAsync(id, newStatus);
             var updatedTask = await _taskService.GetTaskByIdAsync(id);
-            await _hubContext.Clients.All.SendAsync("ReceiveTaskUpdate", new { Action = "Update", Task = updatedTask });
+            await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveTaskUpdate, new { Action = "Update", Task = updatedTask });
             return Ok("Görev durumu başarıyla güncellendi.");
         }
 
@@ -120,7 +120,7 @@ namespace GorevTakip.API.Controllers
         public async Task<IActionResult> DeleteTask(int id)
         {
             await _taskService.DeleteTaskAsync(id);
-            await _hubContext.Clients.All.SendAsync("ReceiveTaskUpdate", new { Action = "Delete", TaskId = id });
+            await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveTaskUpdate, new { Action = "Delete", TaskId = id });
             return Ok("Görev başarıyla silindi.");
         }
 
@@ -175,7 +175,7 @@ namespace GorevTakip.API.Controllers
             if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
 
             await _taskService.AddCommentAsync(id, userId, dto.Text);
-            await _hubContext.Clients.All.SendAsync("ReceiveNewComment", id);
+            await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveNewComment, id);
             return Ok("Yorum eklendi.");
         }
     }

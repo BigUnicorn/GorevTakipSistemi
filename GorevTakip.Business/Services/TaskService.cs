@@ -43,57 +43,7 @@ namespace GorevTakip.Business.Services
 
         public async Task<PagedResponseDto<TaskResponseDto>> GetFilteredTasksAsync(TaskFilterDto filter)
         {
-            var query = _taskRepository.GetQueryable().Include(t => t.AssignedUser).AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(filter.SearchText))
-            {
-                var search = filter.SearchText.ToLower();
-                query = query.Where(x => x.Title.ToLower().Contains(search) || x.Description.ToLower().Contains(search));
-            }
-
-            if (filter.Status.HasValue && filter.Status.Value > 0)
-                query = query.Where(x => (int)x.Status == filter.Status.Value);
-
-            if (filter.AssignedUserId.HasValue && filter.AssignedUserId.Value > 0)
-                query = query.Where(x => x.AssignedUserId == filter.AssignedUserId.Value);
-
-            var totalRecords = await query.CountAsync();
-
-            if (!string.IsNullOrEmpty(filter.SortBy))
-            {
-                switch (filter.SortBy.ToLower())
-                {
-                    case "title":
-                        query = filter.SortDescending ? query.OrderByDescending(x => x.Title) : query.OrderBy(x => x.Title);
-                        break;
-                    case "description":
-                        query = filter.SortDescending ? query.OrderByDescending(x => x.Description) : query.OrderBy(x => x.Description);
-                        break;
-                    case "duedate":
-                        query = filter.SortDescending ? query.OrderByDescending(x => x.DueDate) : query.OrderBy(x => x.DueDate);
-                        break;
-                    case "assigneduser":
-                        query = filter.SortDescending
-                             ? query.OrderByDescending(x => x.AssignedUser!.FirstName).ThenByDescending(x => x.AssignedUser!.LastName)
-                             : query.OrderBy(x => x.AssignedUser!.FirstName).ThenBy(x => x.AssignedUser!.LastName);
-                        break;
-                    case "status":
-                        query = filter.SortDescending ? query.OrderByDescending(x => x.Status) : query.OrderBy(x => x.Status);
-                        break;
-                    default:
-                        query = query.OrderByDescending(x => x.DueDate);
-                        break;
-                }
-            }
-            else
-            {
-                query = query.OrderByDescending(x => x.DueDate);
-            }
-
-            var tasks = await query
-                .Skip((filter.PageNumber - 1) * filter.PageSize)
-                .Take(filter.PageSize)
-                .ToListAsync();
+            var (tasks, totalRecords) = await _taskRepository.GetFilteredTasksWithUsersAsync(filter);
 
             var mappedTasks = _mapper.Map<List<TaskResponseDto>>(tasks);
                 
@@ -108,9 +58,8 @@ namespace GorevTakip.Business.Services
 
         public async Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null, int? categoryId = null)
         {
-            // 1. Cache Anahtarını oluştur (Versiyonlu)
-            string cacheVersion = await GetCacheVersionAsync();
-            string cacheKey = $"TaskStats_v{cacheVersion}_User_{userId ?? 0}_Cat_{categoryId ?? 0}";
+            // 1. Cache Anahtarını oluştur
+            string cacheKey = $"TaskStats_User_{userId ?? 0}_Cat_{categoryId ?? 0}";
             
             // 2. Redis'ten kontrol et
             var cachedDataString = await _cache.GetStringAsync(cacheKey);
@@ -143,7 +92,7 @@ namespace GorevTakip.Business.Services
 
             // 4. Redis'e kaydet
             var cacheOptions = new DistributedCacheEntryOptions()
-                .SetAbsoluteExpiration(TimeSpan.FromMinutes(1));
+                .SetAbsoluteExpiration(TimeSpan.FromMinutes(10));
 
             await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(stats), cacheOptions);
 
@@ -167,8 +116,7 @@ namespace GorevTakip.Business.Services
 
         public async Task<IEnumerable<TaskResponseDto>> GetTasksByUserIdAsync(int userId)
         {
-            var tasks = await _taskRepository.GetAllAsync();
-            var userTasks = tasks.Where(t => t.AssignedUserId == userId);
+            var userTasks = await _taskRepository.GetQueryable().Where(t => t.AssignedUserId == userId).ToListAsync();
             // DEĞİŞİKLİK 4: MapToResponseDto yerine Mapper kullanıldı
             return _mapper.Map<IEnumerable<TaskResponseDto>>(userTasks);
         }
@@ -196,7 +144,7 @@ namespace GorevTakip.Business.Services
             // Her iki işlem de tek bir Transaction (işlem) olarak veritabanına sorunsuzca yansıtılacak.
             await _unitOfWork.SaveChangesAsync();
 
-            await InvalidateTaskCacheAsync();
+            await InvalidateTaskCacheAsync(taskItem.AssignedUserId, (int)taskItem.Category);
             return _mapper.Map<TaskResponseDto>(taskItem);
         }
 
@@ -209,6 +157,9 @@ namespace GorevTakip.Business.Services
             var userExists = await _userRepository.GetByIdAsync(taskDto.AssignedUserId);
             if (userExists == null)
                 throw new Exception("Atanan kullanıcı bulunamadı!");
+
+            int oldUserId = existingTask.AssignedUserId;
+            int oldCategoryId = (int)existingTask.Category;
 
             existingTask.Title = taskDto.Title;
             existingTask.Description = taskDto.Description;
@@ -227,7 +178,8 @@ namespace GorevTakip.Business.Services
             await _historyRepository.AddAsync(history);
 
             await _unitOfWork.SaveChangesAsync();
-            await InvalidateTaskCacheAsync();
+            await InvalidateTaskCacheAsync(oldUserId, oldCategoryId);
+            await InvalidateTaskCacheAsync(taskDto.AssignedUserId, (int)taskDto.Category);
         }
 
         public async Task DeleteTaskAsync(int id)
@@ -235,9 +187,12 @@ namespace GorevTakip.Business.Services
             var task = await _taskRepository.GetByIdAsync(id);
             if (task != null)
             {
+                int userId = task.AssignedUserId;
+                int categoryId = (int)task.Category;
+                
                 _taskRepository.Delete(task);
                 await _unitOfWork.SaveChangesAsync();
-                await InvalidateTaskCacheAsync();
+                await InvalidateTaskCacheAsync(userId, categoryId);
             }
         }
 
@@ -258,7 +213,7 @@ namespace GorevTakip.Business.Services
             await _historyRepository.AddAsync(history);
 
             await _unitOfWork.SaveChangesAsync();
-            await InvalidateTaskCacheAsync();
+            await InvalidateTaskCacheAsync(task.AssignedUserId, (int)task.Category);
         }
 
         public async Task<IEnumerable<TaskHistoryDto>> GetTaskHistoryAsync(int taskId)
@@ -302,25 +257,18 @@ namespace GorevTakip.Business.Services
             });
         }
 
-        private async Task<string> GetCacheVersionAsync()
+        private async Task InvalidateTaskCacheAsync(int? userId = null, int? categoryId = null)
         {
-            var version = await _cache.GetStringAsync("TaskCacheVersion");
-            if (string.IsNullOrEmpty(version))
-            {
-                version = "1";
-                await _cache.SetStringAsync("TaskCacheVersion", version);
-            }
-            return version;
-        }
-
-        private async Task InvalidateTaskCacheAsync()
-        {
-            var versionStr = await GetCacheVersionAsync();
-            if (int.TryParse(versionStr, out int version))
-            {
-                // Versiyonu artırarak mevcut tüm cache'lerin (farklı filtreler dahil) geçersiz olmasını sağlıyoruz.
-                await _cache.SetStringAsync("TaskCacheVersion", (version + 1).ToString());
-            }
+            await _cache.RemoveAsync("TaskStats_User_0_Cat_0");
+            
+            if (userId.HasValue)
+                await _cache.RemoveAsync($"TaskStats_User_{userId.Value}_Cat_0");
+                
+            if (categoryId.HasValue)
+                await _cache.RemoveAsync($"TaskStats_User_0_Cat_{categoryId.Value}");
+                
+            if (userId.HasValue && categoryId.HasValue)
+                await _cache.RemoveAsync($"TaskStats_User_{userId.Value}_Cat_{categoryId.Value}");
         }
 
     }
