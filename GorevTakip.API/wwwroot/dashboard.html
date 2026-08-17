@@ -3,80 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Görev Takip Sistemi - Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>GorevTakip - Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/global.css?v=1">
-    <!-- Chart.js Kütüphanesi CDN -->
+    <link rel="stylesheet" href="css/global.css?v=2">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="header">
-        <h2>Dashboard Analizi</h2>
-        <div>
-            <a href="tasks.html" class="btn-link"><i class="fa-solid fa-list-check"></i> Görevlere Dön</a>
-            <button class="logout-btn" onclick="logout()"><i class="fa-solid fa-arrow-right-from-bracket"></i> Çıkış</button>
-        </div>
+    <div id="toast-container"></div>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <a href="#" class="sidebar-logo">
+                <i class="fa-solid fa-layer-group"></i> GorevTakip
+            </a>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="nav-item active">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </a>
+                <a href="tasks.html" class="nav-item">
+                    <i class="fa-solid fa-list-check"></i> Görevler
+                </a>
+                <div style="flex:1"></div>
+                <a href="#" class="nav-item" style="color: var(--danger-color);" onclick="logout()">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Çıkış Yap
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h2 class="page-title">Sistem Özeti</h2>
+            </div>
+
+            <!-- Filters -->
+            <div style="display: flex; gap: 16px; margin-bottom: 24px;">
+                <div id="adminFilterDiv" style="display: none; flex: 1; max-width: 300px;" class="form-floating">
+                    <select id="userFilterSelect" onchange="applyFilters()">
+                        <option value="">Tüm Sistem (Genel Özet)</option>
+                    </select>
+                    <label>Personel Filtresi</label>
+                </div>
+                <div class="form-floating" style="flex: 1; max-width: 300px;">
+                    <select id="categoryFilterSelect" onchange="applyFilters()">
+                        <option value="">Tüm Kategoriler</option>
+                        <option value="1">Frontend</option>
+                        <option value="2">Backend</option>
+                        <option value="3">Veritabanı</option>
+                        <option value="4">BugFix</option>
+                        <option value="5">Mobil</option>
+                        <option value="6">DevOps</option>
+                    </select>
+                    <label>Kategori Filtresi</label>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="dashboard-grid">
+                <div class="glass-card stat-card" style="border-top: 4px solid var(--primary-color);">
+                    <h3>Toplam Görev <i class="fa-solid fa-layer-group" style="color: var(--primary-color);"></i></h3>
+                    <div class="value" id="valTotal">0</div>
+                </div>
+                <div class="glass-card stat-card" style="border-top: 4px solid #94a3b8;">
+                    <h3>Yapılacaklar <i class="fa-solid fa-list-ul" style="color: #94a3b8;"></i></h3>
+                    <div class="value" id="valTodo">0</div>
+                </div>
+                <div class="glass-card stat-card" style="border-top: 4px solid var(--warning-color);">
+                    <h3>Devam Edenler <i class="fa-solid fa-spinner" style="color: var(--warning-color);"></i></h3>
+                    <div class="value" id="valInProgress">0</div>
+                </div>
+                <div class="glass-card stat-card" style="border-top: 4px solid var(--success-color);">
+                    <h3>Tamamlananlar <i class="fa-solid fa-check-circle" style="color: var(--success-color);"></i></h3>
+                    <div class="value" id="valCompleted">0</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                <div class="glass-card" style="flex: 1; min-width: 400px; padding: 24px;">
+                    <h3 style="margin-bottom: 24px; font-weight: 600; font-size: 16px; color: var(--text-muted);">Durum Dağılımı</h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="taskChart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card" style="flex: 1; min-width: 400px; padding: 24px;">
+                    <h3 style="margin-bottom: 24px; font-weight: 600; font-size: 16px; color: var(--text-muted);">Kategori Analizi</h3>
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-
-    <!-- Filtreleme Alanı -->
-    <div id="filterContainer" style="max-width: 1200px; margin: 20px auto 0 auto; padding: 0 10px; display: flex; gap: 15px; flex-wrap: wrap;">
-        
-        <!-- Admin'e Özel Personel Filtresi (Varsayılan gizli) -->
-        <div id="adminFilterDiv" style="display: none; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); flex: 1; min-width: 250px;">
-            <label style="font-weight: 600; color: #4b5563; font-size: 14px; display: block; margin-bottom: 8px;"><i class="fa-solid fa-users"></i> Personel Seçimi:</label>
-            <select id="userFilterSelect" onchange="applyFilters()" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: 'Inter', sans-serif; background-color: #f9fafb; cursor: pointer;">
-                <option value="">Tüm Sistem (Genel Özet)</option>
-            </select>
-        </div>
-
-        <!-- Herkese Açık Kategori Filtresi -->
-        <div style="background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); flex: 1; min-width: 250px;">
-            <label style="font-weight: 600; color: #4b5563; font-size: 14px; display: block; margin-bottom: 8px;"><i class="fa-solid fa-layer-group"></i> Kategori Seçimi:</label>
-            <select id="categoryFilterSelect" onchange="applyFilters()" style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: 'Inter', sans-serif; background-color: #f9fafb; cursor: pointer;">
-                <option value="">Tüm Kategoriler</option>
-                <option value="1">Frontend</option>
-                <option value="2">Backend</option>
-                <option value="3">Veritabanı</option>
-                <option value="4">BugFix</option>
-                <option value="5">Mobil</option>
-                <option value="6">DevOps</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- Özet Sayısal Veriler -->
-    <div class="dashboard-container">
-        <div class="stat-card" style="border-bottom: 4px solid #3b82f6;">
-            <h3>Toplam Görev</h3>
-            <div class="value" id="valTotal">0</div>
-        </div>
-        <div class="stat-card" style="border-bottom: 4px solid #6c757d;">
-            <h3>Yapılacaklar</h3>
-            <div class="value" id="valTodo">0</div>
-        </div>
-        <div class="stat-card" style="border-bottom: 4px solid #f59e0b;">
-            <h3>Devam Edenler</h3>
-            <div class="value" id="valInProgress">0</div>
-        </div>
-        <div class="stat-card" style="border-bottom: 4px solid #10b981;">
-            <h3>Tamamlananlar</h3>
-            <div class="value" id="valCompleted">0</div>
-        </div>
-    </div>
-
-    <!-- Grafik Alanı -->
-    <div style="display: flex; justify-content: center;">
-        <div class="chart-section">
-            <h3 style="text-align: center; color: #374151; margin-top: 0;">Görev Dağılım Grafiği</h3>
-            <canvas id="taskChart"></canvas>
-        </div>
-            <div class="chart-section" style="margin-top: 0;">
-            <h3 style="text-align: center; color: #374151; margin-top: 0;">Kategori Dağılımı (Sütun)</h3>
-            <canvas id="categoryChart"></canvas>
-        </div>
-    </div>
-
     <script type="module" src="js/dashboard.js"></script>
 </body>
 </html>

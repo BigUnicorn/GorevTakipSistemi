@@ -3,35 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Görev Takip Sistemi - Giriş</title>
-    <!-- Modern Font ve İkonlar -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>GorevTakip - Giriş</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/global.css?v=1">
+    <link rel="stylesheet" href="css/global.css?v=2">
 </head>
 <body>
-    <!-- Toast Bildirim Konteyneri -->
-    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
-
-    <div class="login-container">
-        <!-- Logo/İkon Yeri -->
-        <i class="fa-solid fa-list-check" style="font-size: 40px; color: var(--primary-color); margin-bottom: 15px;"></i>
-        <h2>Sisteme Giriş</h2>
-        
-        <div class="input-group">
-            <i class="fa-regular fa-envelope"></i>
-            <input type="email" id="email" placeholder="E-posta Adresiniz" required>
+    <div id="toast-container"></div>
+    <div class="split-layout">
+        <div class="split-visual">
+            <div class="split-visual-content">
+                <i class="fa-solid fa-layer-group" style="font-size: 64px; color: var(--primary-color); margin-bottom: 24px; filter: drop-shadow(0 0 20px var(--primary-color));"></i>
+                <h1 style="font-size: 48px; font-weight: 700; margin-bottom: 16px;">GorevTakip<span style="color: var(--primary-color);">.</span></h1>
+                <p style="color: var(--text-muted); font-size: 18px;">İş akışınızı bir üst seviyeye taşıyın. Modern, hızlı ve güvenli görev yönetimi.</p>
+            </div>
         </div>
-        
-        <div class="input-group">
-            <i class="fa-solid fa-lock"></i>
-            <input type="password" id="password" placeholder="Şifreniz" required>
+        <div class="split-form">
+            <h2 style="font-size: 28px; margin-bottom: 32px;">Giriş Yap</h2>
+            
+            <div class="form-floating">
+                <input type="email" id="email" placeholder=" " required>
+                <label>E-posta Adresi</label>
+            </div>
+            
+            <div class="form-floating">
+                <input type="password" id="password" placeholder=" " required>
+                <label>Şifre</label>
+            </div>
+            
+            <button id="loginBtn" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
+                Giriş Yap <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            
+            <div style="margin-top: 32px; text-align: center;">
+                <span style="color: var(--text-muted);">Hesabınız yok mu?</span>
+                <a href="register.html" style="color: var(--primary-color); font-weight: 600; text-decoration: none; margin-left: 8px;">Kayıt Ol</a>
+            </div>
         </div>
-        
-        <button id="loginBtn">Giriş Yap</button>
-        <a href="register.html" class="link-text">Hesabınız yok mu? Kayıt Olun</a>
     </div>
-
     <script type="module" src="js/app.js"></script>
 </body>
 </html>

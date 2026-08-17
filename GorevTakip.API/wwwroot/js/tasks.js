@@ -166,9 +166,9 @@ function renderTasks(tasks) {
         const tr = document.createElement('tr');
         const taskId = task.id || task.Id;
 
-        let statusClass = "background-color: #e5e7eb; color: #374151;"; 
-        if (task.status === 2) statusClass = "background-color: #fef08a; color: #854d0e;"; 
-        if (task.status === 3) statusClass = "background-color: #bbf7d0; color: #166534;"; 
+        let statusClass = "background: rgba(255,255,255,0.05); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px;"; 
+        if (task.status === 2) statusClass = "background: rgba(245, 158, 11, 0.1); color: var(--warning-color); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px; padding: 4px;"; 
+        if (task.status === 3) statusClass = "background: rgba(16, 185, 129, 0.1); color: var(--success-color); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px; padding: 4px;"; 
 
         let rowStyle = task.status === 3 ? "opacity: 0.7;" : "";
         tr.style = rowStyle;
@@ -210,18 +210,18 @@ function renderTasks(tasks) {
         }
 
         let categoryLabel = "Belirsiz";
-        let catBg = "#f3f4f6", catColor = "#374151";
+        let catBg = "rgba(255,255,255,0.05)", catColor = "#94a3b8", catBorder = "rgba(255,255,255,0.1)";
 
         switch(task.category || task.Category) {
-            case 1: categoryLabel = "Frontend"; catBg = "#e0f2fe"; catColor = "#0284c7"; break;
-            case 2: categoryLabel = "Backend"; catBg = "#ede9fe"; catColor = "#7c3aed"; break;
-            case 3: categoryLabel = "Veritabanı"; catBg = "#fce7f3"; catColor = "#db2777"; break;
-            case 4: categoryLabel = "BugFix"; catBg = "#fee2e2"; catColor = "#dc2626"; break;
-            case 5: categoryLabel = "Mobil"; catBg = "#ffedd5"; catColor = "#ea580c"; break;
-            case 6: categoryLabel = "DevOps"; catBg = "#dcfce7"; catColor = "#16a34a"; break;
+            case 1: categoryLabel = "Frontend"; catBg = "rgba(2, 132, 199, 0.1)"; catColor = "#38bdf8"; catBorder = "rgba(2, 132, 199, 0.2)"; break;
+            case 2: categoryLabel = "Backend"; catBg = "rgba(124, 58, 237, 0.1)"; catColor = "#a78bfa"; catBorder = "rgba(124, 58, 237, 0.2)"; break;
+            case 3: categoryLabel = "Veritabanı"; catBg = "rgba(219, 39, 119, 0.1)"; catColor = "#f472b6"; catBorder = "rgba(219, 39, 119, 0.2)"; break;
+            case 4: categoryLabel = "BugFix"; catBg = "rgba(220, 38, 38, 0.1)"; catColor = "#f87171"; catBorder = "rgba(220, 38, 38, 0.2)"; break;
+            case 5: categoryLabel = "Mobil"; catBg = "rgba(234, 88, 12, 0.1)"; catColor = "#fb923c"; catBorder = "rgba(234, 88, 12, 0.2)"; break;
+            case 6: categoryLabel = "DevOps"; catBg = "rgba(22, 163, 74, 0.1)"; catColor = "#4ade80"; catBorder = "rgba(22, 163, 74, 0.2)"; break;
         }
 
-        const categoryBadge = `<span style="background-color: ${catBg}; color: ${catColor}; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">${categoryLabel}</span>`;
+        const categoryBadge = `<span style="background-color: ${catBg}; color: ${catColor}; border: 1px solid ${catBorder}; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600;">${categoryLabel}</span>`;
 
         let isOverdue = false;
         if (task.dueDate && task.status !== 3) { 
@@ -649,7 +649,7 @@ async function loadUsersList() {
                     <td>${u.firstName || u.FirstName} ${u.lastName || u.LastName}</td>
                     <td>${u.email || u.Email}</td>
                     <td>
-                        <select id="userRoleSelect_${userId}" class="status-select" style="background: #e5e7eb;">
+                        <select id="userRoleSelect_${userId}" class="status-select" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border-color); padding: 4px; border-radius: 4px;">
                             <option value="1" ${roleValue === 1 ? 'selected' : ''}>Admin</option>
                             <option value="2" ${roleValue === 2 ? 'selected' : ''}>Personel</option>
                         </select>
@@ -784,11 +784,11 @@ async function loadComments(taskId) {
             comments.forEach(c => {
                 const date = new Date(c.createdDate || c.CreatedDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
                 list.innerHTML += `
-                    <div style="margin-bottom: 10px; background: white; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb;">
-                        <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px; display: flex; justify-content: space-between;">
-                            <strong>${escapeHtml(c.userName || c.UserName)}</strong> <span>${date}</span>
+                    <div style="margin-bottom: 10px; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px; display: flex; justify-content: space-between;">
+                            <strong style="color: white;">${escapeHtml(c.userName || c.UserName)}</strong> <span>${date}</span>
                         </div>
-                        <div style="font-size: 13px; color: #1f2937;">${escapeHtml(c.text || c.Text)}</div>
+                        <div style="font-size: 13px; color: var(--text-primary);">${escapeHtml(c.text || c.Text)}</div>
                     </div>
                 `;
             });
@@ -851,13 +851,13 @@ async function loadAttachments(taskId) {
                 const fileSize = ((att.fileSize || att.FileSize) / 1024).toFixed(2);
                 const attId = att.id || att.Id;
                 list.innerHTML += `
-                    <div style="margin-bottom: 10px; background: white; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="margin-bottom: 10px; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">
-                                <strong>${escapeHtml(att.uploadedByUserName || att.UploadedByUserName)}</strong> <span>${date}</span>
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;">
+                                <strong style="color: white;">${escapeHtml(att.uploadedByUserName || att.UploadedByUserName)}</strong> <span>${date}</span>
                             </div>
-                            <div style="font-size: 13px; color: #1f2937;">
-                                <a href="/api/attachments/${attId}/download" target="_blank" style="color: #3b82f6; text-decoration: none;">
+                            <div style="font-size: 13px;">
+                                <a href="/api/attachments/${attId}/download" target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
                                     <i class="fa-solid fa-file"></i> ${escapeHtml(att.fileName || att.FileName)} (${fileSize} KB)
                                 </a>
                             </div>

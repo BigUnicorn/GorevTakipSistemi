@@ -3,43 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Görev Takip Sistemi - Kayıt Ol</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>GorevTakip - Kayıt Ol</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/global.css?v=1">
+    <link rel="stylesheet" href="css/global.css?v=2">
 </head>
 <body>
-    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
-    
-    <div class="login-container">
-        <i class="fa-solid fa-user-plus" style="font-size: 40px; color: var(--primary-color); margin-bottom: 15px;"></i>
-        <h2>Hesap Oluştur</h2>
-        
-        <div style="display: flex; gap: 10px;">
-            <div class="input-group">
-                <i class="fa-regular fa-id-card"></i>
-                <input type="text" id="firstName" placeholder="Ad" required>
-            </div>
-            <div class="input-group">
-                <i class="fa-regular fa-id-card"></i>
-                <input type="text" id="lastName" placeholder="Soyad" required>
+    <div id="toast-container"></div>
+    <div class="split-layout">
+        <div class="split-visual">
+            <div class="split-visual-content">
+                <i class="fa-solid fa-rocket" style="font-size: 64px; color: var(--success-color); margin-bottom: 24px; filter: drop-shadow(0 0 20px var(--success-color));"></i>
+                <h1 style="font-size: 48px; font-weight: 700; margin-bottom: 16px;">Aramıza Katıl<span style="color: var(--success-color);">.</span></h1>
+                <p style="color: var(--text-muted); font-size: 18px;">Hemen ücretsiz bir hesap oluşturun ve ekibinizle görevlerinizi kolayca yönetmeye başlayın.</p>
             </div>
         </div>
-        
-        <div class="input-group">
-            <i class="fa-regular fa-envelope"></i>
-            <input type="email" id="email" placeholder="E-posta Adresiniz" required>
+        <div class="split-form">
+            <h2 style="font-size: 28px; margin-bottom: 32px;">Hesap Oluştur</h2>
+            
+            <div style="display: flex; gap: 16px;">
+                <div class="form-floating" style="flex: 1;">
+                    <input type="text" id="firstName" placeholder=" " required>
+                    <label>Ad</label>
+                </div>
+                <div class="form-floating" style="flex: 1;">
+                    <input type="text" id="lastName" placeholder=" " required>
+                    <label>Soyad</label>
+                </div>
+            </div>
+            
+            <div class="form-floating">
+                <input type="email" id="email" placeholder=" " required>
+                <label>E-posta Adresi</label>
+            </div>
+            
+            <div class="form-floating">
+                <input type="password" id="password" placeholder=" " required>
+                <label>Şifre</label>
+            </div>
+            
+            <button id="registerBtn" class="btn btn-primary" style="width: 100%; margin-top: 16px;">
+                Kayıt Ol <i class="fa-solid fa-check"></i>
+            </button>
+            
+            <div style="margin-top: 32px; text-align: center;">
+                <span style="color: var(--text-muted);">Zaten hesabınız var mı?</span>
+                <a href="index.html" style="color: var(--primary-color); font-weight: 600; text-decoration: none; margin-left: 8px;">Giriş Yap</a>
+            </div>
         </div>
-        
-        <div class="input-group">
-            <i class="fa-solid fa-lock"></i>
-            <input type="password" id="password" placeholder="Şifreniz" required>
-        </div>
-        
-        <button id="registerBtn">Kayıt Ol</button>
-        <a href="index.html" class="link-text">Zaten hesabınız var mı? Giriş Yapın</a>
     </div>
-
     <script type="module" src="js/register.js"></script>
 </body>
 </html>
