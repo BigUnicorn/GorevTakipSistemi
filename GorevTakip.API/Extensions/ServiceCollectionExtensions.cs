@@ -28,11 +28,13 @@ namespace GorevTakip.API.Extensions
             services.AddScoped<ITaskRepository, TaskRepository>();
             services.AddScoped<ITaskHistoryRepository, TaskHistoryRepository>();
             services.AddScoped<ITaskCommentRepository, TaskCommentRepository>();
+            services.AddScoped<ITaskAttachmentRepository, TaskAttachmentRepository>();
 
             // 3. Business (Servis) Katmanı Kayıtları (Mevcut kodunuz)
             services.AddScoped<ITaskService, TaskService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAttachmentService, AttachmentService>();
 
             // AutoMapper ve Validation kayıtlarınız aşağıda aynen kalacak...
             services.AddAutoMapper(cfg => {

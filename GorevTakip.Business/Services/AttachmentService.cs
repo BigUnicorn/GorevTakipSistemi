@@ -1,0 +1,158 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using GorevTakip.Business.DTOs;
+using GorevTakip.DataAccess.Repositories;
+using GorevTakip.Entities;
+using Microsoft.AspNetCore.Http;
+
+namespace GorevTakip.Business.Services
+{
+    public class AttachmentService : IAttachmentService
+    {
+        private readonly ITaskAttachmentRepository _attachmentRepository;
+        private readonly ITaskRepository _taskRepository;
+        private readonly IUserRepository _userRepository;
+
+        // Dosyaların kaydedileceği klasör
+        private readonly string _uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+
+        public AttachmentService(
+            ITaskAttachmentRepository attachmentRepository,
+            ITaskRepository taskRepository,
+            IUserRepository userRepository)
+        {
+            _attachmentRepository = attachmentRepository;
+            _taskRepository = taskRepository;
+            _userRepository = userRepository;
+        }
+
+        public async Task<TaskAttachmentDto> UploadAttachmentAsync(int taskId, int userId, IFormFile file)
+        {
+            var task = await _taskRepository.GetByIdAsync(taskId);
+            if (task == null) throw new Exception("Görev bulunamadı.");
+
+            if (file == null || file.Length == 0)
+                throw new Exception("Geçerli bir dosya yüklemediniz.");
+
+            if (file.Length > 10 * 1024 * 1024) // 10 MB limit
+                throw new Exception("Dosya boyutu 10MB'dan büyük olamaz.");
+
+            // Klasör yoksa oluştur
+            if (!Directory.Exists(_uploadDirectory))
+            {
+                Directory.CreateDirectory(_uploadDirectory);
+            }
+
+            // Güvenli dosya adı oluşturma (Guid ekleyerek çakışmaları önleme)
+            var extension = Path.GetExtension(file.FileName);
+            var safeFileName = $"{Guid.NewGuid()}{extension}";
+            var physicalPath = Path.Combine(_uploadDirectory, safeFileName);
+            var relativePath = $"/uploads/{safeFileName}"; // Web üzerinden erişilecek yol
+
+            // Fiziksel diske kaydet
+            using (var stream = new FileStream(physicalPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            // DB'ye kaydet
+            var attachment = new TaskAttachment
+            {
+                TaskId = taskId,
+                FileName = file.FileName, // Orijinal adı koruyoruz
+                FilePath = relativePath,  // İndirmek için kullanılacak URL yolu
+                ContentType = file.ContentType,
+                FileSize = file.Length,
+                UploadedByUserId = userId,
+                UploadedAt = DateTime.UtcNow
+            };
+
+            await _attachmentRepository.AddAsync(attachment);
+
+            return await MapToDtoAsync(attachment);
+        }
+
+        public async Task<IEnumerable<TaskAttachmentDto>> GetAttachmentsByTaskIdAsync(int taskId)
+        {
+            var attachments = await _attachmentRepository.GetAllAsync(a => a.TaskId == taskId);
+            
+            var dtos = new List<TaskAttachmentDto>();
+            foreach(var att in attachments.OrderByDescending(a => a.UploadedAt))
+            {
+                dtos.Add(await MapToDtoAsync(att));
+            }
+            return dtos;
+        }
+
+        public async Task<TaskAttachmentDto?> GetAttachmentByIdAsync(int attachmentId)
+        {
+            var attachment = await _attachmentRepository.GetByIdAsync(attachmentId);
+            if (attachment == null) return null;
+            return await MapToDtoAsync(attachment);
+        }
+
+        public async Task<(byte[] FileBytes, string ContentType, string FileName)> DownloadAttachmentAsync(int attachmentId)
+        {
+            var attachment = await _attachmentRepository.GetByIdAsync(attachmentId);
+            if (attachment == null) throw new Exception("Dosya bulunamadı.");
+
+            var physicalPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.FilePath.TrimStart('/'));
+
+            if (!File.Exists(physicalPath))
+                throw new Exception("Dosya sunucuda bulunamadı.");
+
+            var memory = new MemoryStream();
+            using (var stream = new FileStream(physicalPath, FileMode.Open))
+            {
+                await stream.CopyToAsync(memory);
+            }
+            memory.Position = 0;
+
+            return (memory.ToArray(), attachment.ContentType, attachment.FileName);
+        }
+
+        public async Task DeleteAttachmentAsync(int attachmentId, int userId, string role)
+        {
+            var attachment = await _attachmentRepository.GetByIdAsync(attachmentId);
+            if (attachment == null) throw new Exception("Dosya bulunamadı.");
+
+            var task = await _taskRepository.GetByIdAsync(attachment.TaskId);
+
+            // Sadece Admin, dosyayı yükleyen kişi VEYA görevin sahibi silebilir
+            if (role != nameof(UserRole.Admin) && attachment.UploadedByUserId != userId && (task == null || task.AssignedUserId != userId))
+            {
+                throw new Exception("Bu dosyayı silme yetkiniz yok.");
+            }
+
+            // Fiziksel diskten sil
+            var physicalPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.FilePath.TrimStart('/'));
+            if (File.Exists(physicalPath))
+            {
+                File.Delete(physicalPath);
+            }
+
+            // DB'den sil
+            _attachmentRepository.Delete(attachment); // GenericRepository'deki Delete metodu
+        }
+
+        private async Task<TaskAttachmentDto> MapToDtoAsync(TaskAttachment attachment)
+        {
+            var user = await _userRepository.GetByIdAsync(attachment.UploadedByUserId);
+            return new TaskAttachmentDto
+            {
+                Id = attachment.Id,
+                TaskId = attachment.TaskId,
+                FileName = attachment.FileName,
+                FilePath = attachment.FilePath,
+                ContentType = attachment.ContentType,
+                FileSize = attachment.FileSize,
+                UploadedAt = attachment.UploadedAt,
+                UploadedByUserId = attachment.UploadedByUserId,
+                UploadedByUserName = user != null ? $"{user.FirstName} {user.LastName}" : "Bilinmeyen"
+            };
+        }
+    }
+}

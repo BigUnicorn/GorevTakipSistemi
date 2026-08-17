@@ -51,7 +51,11 @@ Object.assign(window, {
     toggleView,
     dragStartKanban,
     allowDropKanban,
-    dropKanban
+    dropKanban,
+    openAttachmentModal,
+    closeAttachmentModal,
+    uploadAttachment,
+    deleteAttachment
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -183,6 +187,12 @@ function renderTasks(tasks) {
             </button>
         `;
 
+        const attachmentBtn = `
+            <button onclick="openAttachmentModal(${taskId})" class="action-btn" style="background-color: #10b981; color: white;" title="Ekler">
+                <i class="fa-solid fa-paperclip"></i>
+            </button>
+        `;
+
         if (userRole === 'Admin') {
             actionButtons = `
                 <button onclick="openEditModal(${taskId})" class="action-btn btn-edit" title="Düzenle">
@@ -193,9 +203,10 @@ function renderTasks(tasks) {
                 </button>
                 ${historyBtn}
                 ${commentBtn}
+                ${attachmentBtn}
             `;
         } else {
-            actionButtons = `${historyBtn} ${commentBtn}`;
+            actionButtons = `${historyBtn} ${commentBtn} ${attachmentBtn}`;
         }
 
         let categoryLabel = "Belirsiz";
@@ -300,6 +311,7 @@ function renderKanban(tasks) {
             <div class="kanban-card-actions">
                 <button onclick="openHistoryModal(${taskId})" class="action-btn" style="background-color: #6366f1; color: white;" title="Geçmiş"><i class="fa-solid fa-clock-rotate-left"></i></button>
                 <button onclick="openCommentModal(${taskId})" class="action-btn" style="background-color: #3b82f6; color: white;" title="Yorumlar"><i class="fa-regular fa-comments"></i></button>
+                <button onclick="openAttachmentModal(${taskId})" class="action-btn" style="background-color: #10b981; color: white;" title="Ekler"><i class="fa-solid fa-paperclip"></i></button>
                 ${actionButtons}
             </div>
         `;
@@ -805,6 +817,117 @@ async function postComment() {
         }
     } catch (err) {
         console.error("Yorum gönderilemedi:", err);
+    }
+}
+
+// --- DOSYA/EK İŞLEMLERİ ---
+async function openAttachmentModal(taskId) {
+    document.getElementById('attachmentTaskId').value = taskId;
+    document.getElementById('attachmentModal').style.display = 'flex';
+    document.getElementById('newAttachmentFile').value = '';
+    await loadAttachments(taskId);
+}
+
+function closeAttachmentModal() {
+    document.getElementById('attachmentModal').style.display = 'none';
+}
+
+async function loadAttachments(taskId) {
+    const list = document.getElementById('attachmentList');
+    list.innerHTML = '<p style="text-align:center; color:#6b7280;">Yükleniyor...</p>';
+
+    try {
+        const response = await fetchWithAuth(`/Attachments/task/${taskId}`, { method: 'GET' });
+        if (response && response.ok) {
+            const attachments = await response.json();
+            list.innerHTML = '';
+            
+            if (attachments.length === 0) {
+                list.innerHTML = '<p style="text-align:center; color:#9ca3af; font-size: 13px;">Bu göreve ait dosya bulunamadı.</p>';
+            }
+            
+            attachments.forEach(att => {
+                const date = new Date(att.uploadedAt || att.UploadedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                const fileSize = ((att.fileSize || att.FileSize) / 1024).toFixed(2);
+                const attId = att.id || att.Id;
+                list.innerHTML += `
+                    <div style="margin-bottom: 10px; background: white; padding: 10px; border-radius: 6px; border: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-size: 11px; color: #6b7280; margin-bottom: 4px;">
+                                <strong>${escapeHtml(att.uploadedByUserName || att.UploadedByUserName)}</strong> <span>${date}</span>
+                            </div>
+                            <div style="font-size: 13px; color: #1f2937;">
+                                <a href="/api/attachments/${attId}/download" target="_blank" style="color: #3b82f6; text-decoration: none;">
+                                    <i class="fa-solid fa-file"></i> ${escapeHtml(att.fileName || att.FileName)} (${fileSize} KB)
+                                </a>
+                            </div>
+                        </div>
+                        <button onclick="deleteAttachment(${attId})" style="background: #ef4444; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer;" title="Sil">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            });
+        }
+    } catch (err) {
+        list.innerHTML = '<p style="color:red;">Hata oluştu.</p>';
+    }
+}
+
+async function uploadAttachment() {
+    const taskId = document.getElementById('attachmentTaskId').value;
+    const fileInput = document.getElementById('newAttachmentFile');
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+        showToast("Lütfen bir dosya seçin.", "warning");
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const tokenStr = localStorage.getItem('token');
+        const response = await fetch(`/api/Attachments/task/${taskId}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${tokenStr}`
+            },
+            body: formData
+        });
+
+        if (response.ok) {
+            showToast("Dosya başarıyla yüklendi.", "success");
+            fileInput.value = '';
+            await loadAttachments(taskId);
+        } else {
+            const errorText = await response.text();
+            showToast(`Yükleme hatası: ${errorText}`, "error");
+        }
+    } catch (err) {
+        console.error("Yükleme sırasında hata:", err);
+        showToast("Sunucu bağlantı hatası.", "error");
+    }
+}
+
+async function deleteAttachment(attachmentId) {
+    if (!confirm("Bu dosyayı silmek istediğinize emin misiniz?")) return;
+
+    try {
+        const response = await fetchWithAuth(`/Attachments/${attachmentId}`, { method: 'DELETE' });
+        
+        if (response && response.ok) {
+            showToast("Dosya başarıyla silindi.", "success");
+            const taskId = document.getElementById('attachmentTaskId').value;
+            await loadAttachments(taskId);
+        } else if (response) {
+            const errText = await response.text();
+            showToast(`Silinirken hata oluştu: ${errText}`, "error");
+        }
+    } catch (error) {
+        console.error("Silme hatası:", error);
+        showToast("Sunucu bağlantı hatası.", "error");
     }
 }
 
