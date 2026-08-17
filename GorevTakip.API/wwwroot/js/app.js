@@ -27,7 +27,8 @@ if(loginBtn) {
 
             if (response.ok) {
                 const data = await response.json();
-                localStorage.setItem('token', data.token);
+                localStorage.setItem('token', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
                 showToast("Giriş başarılı! Yönlendiriliyorsunuz...", "success");
                 
                 setTimeout(() => {
