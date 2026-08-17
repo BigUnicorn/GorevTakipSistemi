@@ -11,6 +11,9 @@ namespace GorevTakip.Entities
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty; 
         
+        public string? RefreshToken { get; set; }
+        public System.DateTime? RefreshTokenExpiryTime { get; set; }
+
         public UserRole Role { get; set; } = UserRole.Employee;
 
         [JsonIgnore] // Bunu ekledik!

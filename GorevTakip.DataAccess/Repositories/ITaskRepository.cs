@@ -7,7 +7,5 @@ namespace GorevTakip.DataAccess.Repositories
 {
     public interface ITaskRepository : IGenericRepository<TaskItem>
     {
-        Task<(IEnumerable<TaskItem> Tasks, int TotalCount)> GetFilteredTasksAsync(TaskFilterDto filter);
-        Task<TaskStatisticsDto> GetTaskStatisticsAsync(int? userId = null, int? categoryId = null);
     }
 }

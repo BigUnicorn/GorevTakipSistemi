@@ -13,6 +13,8 @@ namespace GorevTakip.DataAccess.Repositories
         void Update(T entity);
         void Delete(T entity);
         
+        System.Linq.IQueryable<T> GetQueryable();
+
         Task<T?> FirstOrDefaultAsync(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate);
         Task<bool> AnyAsync(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate);
     }

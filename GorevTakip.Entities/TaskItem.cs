@@ -13,6 +13,7 @@ namespace GorevTakip.Entities
         public TaskCategory Category { get; set; } = TaskCategory.Backend;
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime? DueDate { get; set; }
+        public bool IsDeleted { get; set; } = false;
 
         public int AssignedUserId { get; set; }
         
