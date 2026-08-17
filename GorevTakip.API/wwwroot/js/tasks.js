@@ -69,9 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (userRole === 'Admin') {
         const adminBtn = document.getElementById('adminUsersBtn');
-        if (adminBtn) {
-            adminBtn.style.display = 'inline-block'; 
-        }
+            adminBtn.style.display = 'flex'; 
     } else {
         // Admin değilse form alanını gizle ve listeyi genişlet
         const formSection = document.querySelector('.form-section');
@@ -364,7 +362,7 @@ function allowDropKanban(event) {
 async function dropKanban(event) {
     event.preventDefault();
     const taskId = event.dataTransfer.getData("taskId");
-    const column = event.target.closest('.kanban-column');
+    const column = event.target.closest('.kanban-col');
     if (!column || !taskId) return;
 
     const newStatus = column.getAttribute('data-status');
