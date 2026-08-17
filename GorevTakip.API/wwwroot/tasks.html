@@ -225,6 +225,26 @@
         </div>
     </div>
 
+    <!-- Dosya (Ek) Modalı -->
+    <div id="attachmentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
+        <div style="background: white; padding: 25px; border-radius: 8px; width: 500px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;"><i class="fa-solid fa-paperclip"></i> Görev Dosyaları (Ekler)</h3>
+                <button onclick="closeAttachmentModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            
+            <div id="attachmentList" style="max-height: 250px; overflow-y: auto; margin-bottom: 15px; background: #f9fafb; padding: 10px; border-radius: 8px;">
+                <!-- Ekler buraya dolacak -->
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-direction: column;">
+                <input type="hidden" id="attachmentTaskId">
+                <input type="file" id="newAttachmentFile" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                <button onclick="uploadAttachment()" style="background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer;"><i class="fa-solid fa-upload"></i> Dosya Yükle</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ROL KONTROLÜ VE ARAYÜZ GİZLEME İŞLEMİ BURAYA YAZILIYOR -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {

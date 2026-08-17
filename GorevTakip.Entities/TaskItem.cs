@@ -18,5 +18,7 @@ namespace GorevTakip.Entities
         public int AssignedUserId { get; set; }
         
         public User? AssignedUser { get; set; }
+
+        public ICollection<TaskAttachment> Attachments { get; set; } = new List<TaskAttachment>();
     }
 }
