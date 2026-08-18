@@ -1,17 +1,20 @@
 'use client';
 
 import { useAuthStore } from '@/store/useAuthStore';
+import { useNotificationStore } from '@/store/useNotificationStore';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { LayoutDashboard, CheckSquare, LogOut, Settings, User } from 'lucide-react';
 
 export default function Sidebar() {
   const { user, logout } = useAuthStore();
+  const { clearNotifications } = useNotificationStore();
   const router = useRouter();
   const pathname = usePathname();
 
   const handleLogout = () => {
     logout();
+    clearNotifications();
     router.push('/login');
   };
 

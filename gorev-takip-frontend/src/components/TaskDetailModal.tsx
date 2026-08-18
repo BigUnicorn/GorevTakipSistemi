@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, MessageSquare, History, Paperclip, Edit, Download, Send, Trash2 } from 'lucide-react';
 import { useTaskStore, Task, TaskComment, TaskHistory, TaskAttachment } from '@/store/useTaskStore';
 import { useUserStore } from '@/store/useUserStore';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface TaskDetailModalProps {
   task: Task;
@@ -12,7 +13,9 @@ interface TaskDetailModalProps {
 }
 
 export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<'edit' | 'comments' | 'attachments' | 'history'>('edit');
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 1;
+  const [activeTab, setActiveTab] = useState<'edit' | 'comments' | 'attachments' | 'history'>(isAdmin ? 'edit' : 'comments');
   
   const { 
     updateTaskDetails, 
@@ -38,6 +41,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
 
   useEffect(() => {
     if (isOpen) {
+      setActiveTab(isAdmin ? 'edit' : 'comments');
       setEditData({
         title: task.title,
         description: task.description,
@@ -119,9 +123,11 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
 
         {/* Tabs */}
         <div className="flex border-b dark:border-gray-700 overflow-x-auto">
-          <button onClick={() => setActiveTab('edit')} className={`flex items-center gap-2 p-4 font-semibold whitespace-nowrap ${activeTab === 'edit' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
-            <Edit size={18} /> Düzenle
-          </button>
+          {isAdmin && (
+            <button onClick={() => setActiveTab('edit')} className={`flex items-center gap-2 p-4 font-semibold whitespace-nowrap ${activeTab === 'edit' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+              <Edit size={18} /> Düzenle
+            </button>
+          )}
           <button onClick={() => setActiveTab('comments')} className={`flex items-center gap-2 p-4 font-semibold whitespace-nowrap ${activeTab === 'comments' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
             <MessageSquare size={18} /> Sohbet
           </button>
@@ -135,7 +141,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
 
         {/* Content */}
         <div className="p-6 overflow-y-auto flex-1">
-          {activeTab === 'edit' && (
+          {isAdmin && activeTab === 'edit' && (
             <form onSubmit={handleEditSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Başlık</label>
