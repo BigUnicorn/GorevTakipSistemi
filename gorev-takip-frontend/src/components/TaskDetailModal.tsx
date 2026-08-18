@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, MessageSquare, History, Paperclip, Edit, Download, Send } from 'lucide-react';
+import { X, MessageSquare, History, Paperclip, Edit, Download, Send, Trash2 } from 'lucide-react';
 import { useTaskStore, Task, TaskComment, TaskHistory, TaskAttachment } from '@/store/useTaskStore';
 import { useUserStore } from '@/store/useUserStore';
 
@@ -242,9 +242,24 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                         <p className="text-xs text-gray-500 mt-1">{(a.fileSize / 1024 / 1024).toFixed(2)} MB • {a.uploadedByUserName} • {new Date(a.uploadedAt).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <a href={`/api/Attachments/${a.id}/download`} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-full transition-colors">
-                      <Download size={20} />
-                    </a>
+                    <div className="flex gap-2">
+                      <a href={`/api/Attachments/${a.id}/download`} target="_blank" rel="noopener noreferrer" className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-full transition-colors" title="İndir">
+                        <Download size={20} />
+                      </a>
+                      <button 
+                        onClick={() => {
+                          if (window.confirm("Bu dosyayı silmek istediğinize emin misiniz?")) {
+                            useTaskStore.getState().deleteTaskAttachment(a.id)
+                              .then(() => loadTabData('attachments'))
+                              .catch(() => alert("Dosya silinirken bir hata oluştu."));
+                          }
+                        }}
+                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors"
+                        title="Dosyayı Sil"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
                   </div>
                 ))}
                 {attachments.length === 0 && (

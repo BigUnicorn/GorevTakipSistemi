@@ -45,25 +45,7 @@ export default function RegisterPage() {
         <div className="absolute w-[600px] h-[600px] bg-blue-500/20 rounded-full blur-[100px] bottom-0 left-0 mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      {/* Left side content */}
-      <div className="hidden lg:flex w-1/2 bg-gray-900/50 flex-col items-center justify-center p-12 border-r border-gray-800/50 z-10 backdrop-blur-sm">
-        <div className="max-w-lg text-center">
-          <h3 className="text-3xl font-bold text-white mb-6">Aramıza Katılın!</h3>
-          <p className="text-gray-400 mb-8">Görevlerinizi daha iyi organize etmek ve ekibinizle anında senkronize olmak için ücretsiz hesabınızı oluşturun.</p>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700/50 flex flex-col items-center justify-center text-center">
-              <span className="text-purple-400 font-bold text-2xl mb-1">0</span>
-              <span className="text-gray-400 text-xs">Aylık Ücret</span>
-            </div>
-            <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700/50 flex flex-col items-center justify-center text-center">
-              <span className="text-blue-400 font-bold text-2xl mb-1">∞</span>
-              <span className="text-gray-400 text-xs">Görev Sınırı</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 z-10 relative">
+      <div className="w-full flex items-center justify-center p-8 z-10 relative">
         <div className="w-full max-w-md bg-gray-900/50 p-10 rounded-3xl shadow-2xl backdrop-blur-xl border border-gray-800/50">
           <div className="text-center mb-8">
             <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500 mb-2">Kayıt Ol</h2>

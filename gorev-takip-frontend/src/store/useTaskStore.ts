@@ -47,6 +47,7 @@ interface TaskState {
   fetchTaskHistory: (taskId: number) => Promise<TaskHistory[]>;
   fetchTaskAttachments: (taskId: number) => Promise<TaskAttachment[]>;
   uploadTaskAttachment: (taskId: number, file: File) => Promise<TaskAttachment>;
+  deleteTaskAttachment: (attachmentId: number) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -72,54 +73,50 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   updateTaskStatus: async (taskId, newStatus) => {
     try {
       const previousTasks = get().tasks;
-      set({
-        tasks: previousTasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t)
-      });
-      
+      set(state => ({
+        tasks: state.tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t)
+      }));
       await api.patch(`/Tasks/${taskId}/status`, newStatus, {
         headers: { 'Content-Type': 'application/json' }
       });
     } catch (error) {
       console.error('Error updating task status:', error);
-      get().fetchTasks();
+      await get().fetchTasks(); // Rollback
     }
   },
   updateTaskDetails: async (taskId, data) => {
     try {
-      const previousTasks = get().tasks;
-      set({
-        tasks: previousTasks.map(t => t.id === taskId ? { ...t, ...data } : t)
-      });
-      
       await api.put(`/Tasks/${taskId}`, { id: taskId, ...data });
+      await get().fetchTasks();
     } catch (error) {
       console.error('Error updating task details:', error);
-      get().fetchTasks();
+      throw error;
     }
   },
   fetchTaskComments: async (taskId) => {
-    const response = await api.get(`/Tasks/${taskId}/comments`);
-    return response.data;
+    const res = await api.get(`/Tasks/${taskId}/comments`);
+    return res.data;
   },
   addTaskComment: async (taskId, text) => {
     await api.post(`/Tasks/${taskId}/comments`, { text });
   },
   fetchTaskHistory: async (taskId) => {
-    const response = await api.get(`/Tasks/${taskId}/history`);
-    return response.data;
+    const res = await api.get(`/Tasks/${taskId}/history`);
+    return res.data;
   },
   fetchTaskAttachments: async (taskId) => {
-    const response = await api.get(`/Attachments/task/${taskId}`);
-    return response.data;
+    const res = await api.get(`/Attachments/task/${taskId}`);
+    return res.data;
   },
   uploadTaskAttachment: async (taskId, file) => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await api.post(`/Attachments/task/${taskId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+    const res = await api.post(`/Attachments/task/${taskId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
-    return response.data;
+    return res.data;
+  },
+  deleteTaskAttachment: async (attachmentId) => {
+    await api.delete(`/Attachments/${attachmentId}`);
   }
 }));

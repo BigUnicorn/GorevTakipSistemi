@@ -30,6 +30,8 @@ export const useSignalR = () => {
     setConnection(newConnection);
   }, [isAuthenticated]);
 
+  const { user } = useAuthStore();
+  const { tasks } = useTaskStore();
   const { addNotification } = useNotificationStore();
 
   useEffect(() => {
@@ -41,12 +43,16 @@ export const useSignalR = () => {
           connection.on('ReceiveTaskUpdate', (data: any) => {
             console.log('Task Update Received:', data);
             
-            if (data.action === 'Create') {
-              addNotification(`Yeni görev oluşturuldu: ${data.task?.title || 'Bilinmiyor'}`);
-            } else if (data.action === 'Update') {
-              addNotification(`Görev güncellendi: ${data.task?.title || 'Bilinmiyor'}`);
-            } else if (data.action === 'Delete') {
-              addNotification('Bir görev silindi.');
+            const isRelevant = user?.role === 1 || data.task?.assignedUserId === user?.id;
+            
+            if (isRelevant) {
+              if (data.action === 'Create') {
+                addNotification(`Yeni görev oluşturuldu: ${data.task?.title || 'Bilinmiyor'}`);
+              } else if (data.action === 'Update') {
+                addNotification(`Görev güncellendi: ${data.task?.title || 'Bilinmiyor'}`);
+              } else if (data.action === 'Delete') {
+                addNotification('Bir görev silindi.');
+              }
             }
 
             // Re-fetch tasks to keep it simple, or update zustand store directly
@@ -54,12 +60,18 @@ export const useSignalR = () => {
           });
 
           connection.on('ReceiveNewComment', (taskId: number) => {
-            addNotification(`#${taskId} numaralı göreve yeni bir yorum yapıldı.`);
+            // Find task to check if it's assigned to current user
+            const task = useTaskStore.getState().tasks.find(t => t.id === taskId);
+            const isRelevant = user?.role === 1 || task?.assignedUserId === user?.id;
+            
+            if (isRelevant) {
+              addNotification(`#${taskId} numaralı göreve yeni bir yorum yapıldı.`);
+            }
           });
         })
         .catch(e => console.log('SignalR Connection Error: ', e));
     }
-  }, [connection, fetchTasks, addNotification]);
+  }, [connection, fetchTasks, addNotification, user]);
 
   return connection;
 };

@@ -47,7 +47,7 @@ export default function LoginPage() {
         <div className="absolute w-[600px] h-[600px] bg-blue-500/20 rounded-full blur-[100px] bottom-0 right-0 mix-blend-screen animate-pulse" style={{ animationDelay: '2s' }}></div>
       </div>
 
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 z-10 relative">
+      <div className="w-full flex items-center justify-center p-8 z-10 relative">
         <div className="w-full max-w-md bg-gray-900/50 p-10 rounded-3xl shadow-2xl backdrop-blur-xl border border-gray-800/50">
           <div className="text-center mb-8">
             <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500 mb-2">Görev Takip</h2>
@@ -101,23 +101,6 @@ export default function LoginPage() {
               Hemen Kaydolun
             </Link>
           </p>
-        </div>
-      </div>
-
-      {/* Right side content (Optional features showcase) */}
-      <div className="hidden lg:flex w-1/2 bg-gray-900/50 flex-col items-center justify-center p-12 border-l border-gray-800/50 z-10 backdrop-blur-sm">
-        <div className="max-w-lg text-center">
-          <h3 className="text-3xl font-bold text-white mb-6">Neden Bizi Seçmelisiniz?</h3>
-          <div className="space-y-6 text-left">
-            <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
-              <h4 className="font-semibold text-purple-400 mb-2">⚡ Anlık Senkronizasyon</h4>
-              <p className="text-gray-400 text-sm">SignalR altyapısı sayesinde ekibinizin yaptığı tüm değişiklikler sayfa yenilemeden saniyeler içinde ekranınıza yansır.</p>
-            </div>
-            <div className="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
-              <h4 className="font-semibold text-blue-400 mb-2">🚀 Modern Mimari</h4>
-              <p className="text-gray-400 text-sm">Backend tarafında S.O.L.I.D prensipleriyle CQRS kullanırken, frontend tarafında Next.js ve Zustand'ın gücünden faydalanıyoruz.</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
