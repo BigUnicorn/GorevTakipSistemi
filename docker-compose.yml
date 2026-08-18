@@ -27,14 +27,33 @@ services:
     depends_on:
       - db
       - redis
-    ports:
-      - "5074:8080" # Dışarıdan localhost:5074, içeride 8080
+    # ports bölümü kaldırıldı, artık nginx üzerinden erişilecek
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      # Host kısmını localhost yerine container adı olan 'db' ile değiştiriyoruz
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=GorevTakipDb;Username=postgres;Password=${DB_PASSWORD}
       - ConnectionStrings__RedisConnection=redis:6379
       - Jwt__Key=${JWT_SECRET_KEY}
+
+  frontend:
+    build:
+      context: ./gorev-takip-frontend
+      dockerfile: Dockerfile
+    container_name: gorevtakip-frontend
+    depends_on:
+      - api
+    environment:
+      - NODE_ENV=production
+
+  proxy:
+    image: nginx:alpine
+    container_name: gorevtakip-proxy
+    ports:
+      - "5074:80" # Kullanıcı hala localhost:5074 üzerinden girecek
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - api
+      - frontend
 
 volumes:
   postgres_data:
