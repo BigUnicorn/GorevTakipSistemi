@@ -7,6 +7,7 @@ import { Calendar, Tag, User } from 'lucide-react';
 
 interface Props {
   task: Task;
+  onClick?: (task: Task) => void;
 }
 
 const categoryColors: Record<number, string> = {
@@ -27,7 +28,7 @@ const categoryLabels: Record<number, string> = {
   5: 'DevOps',
 };
 
-export default function TaskCard({ task }: Props) {
+export default function TaskCard({ task, onClick }: Props) {
   const {
     attributes,
     listeners,
@@ -58,6 +59,7 @@ export default function TaskCard({ task }: Props) {
       style={style}
       {...attributes}
       {...listeners}
+      onClick={() => onClick && onClick(task)}
       className="bg-gray-800/80 hover:bg-gray-800 border border-gray-700 hover:border-gray-600 rounded-xl p-4 shadow-lg cursor-grab active:cursor-grabbing transition-colors group"
     >
       <div className="flex justify-between items-start mb-3">

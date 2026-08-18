@@ -230,11 +230,13 @@ namespace GorevTakip.Business.Features.Tasks.Commands
     public class AddCommentCommandHandler : IRequestHandler<AddCommentCommand>
     {
         private readonly ITaskCommentRepository _commentRepository;
+        private readonly ITaskHistoryRepository _historyRepository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public AddCommentCommandHandler(ITaskCommentRepository commentRepository, IUnitOfWork unitOfWork)
+        public AddCommentCommandHandler(ITaskCommentRepository commentRepository, ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork)
         {
             _commentRepository = commentRepository;
+            _historyRepository = historyRepository;
             _unitOfWork = unitOfWork;
         }
 
@@ -248,6 +250,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
                 CreatedDate = DateTime.UtcNow
             };
             await _commentRepository.AddAsync(comment);
+
+            var history = new TaskHistory 
+            { 
+                TaskId = request.TaskId, 
+                ActionMessage = "Göreve yeni bir not eklendi." 
+            };
+            await _historyRepository.AddAsync(history);
+
             await _unitOfWork.SaveChangesAsync();
         }
     }

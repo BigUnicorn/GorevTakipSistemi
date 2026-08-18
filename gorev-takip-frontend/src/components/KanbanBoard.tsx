@@ -5,10 +5,12 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { useTaskStore, Task } from '@/store/useTaskStore';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
+import TaskDetailModal from './TaskDetailModal';
 
 export default function KanbanBoard() {
   const { tasks, updateTaskStatus } = useTaskStore();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -69,21 +71,31 @@ export default function KanbanBoard() {
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-140px)]">
-        <KanbanColumn status={1} title="Yapılacaklar" tasks={todoTasks} />
-        <KanbanColumn status={2} title="Devam Edenler" tasks={inProgressTasks} />
-        <KanbanColumn status={3} title="Tamamlananlar" tasks={doneTasks} />
-      </div>
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-140px)]">
+          <KanbanColumn status={1} title="Yapılacaklar" tasks={todoTasks} onTaskClick={setSelectedTask} />
+          <KanbanColumn status={2} title="Devam Edenler" tasks={inProgressTasks} onTaskClick={setSelectedTask} />
+          <KanbanColumn status={3} title="Tamamlananlar" tasks={doneTasks} onTaskClick={setSelectedTask} />
+        </div>
 
-      <DragOverlay>
-        {activeTask ? <TaskCard task={activeTask} /> : null}
-      </DragOverlay>
-    </DndContext>
+        <DragOverlay>
+          {activeTask ? <TaskCard task={activeTask} /> : null}
+        </DragOverlay>
+      </DndContext>
+
+      {selectedTask && (
+        <TaskDetailModal 
+          task={selectedTask} 
+          isOpen={true} 
+          onClose={() => setSelectedTask(null)} 
+        />
+      )}
+    </>
   );
 }
