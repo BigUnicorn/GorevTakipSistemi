@@ -57,12 +57,14 @@ export default function TasksPage() {
             </button>
           </div>
 
-          <button 
-            onClick={() => setIsCreateModalOpen(true)}
-            className="bg-purple-600 hover:bg-purple-500 text-white font-medium py-2 px-4 rounded-xl transition-colors shadow-lg shadow-purple-500/20 whitespace-nowrap ml-auto md:ml-0"
-          >
-            + Yeni Görev
-          </button>
+          {user?.role === 1 && (
+            <button 
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-purple-600 hover:bg-purple-500 text-white font-medium py-2 px-4 rounded-xl transition-colors shadow-lg shadow-purple-500/20 whitespace-nowrap ml-auto md:ml-0"
+            >
+              + Yeni Görev
+            </button>
+          )}
         </div>
       </div>
 

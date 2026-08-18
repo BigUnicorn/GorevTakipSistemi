@@ -40,7 +40,11 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
     
     setIsSubmitting(true);
     try {
-      await createTask(formData);
+      const formattedData = {
+        ...formData,
+        dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : undefined
+      };
+      await createTask(formattedData);
       onClose();
       // Reset form
       setFormData({
