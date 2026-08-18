@@ -18,9 +18,9 @@ export default function KanbanBoard() {
     })
   );
 
-  const todoTasks = tasks.filter(t => t.status === 0);
-  const inProgressTasks = tasks.filter(t => t.status === 1);
-  const doneTasks = tasks.filter(t => t.status === 2);
+  const todoTasks = tasks.filter(t => t.status === 1);
+  const inProgressTasks = tasks.filter(t => t.status === 2);
+  const doneTasks = tasks.filter(t => t.status === 3);
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -76,9 +76,9 @@ export default function KanbanBoard() {
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-140px)]">
-        <KanbanColumn status={0} title="Yapılacaklar" tasks={todoTasks} />
-        <KanbanColumn status={1} title="Devam Edenler" tasks={inProgressTasks} />
-        <KanbanColumn status={2} title="Tamamlananlar" tasks={doneTasks} />
+        <KanbanColumn status={1} title="Yapılacaklar" tasks={todoTasks} />
+        <KanbanColumn status={2} title="Devam Edenler" tasks={inProgressTasks} />
+        <KanbanColumn status={3} title="Tamamlananlar" tasks={doneTasks} />
       </div>
 
       <DragOverlay>

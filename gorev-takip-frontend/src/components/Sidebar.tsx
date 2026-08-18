@@ -58,6 +58,19 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        {user?.role === 1 && (
+          <Link
+            href="/users"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+              pathname === '/users' 
+                ? 'bg-purple-500/10 text-purple-400 font-medium' 
+                : 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-200'
+            }`}
+          >
+            <User size={20} className={pathname === '/users' ? 'text-purple-400' : 'text-gray-500'} />
+            Kullanıcı Yönetimi
+          </Link>
+        )}
       </nav>
 
       <div className="p-4 border-t border-gray-800">

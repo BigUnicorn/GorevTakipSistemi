@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useTaskStore } from '@/store/useTaskStore';
+import { useNotificationStore } from '@/store/useNotificationStore';
 
 export const useSignalR = () => {
   const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
@@ -29,6 +30,8 @@ export const useSignalR = () => {
     setConnection(newConnection);
   }, [isAuthenticated]);
 
+  const { addNotification } = useNotificationStore();
+
   useEffect(() => {
     if (connection) {
       connection.start()
@@ -37,13 +40,26 @@ export const useSignalR = () => {
           
           connection.on('ReceiveTaskUpdate', (data: any) => {
             console.log('Task Update Received:', data);
+            
+            if (data.action === 'Create') {
+              addNotification(`Yeni görev oluşturuldu: ${data.task?.title || 'Bilinmiyor'}`);
+            } else if (data.action === 'Update') {
+              addNotification(`Görev güncellendi: ${data.task?.title || 'Bilinmiyor'}`);
+            } else if (data.action === 'Delete') {
+              addNotification('Bir görev silindi.');
+            }
+
             // Re-fetch tasks to keep it simple, or update zustand store directly
             fetchTasks();
+          });
+
+          connection.on('ReceiveNewComment', (taskId: number) => {
+            addNotification(`#${taskId} numaralı göreve yeni bir yorum yapıldı.`);
           });
         })
         .catch(e => console.log('SignalR Connection Error: ', e));
     }
-  }, [connection, fetchTasks]);
+  }, [connection, fetchTasks, addNotification]);
 
   return connection;
 };

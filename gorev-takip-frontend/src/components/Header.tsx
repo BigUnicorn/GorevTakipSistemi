@@ -1,24 +1,31 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, CheckCircle2 } from 'lucide-react';
+import { useNotificationStore } from '@/store/useNotificationStore';
 
 export default function Header() {
   const pathname = usePathname();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const { notifications, markAsRead, markAllAsRead } = useNotificationStore();
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
   
   const getPageTitle = () => {
     if (pathname.startsWith('/dashboard')) return 'Kontrol Paneli';
     if (pathname.startsWith('/tasks')) return 'Görevler';
+    if (pathname.startsWith('/users')) return 'Kullanıcı Yönetimi';
     return 'Görev Takip';
   };
 
   return (
-    <header className="h-20 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 flex items-center justify-between px-8 sticky top-0 z-10">
+    <header className="h-20 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 flex items-center justify-between px-8 sticky top-0 z-50">
       <div>
         <h2 className="text-xl font-bold text-white">{getPageTitle()}</h2>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 relative">
         <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
           <input 
@@ -28,10 +35,63 @@ export default function Header() {
           />
         </div>
         
-        <button className="relative text-gray-400 hover:text-white transition-colors">
-          <Bell size={20} />
-          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-purple-500 rounded-full border-2 border-gray-900"></span>
-        </button>
+        <div className="relative">
+          <button 
+            className="relative text-gray-400 hover:text-white transition-colors"
+            onClick={() => setShowNotifications(!showNotifications)}
+          >
+            <Bell size={20} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-purple-500 rounded-full border-2 border-gray-900 text-[8px] flex items-center justify-center text-white font-bold">
+                {unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* Notifications Popover */}
+          {showNotifications && (
+            <div className="absolute right-0 mt-4 w-80 bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+              <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-gray-800/50">
+                <h3 className="font-semibold text-white">Bildirimler</h3>
+                {unreadCount > 0 && (
+                  <button 
+                    onClick={markAllAsRead}
+                    className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                  >
+                    Tümünü Okundu İşaretle
+                  </button>
+                )}
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-6 text-center text-sm text-gray-500">
+                    Henüz bildiriminiz yok.
+                  </div>
+                ) : (
+                  notifications.map(notif => (
+                    <div 
+                      key={notif.id} 
+                      className={`p-4 border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors cursor-pointer flex gap-3 ${!notif.read ? 'bg-purple-900/10' : ''}`}
+                      onClick={() => markAsRead(notif.id)}
+                    >
+                      <div className="mt-0.5">
+                        <CheckCircle2 size={16} className={notif.read ? 'text-gray-600' : 'text-purple-500'} />
+                      </div>
+                      <div>
+                        <p className={`text-sm ${notif.read ? 'text-gray-400' : 'text-gray-200 font-medium'}`}>
+                          {notif.message}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {notif.date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
