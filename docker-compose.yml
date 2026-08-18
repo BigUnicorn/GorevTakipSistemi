@@ -35,8 +35,6 @@ services:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=GorevTakipDb;Username=postgres;Password=${DB_PASSWORD}
       - ConnectionStrings__RedisConnection=redis:6379
       - Jwt__Key=${JWT_SECRET_KEY}
-    volumes:
-      - ./GorevTakip.API/wwwroot:/app/wwwroot # YENİ: Host'taki klasörü container'a bağladık
 
 volumes:
   postgres_data:

@@ -20,7 +20,7 @@ export const useSignalR = () => {
     const token = localStorage.getItem('token');
     
     const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:5074/taskhub', {
+      .withUrl('/taskhub', {
         accessTokenFactory: () => token || ''
       })
       .withAutomaticReconnect()

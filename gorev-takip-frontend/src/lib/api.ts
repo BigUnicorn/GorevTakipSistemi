@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5074/api';
+// Sunucu (API) ile arayüz (Frontend) aynı domain'de çalıştığı için (wwwroot üzerinden),
+// relative path kullanabiliriz.
+const API_URL = '/api';
 
 export const api = axios.create({
   baseURL: API_URL,

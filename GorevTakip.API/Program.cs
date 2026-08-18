@@ -153,6 +153,8 @@ app.UseCors("StrictCorsPolicy");
 app.UseRateLimiter();
 
 app.UseAuthentication();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseAuthorization();
 
 app.MapControllers();
