@@ -89,9 +89,9 @@ export default function TaskListView({ tasks, onTaskClick }: Props) {
                 <td className="p-4">
                   <div className="flex items-center gap-2 text-gray-300 text-sm">
                     <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center text-xs">
-                      {task.assignedUserFullName?.charAt(0) || '?'}
+                      {task.assignedUserName?.charAt(0) || '?'}
                     </div>
-                    {task.assignedUserFullName || 'Atanmadı'}
+                    {task.assignedUserName || 'Atanmadı'}
                   </div>
                 </td>
                 <td className="p-4">

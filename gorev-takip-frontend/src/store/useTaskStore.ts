@@ -9,7 +9,7 @@ export interface Task {
   category: number;
   dueDate: string;
   assignedUserId: number;
-  assignedUserFullName: string;
+  assignedUserName: string;
 }
 
 export interface TaskComment {

@@ -77,9 +77,9 @@ export default function TaskCard({ task, onClick }: Props) {
           <Calendar size={12} />
           <span>{new Date(task.dueDate).toLocaleDateString('tr-TR')}</span>
         </div>
-        <div className="flex items-center gap-1 bg-gray-900/50 px-2 py-1 rounded-md" title={task.assignedUserFullName}>
+        <div className="flex items-center gap-1 bg-gray-900/50 px-2 py-1 rounded-md" title={task.assignedUserName}>
           <User size={12} />
-          <span className="truncate max-w-[80px]">{task.assignedUserFullName?.split(' ')[0] || 'Atanmadı'}</span>
+          <span className="truncate max-w-[80px]">{task.assignedUserName?.split(' ')[0] || 'Atanmadı'}</span>
         </div>
       </div>
     </div>
