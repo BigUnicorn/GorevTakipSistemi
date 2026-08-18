@@ -22,22 +22,22 @@ const statusColors: Record<number, string> = {
 };
 
 const categoryLabels: Record<number, string> = {
-  0: 'Frontend',
-  1: 'Backend',
-  2: 'Database',
-  3: 'Bug Fix',
-  4: 'Mobile',
-  5: 'DevOps',
+  1: 'Frontend',
+  2: 'Backend',
+  3: 'Database',
+  4: 'Bug Fix',
+  5: 'Mobile',
+  6: 'DevOps',
 };
 
 const getCategoryIcon = (categoryId: number) => {
   switch (categoryId) {
-    case 0: return <Layout size={14} className="mr-1" />;
-    case 1: return <Code size={14} className="mr-1" />;
-    case 2: return <Database size={14} className="mr-1" />;
-    case 3: return <Bug size={14} className="mr-1" />;
-    case 4: return <Smartphone size={14} className="mr-1" />;
-    case 5: return <TerminalSquare size={14} className="mr-1" />;
+    case 1: return <Layout size={14} className="mr-1" />;
+    case 2: return <Code size={14} className="mr-1" />;
+    case 3: return <Database size={14} className="mr-1" />;
+    case 4: return <Bug size={14} className="mr-1" />;
+    case 5: return <Smartphone size={14} className="mr-1" />;
+    case 6: return <TerminalSquare size={14} className="mr-1" />;
     default: return <Layout size={14} className="mr-1" />;
   }
 };

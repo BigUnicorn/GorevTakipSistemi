@@ -120,9 +120,9 @@ export default function DashboardPage() {
             <option value="1">Frontend</option>
             <option value="2">Backend</option>
             <option value="3">Veritabanı</option>
-            <option value="4">Mobil</option>
-            <option value="5">DevOps</option>
-            <option value="6">Bug Fix</option>
+            <option value="4">Bug Fix</option>
+            <option value="5">Mobil</option>
+            <option value="6">DevOps</option>
           </select>
 
           {user?.role === 1 && (
@@ -170,6 +170,7 @@ export default function DashboardPage() {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
                   itemStyle={{ color: '#fff' }}
+                  formatter={(value: any) => [value, 'Görev Sayısı']}
                 />
                 <Legend verticalAlign="bottom" height={36} />
               </PieChart>
@@ -187,8 +188,9 @@ export default function DashboardPage() {
                 <Tooltip 
                   cursor={{ fill: '#374151', opacity: 0.4 }}
                   contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
+                  formatter={(value: any) => [value, 'Görev Sayısı']}
                 />
-                <Bar dataKey="value" fill="#8B5CF6" radius={[4, 4, 0, 0]} maxBarSize={50} />
+                <Bar dataKey="value" name="Görev Sayısı" fill="#8B5CF6" radius={[4, 4, 0, 0]} maxBarSize={50} />
               </BarChart>
             </ResponsiveContainer>
           </div>

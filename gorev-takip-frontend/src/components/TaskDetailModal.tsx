@@ -51,9 +51,14 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
         assignedUserId: task.assignedUserId
       });
       fetchUsers();
+    }
+  }, [isOpen, task, isAdmin]);
+
+  useEffect(() => {
+    if (isOpen) {
       loadTabData(activeTab);
     }
-  }, [isOpen, task, activeTab]);
+  }, [isOpen, activeTab, task.id]);
 
   const loadTabData = async (tab: string) => {
     if (tab === 'comments') {
@@ -166,9 +171,9 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                     <option value={1}>Frontend</option>
                     <option value={2}>Backend</option>
                     <option value={3}>Veritabanı</option>
-                    <option value={4}>Mobil</option>
-                    <option value={5}>DevOps</option>
-                    <option value={6}>BugFix</option>
+                    <option value={4}>Bug Fix</option>
+                    <option value={5}>Mobil</option>
+                    <option value={6}>DevOps</option>
                   </select>
                 </div>
                 <div>

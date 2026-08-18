@@ -11,21 +11,21 @@ interface Props {
 }
 
 const categoryColors: Record<number, string> = {
-  0: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
-  1: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
-  2: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-  3: 'bg-red-500/20 text-red-400 border-red-500/30',
-  4: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-  5: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  1: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
+  2: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
+  3: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+  4: 'bg-red-500/20 text-red-400 border-red-500/30',
+  5: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+  6: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
 };
 
 const categoryLabels: Record<number, string> = {
-  0: 'Frontend',
-  1: 'Backend',
-  2: 'Database',
-  3: 'Bug Fix',
-  4: 'Mobile',
-  5: 'DevOps',
+  1: 'Frontend',
+  2: 'Backend',
+  3: 'Database',
+  4: 'Bug Fix',
+  5: 'Mobile',
+  6: 'DevOps',
 };
 
 export default function TaskCard({ task, onClick }: Props) {

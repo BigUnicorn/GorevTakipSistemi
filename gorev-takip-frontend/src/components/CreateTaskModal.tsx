@@ -111,9 +111,9 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
                 <option value={1}>Frontend</option>
                 <option value={2}>Backend</option>
                 <option value={3}>Veritabanı</option>
-                <option value={4}>Mobil</option>
-                <option value={5}>DevOps</option>
-                <option value={6}>BugFix</option>
+                <option value={4}>Bug Fix</option>
+                <option value={5}>Mobil</option>
+                <option value={6}>DevOps</option>
               </select>
             </div>
             
