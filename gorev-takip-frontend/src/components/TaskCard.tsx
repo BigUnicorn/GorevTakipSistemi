@@ -77,7 +77,7 @@ export default function TaskCard({ task }: Props) {
         </div>
         <div className="flex items-center gap-1 bg-gray-900/50 px-2 py-1 rounded-md" title={task.assignedUserFullName}>
           <User size={12} />
-          <span className="truncate max-w-[80px]">{task.assignedUserFullName.split(' ')[0]}</span>
+          <span className="truncate max-w-[80px]">{task.assignedUserFullName?.split(' ')[0] || 'Atanmadı'}</span>
         </div>
       </div>
     </div>
