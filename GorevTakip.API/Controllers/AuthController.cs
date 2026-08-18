@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using GorevTakip.Business.Services;
 using GorevTakip.Entities.DTOs;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace GorevTakip.API.Controllers
         }
 
         [HttpPost("register")]
+        [EnableRateLimiting("AuthLimit")]
         public async Task<IActionResult> Register([FromBody] UserRegisterDto registerDto)
         {
             await _authService.RegisterAsync(registerDto);
@@ -24,6 +26,7 @@ namespace GorevTakip.API.Controllers
         }
 
         [HttpPost("login")]
+        [EnableRateLimiting("AuthLimit")]
         public async Task<IActionResult> Login([FromBody] UserLoginDto loginDto)
         {
             var tokenDto = await _authService.LoginAsync(loginDto);

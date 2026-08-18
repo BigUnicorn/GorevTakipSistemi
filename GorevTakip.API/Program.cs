@@ -10,6 +10,8 @@ using NpgsqlTypes;
 using System.Collections.Generic;
 using GorevTakip.API.HostedServices;
 using GorevTakip.API.Filters;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,6 +106,19 @@ builder.Services.AddCors(options =>
 // Arka plan log temizleme servisini sisteme ekliyoruz
 builder.Services.AddHostedService<LogCleanupService>();
 
+// Rate Limiting Ayarları
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("AuthLimit", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 5; // 1 dakikada max 5 istek
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0; // Kuyruğa alma, direkt reddet
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -134,6 +149,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("StrictCorsPolicy");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseDefaultFiles(); 
