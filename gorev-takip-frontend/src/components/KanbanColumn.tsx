@@ -14,7 +14,7 @@ interface Props {
 
 export default function KanbanColumn({ status, title, tasks, onTaskClick }: Props) {
   const { setNodeRef, isOver } = useDroppable({
-    id: status.toString(),
+    id: `column-${status}`,
     data: {
       type: 'Column',
       status

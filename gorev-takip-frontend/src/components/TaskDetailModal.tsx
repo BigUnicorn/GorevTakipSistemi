@@ -66,7 +66,11 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await updateTaskDetails(task.id, editData);
+    const formattedData = {
+      ...editData,
+      dueDate: editData.dueDate ? new Date(editData.dueDate).toISOString() : undefined
+    };
+    await updateTaskDetails(task.id, formattedData);
     onClose();
   };
 
