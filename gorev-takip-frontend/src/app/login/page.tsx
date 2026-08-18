@@ -23,7 +23,7 @@ export default function LoginPage() {
     try {
       const res = await api.post('/Auth/login', { email, password });
       
-      const { accessToken, refreshToken, userId, firstName, lastName, email, role } = res.data;
+      const { accessToken, refreshToken, userId, firstName, lastName, role } = res.data;
       
       const user = { id: userId, firstName, lastName, email, role };
       
