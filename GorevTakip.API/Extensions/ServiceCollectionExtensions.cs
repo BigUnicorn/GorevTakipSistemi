@@ -31,10 +31,12 @@ namespace GorevTakip.API.Extensions
             services.AddScoped<ITaskAttachmentRepository, TaskAttachmentRepository>();
 
             // 3. Business (Servis) Katmanı Kayıtları (Mevcut kodunuz)
-            services.AddScoped<ITaskService, TaskService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IAttachmentService, AttachmentService>();
+
+            // MediatR Kaydı
+            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GorevTakip.Business.Mapping.MappingProfile).Assembly));
 
             // AutoMapper ve Validation kayıtlarınız aşağıda aynen kalacak...
             services.AddAutoMapper(cfg => {
