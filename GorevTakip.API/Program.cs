@@ -175,10 +175,3 @@ app.Run();
 
 //docker-compose stop --> Duraklatmak için
 //docker-compose start --> Başlatmak için
-
-/* 
-3. Kullanıcı Deneyimi ve GenişletilebilirlikRefresh Token Mekanizması: 
-
-JWT süresi dolduğunda (mevcut durumda 2 saat) sistem kullanıcıyı dışarı atıyor.  
-Geliştirme: Kullanıcı tablosuna RefreshToken ve RefreshTokenExpiryTime kolonları ekleyerek, frontend tarafında Axios (veya mevcut fetch yapınıza bir interceptor) yazarak token süresi dolduğunda kullanıcı hissetmeden arka planda yeni bir token alınmasını sağlayabilirsiniz.
-*/
