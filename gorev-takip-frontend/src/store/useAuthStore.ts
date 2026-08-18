@@ -21,20 +21,20 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
   login: (token, refreshToken, user) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('refreshToken', refreshToken);
-    localStorage.setItem('user', JSON.stringify(user));
+    sessionStorage.setItem('token', token);
+    sessionStorage.setItem('refreshToken', refreshToken);
+    sessionStorage.setItem('user', JSON.stringify(user));
     set({ user, isAuthenticated: true });
   },
   logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('user');
     set({ user: null, isAuthenticated: false });
   },
   checkAuth: () => {
-    const token = localStorage.getItem('token');
-    const userStr = localStorage.getItem('user');
+    const token = sessionStorage.getItem('token');
+    const userStr = sessionStorage.getItem('user');
     if (token && userStr) {
       set({ user: JSON.parse(userStr), isAuthenticated: true });
     } else {

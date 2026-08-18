@@ -15,7 +15,7 @@ let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -34,8 +34,8 @@ api.interceptors.response.use(
         isRefreshing = true;
         refreshPromise = (async () => {
           try {
-            const refreshToken = localStorage.getItem('refreshToken');
-            const accessToken = localStorage.getItem('token');
+            const refreshToken = sessionStorage.getItem('refreshToken');
+            const accessToken = sessionStorage.getItem('token');
             if (!refreshToken || !accessToken) {
               throw new Error("No tokens available");
             }
@@ -46,12 +46,13 @@ api.interceptors.response.use(
             const newToken = res.data.accessToken;
             const newRefreshToken = res.data.refreshToken;
             
-            localStorage.setItem('token', newToken);
-            localStorage.setItem('refreshToken', newRefreshToken);
+            sessionStorage.setItem('token', newToken);
+            sessionStorage.setItem('refreshToken', newRefreshToken);
             return newToken;
           } catch (refreshError) {
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('refreshToken');
+            sessionStorage.removeItem('user'); // Kullanıcıyı da temizle
             window.location.href = '/login';
             return null;
           } finally {

@@ -18,7 +18,7 @@ export const useSignalR = () => {
       return;
     }
 
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     
     const newConnection = new signalR.HubConnectionBuilder()
       .withUrl('/taskhub', {
