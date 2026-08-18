@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
-import { CheckCircle2, CircleDashed, Clock, Layout, Code, Database, Bug, Smartphone, TerminalSquare } from 'lucide-react';
+import { useUserStore } from '@/store/useUserStore';
+import { CheckCircle2, CircleDashed, Clock, Layout, Code, Database, Bug, Smartphone, TerminalSquare, Filter } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface TaskStats {
   totalTasks: number;
@@ -22,11 +24,34 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<TaskStats | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuthStore();
+  const { users, fetchUsers } = useUserStore();
+
+  const [selectedUserId, setSelectedUserId] = useState<number | ''>('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | ''>('');
+
+  useEffect(() => {
+    if (user?.role === 1) {
+      fetchUsers();
+    }
+  }, [user]);
 
   useEffect(() => {
     const fetchStats = async () => {
+      setLoading(true);
       try {
-        const url = user?.role === 1 ? '/Tasks/statistics' : `/Tasks/statistics?userId=${user?.id}`;
+        let url = '/Tasks/statistics?';
+        
+        // Admin can filter by user, normal users only see their own tasks
+        if (user?.role === 1) {
+          if (selectedUserId !== '') url += `userId=${selectedUserId}&`;
+        } else {
+          url += `userId=${user?.id}&`;
+        }
+
+        if (selectedCategoryId !== '') {
+          url += `categoryId=${selectedCategoryId}&`;
+        }
+
         const res = await api.get(url);
         setStats(res.data);
       } catch (error) {
@@ -39,11 +64,7 @@ export default function DashboardPage() {
     if (user) {
       fetchStats();
     }
-  }, [user]);
-
-  if (loading) {
-    return <div className="flex items-center justify-center h-full text-gray-400">Yükleniyor...</div>;
-  }
+  }, [user, selectedUserId, selectedCategoryId]);
 
   const StatCard = ({ title, value, icon: Icon, colorClass, borderClass }: any) => (
     <div className={`bg-gray-900/60 p-6 rounded-2xl border ${borderClass} backdrop-blur-sm relative overflow-hidden group hover:scale-[1.02] transition-transform`}>
@@ -51,7 +72,7 @@ export default function DashboardPage() {
       <div className="flex justify-between items-start relative z-10">
         <div>
           <p className="text-gray-400 text-sm font-medium mb-1">{title}</p>
-          <h3 className="text-3xl font-bold text-white">{value || 0}</h3>
+          <h3 className="text-3xl font-bold text-white">{loading ? '...' : (value || 0)}</h3>
         </div>
         <div className={`p-3 rounded-xl ${colorClass} bg-opacity-10 text-white`}>
           <Icon size={24} />
@@ -60,11 +81,63 @@ export default function DashboardPage() {
     </div>
   );
 
+  const statusData = stats ? [
+    { name: 'Yapılacaklar', value: stats.todoTasks, color: '#9CA3AF' },
+    { name: 'Devam Edenler', value: stats.inProgressTasks, color: '#3B82F6' },
+    { name: 'Tamamlananlar', value: stats.completedTasks, color: '#10B981' },
+  ] : [];
+
+  const categoryData = stats ? [
+    { name: 'Frontend', value: stats.frontendTasks },
+    { name: 'Backend', value: stats.backendTasks },
+    { name: 'Database', value: stats.databaseTasks },
+    { name: 'Bug Fix', value: stats.bugFixTasks },
+    { name: 'Mobile', value: stats.mobileTasks },
+    { name: 'DevOps', value: stats.devOpsTasks },
+  ] : [];
+
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Hoş Geldiniz, {user?.firstName} 👋</h1>
-        <p className="text-gray-400">İşte {user?.role === 1 ? 'sistemin' : 'senin'} güncel görev özeti.</p>
+    <div className="space-y-8 max-w-7xl mx-auto h-full overflow-y-auto pb-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">Hoş Geldiniz, {user?.firstName} 👋</h1>
+          <p className="text-gray-400">İşte {user?.role === 1 ? 'sistemin' : 'senin'} güncel görev özeti ve istatistikleri.</p>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3 bg-gray-900/50 p-3 rounded-xl border border-gray-800">
+          <div className="flex items-center text-gray-400 mr-2">
+            <Filter size={18} className="mr-2" />
+            <span className="text-sm font-medium">Filtrele:</span>
+          </div>
+          
+          <select 
+            value={selectedCategoryId} 
+            onChange={e => setSelectedCategoryId(e.target.value ? Number(e.target.value) : '')}
+            className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg p-2 outline-none focus:ring-1 focus:ring-purple-500 min-w-[120px]"
+          >
+            <option value="">Tüm Kategoriler</option>
+            <option value="1">Frontend</option>
+            <option value="2">Backend</option>
+            <option value="3">Veritabanı</option>
+            <option value="4">Mobil</option>
+            <option value="5">DevOps</option>
+            <option value="6">Bug Fix</option>
+          </select>
+
+          {user?.role === 1 && (
+            <select 
+              value={selectedUserId} 
+              onChange={e => setSelectedUserId(e.target.value ? Number(e.target.value) : '')}
+              className="bg-gray-800 border border-gray-700 text-white text-sm rounded-lg p-2 outline-none focus:ring-1 focus:ring-purple-500 min-w-[150px]"
+            >
+              <option value="">Tüm Kullanıcılar</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -74,14 +147,52 @@ export default function DashboardPage() {
         <StatCard title="Tamamlananlar" value={stats?.completedTasks} icon={CheckCircle2} colorClass="bg-green-500" borderClass="border-green-500/20" />
       </div>
 
-      <h2 className="text-xl font-semibold text-white mt-8 mb-4">Kategorilere Göre Dağılım</h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <StatCard title="Frontend" value={stats?.frontendTasks} icon={Layout} colorClass="bg-pink-500" borderClass="border-gray-800" />
-        <StatCard title="Backend" value={stats?.backendTasks} icon={Code} colorClass="bg-indigo-500" borderClass="border-gray-800" />
-        <StatCard title="Database" value={stats?.databaseTasks} icon={Database} colorClass="bg-emerald-500" borderClass="border-gray-800" />
-        <StatCard title="Bug Fix" value={stats?.bugFixTasks} icon={Bug} colorClass="bg-red-500" borderClass="border-gray-800" />
-        <StatCard title="Mobile" value={stats?.mobileTasks} icon={Smartphone} colorClass="bg-cyan-500" borderClass="border-gray-800" />
-        <StatCard title="DevOps" value={stats?.devOpsTasks} icon={TerminalSquare} colorClass="bg-orange-500" borderClass="border-gray-800" />
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        <div className="bg-gray-900/60 p-6 rounded-2xl border border-gray-800 backdrop-blur-sm">
+          <h2 className="text-lg font-semibold text-white mb-6">Görev Durumu Dağılımı</h2>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {statusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Legend verticalAlign="bottom" height={36} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-gray-900/60 p-6 rounded-2xl border border-gray-800 backdrop-blur-sm">
+          <h2 className="text-lg font-semibold text-white mb-6">Kategorilere Göre Görevler</h2>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={categoryData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip 
+                  cursor={{ fill: '#374151', opacity: 0.4 }}
+                  contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
+                />
+                <Bar dataKey="value" fill="#8B5CF6" radius={[4, 4, 0, 0]} maxBarSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     </div>
   );

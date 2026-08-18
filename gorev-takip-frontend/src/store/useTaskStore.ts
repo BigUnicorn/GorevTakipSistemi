@@ -39,6 +39,7 @@ interface TaskState {
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
   fetchTasks: () => Promise<void>;
+  createTask: (data: Partial<Task>) => Promise<void>;
   updateTaskStatus: (taskId: number, newStatus: number) => Promise<void>;
   updateTaskDetails: (taskId: number, data: Partial<Task>) => Promise<void>;
   fetchTaskComments: (taskId: number) => Promise<TaskComment[]>;
@@ -57,6 +58,15 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       set({ tasks: response.data.data });
     } catch (error) {
       console.error('Error fetching tasks:', error);
+    }
+  },
+  createTask: async (data) => {
+    try {
+      await api.post('/Tasks', data);
+      await get().fetchTasks();
+    } catch (error) {
+      console.error('Error creating task:', error);
+      throw error;
     }
   },
   updateTaskStatus: async (taskId, newStatus) => {
