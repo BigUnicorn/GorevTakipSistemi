@@ -66,7 +66,12 @@ namespace GorevTakip.Business.Services
             return new TokenDto
             {
                 AccessToken = accessToken,
-                RefreshToken = refreshToken
+                RefreshToken = refreshToken,
+                UserId = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Role = (int)user.Role
             };
         }
 
@@ -98,7 +103,12 @@ namespace GorevTakip.Business.Services
             return new TokenDto
             {
                 AccessToken = newAccessToken,
-                RefreshToken = newRefreshToken
+                RefreshToken = newRefreshToken,
+                UserId = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Role = (int)user.Role
             };
         }
 

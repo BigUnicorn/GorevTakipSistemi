@@ -23,10 +23,12 @@ export default function LoginPage() {
     try {
       const res = await api.post('/Auth/login', { email, password });
       
-      const { token, refreshToken, user } = res.data;
+      const { accessToken, refreshToken, userId, firstName, lastName, email, role } = res.data;
+      
+      const user = { id: userId, firstName, lastName, email, role };
       
       // Update state and localStorage
-      login(token, refreshToken, user);
+      login(accessToken, refreshToken, user);
       
       // Redirect to dashboard
       router.push('/dashboard');
