@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Bell, Search, CheckCircle2 } from 'lucide-react';
+import { Bell, Search, CheckCircle2, Menu } from 'lucide-react';
 import { useNotificationStore } from '@/store/useNotificationStore';
+import { useSidebarStore } from '@/store/useSidebarStore';
 
 export default function Header() {
   const pathname = usePathname();
   const [showNotifications, setShowNotifications] = useState(false);
   const { notifications, markAsRead, markAllAsRead } = useNotificationStore();
+  const { toggle: toggleSidebar } = useSidebarStore();
   
   const unreadCount = notifications.filter(n => !n.read).length;
   
@@ -20,8 +22,14 @@ export default function Header() {
   };
 
   return (
-    <header className="h-20 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 flex items-center justify-between px-8 sticky top-0 z-50">
-      <div>
+    <header className="h-20 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 flex items-center justify-between px-4 md:px-8 sticky top-0 z-50">
+      <div className="flex items-center gap-4">
+        <button 
+          onClick={toggleSidebar}
+          className="md:hidden text-gray-400 hover:text-white transition-colors"
+        >
+          <Menu size={24} />
+        </button>
         <h2 className="text-xl font-bold text-white">{getPageTitle()}</h2>
       </div>
 

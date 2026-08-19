@@ -2,25 +2,18 @@ import axios from 'axios';
 
 // Sunucu (API) ile arayüz (Frontend) aynı domain'de çalıştığı için (wwwroot üzerinden),
 // relative path kullanabiliriz.
-const API_URL = '/api';
+const API_URL = '/api/v1';
 
 export const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true, // Çerezlerin gönderilmesi için eklendi
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 let isRefreshing = false;
-let refreshPromise: Promise<string | null> | null = null;
-
-api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => Promise.reject(error));
+let refreshPromise: Promise<boolean> | null = null;
 
 api.interceptors.response.use(
   (response) => response,
@@ -34,36 +27,25 @@ api.interceptors.response.use(
         isRefreshing = true;
         refreshPromise = (async () => {
           try {
-            const refreshToken = sessionStorage.getItem('refreshToken');
-            const accessToken = sessionStorage.getItem('token');
-            if (!refreshToken || !accessToken) {
-              throw new Error("No tokens available");
-            }
-            const res = await axios.post(`${API_URL}/Auth/refresh`, {
-              accessToken: accessToken,
-              refreshToken: refreshToken
-            });
-            const newToken = res.data.accessToken;
-            const newRefreshToken = res.data.refreshToken;
-            
-            sessionStorage.setItem('token', newToken);
-            sessionStorage.setItem('refreshToken', newRefreshToken);
-            return newToken;
+            // Sadece Auth/refresh rotasına istek atıyoruz. Token'lar çerezden gidecek.
+            await axios.post(`${API_URL}/Auth/refresh`, {}, { withCredentials: true });
+            return true;
           } catch (refreshError) {
-            sessionStorage.removeItem('token');
-            sessionStorage.removeItem('refreshToken');
-            sessionStorage.removeItem('user'); // Kullanıcıyı da temizle
-            window.location.href = '/login';
-            return null;
+            // Token yenilenemediyse çıkış yap.
+            // window.location.href kullanmak sonsuz döngüye sebep olur, React Router yönlendirmeyi halledecek.
+            if (typeof window !== 'undefined' && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+              window.location.href = '/login';
+            }
+            return false;
           } finally {
             isRefreshing = false;
           }
         })();
       }
 
-      const newToken = await refreshPromise;
-      if (newToken) {
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+      const success = await refreshPromise;
+      if (success) {
+        // Çerezler başarılı yenilendiyse, orijinal isteği aynı konfigürasyonla tekrar et.
         return api(originalRequest);
       }
     }

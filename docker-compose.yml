@@ -12,12 +12,22 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data # Verilerin kalıcı olması için volume
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d GorevTakipDb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:alpine
     container_name: gorevtakip-redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
     build:
@@ -25,8 +35,15 @@ services:
       dockerfile: Dockerfile
     container_name: gorevtakip-api
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     # ports bölümü kaldırıldı, artık nginx üzerinden erişilecek
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -40,7 +57,13 @@ services:
       dockerfile: Dockerfile
     container_name: gorevtakip-frontend
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
     environment:
       - NODE_ENV=production
 
@@ -52,8 +75,10 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
-      - api
-      - frontend
+      api:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
 
 volumes:
   postgres_data:

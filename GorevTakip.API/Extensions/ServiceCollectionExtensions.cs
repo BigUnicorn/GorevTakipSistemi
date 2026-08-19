@@ -62,6 +62,17 @@ namespace GorevTakip.API.Extensions
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
                     };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            if (context.Request.Cookies.ContainsKey("accessToken"))
+                            {
+                                context.Token = context.Request.Cookies["accessToken"];
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
 
             return services;

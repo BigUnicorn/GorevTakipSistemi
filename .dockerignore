@@ -4,9 +4,19 @@ bin/
 obj/
 */bin/
 */obj/
+**/bin/
+**/obj/
 *.user
 *.suo
 *.md
+
+# Frontend
+**/node_modules/
+**/.next/
+node_modules/
+.next/
+out/
+build/
 
 # Dokuman dosyaları
 proje_ozeti.md
