@@ -50,6 +50,12 @@ namespace GorevTakip.API.HostedServices
                         }
                     }
                 }
+                catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P01")
+                {
+                    // Tablo bulunamadı (42P01: relation "Logs" does not exist).
+                    // Serilog henüz hiç hata yakalamadığı için "Logs" tablosunu oluşturmamış.
+                    // Temizlenecek log olmadığı için bu hatayı görmezden geliyoruz.
+                }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Log temizleme işlemi sırasında beklenmeyen bir hata oluştu.");
