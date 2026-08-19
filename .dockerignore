@@ -7,3 +7,8 @@ obj/
 *.user
 *.suo
 *.md
+
+# Dokuman dosyaları
+proje_ozeti.md
+gelistirmeler.md
+yapilanlar.md
