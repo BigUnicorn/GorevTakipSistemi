@@ -31,8 +31,11 @@ api.interceptors.response.use(
             await axios.post(`${API_URL}/Auth/refresh`, {}, { withCredentials: true });
             return true;
           } catch (refreshError) {
-            // Token yenilenemediyse çıkış yap. State temizliği useAuthStore içinde veya app tarafında yönetilebilir.
-            window.location.href = '/login';
+            // Token yenilenemediyse çıkış yap.
+            // window.location.href kullanmak sonsuz döngüye sebep olur, React Router yönlendirmeyi halledecek.
+            if (typeof window !== 'undefined' && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+              window.location.href = '/login';
+            }
             return false;
           } finally {
             isRefreshing = false;
