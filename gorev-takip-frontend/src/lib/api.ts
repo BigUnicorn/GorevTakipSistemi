@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Sunucu (API) ile arayüz (Frontend) aynı domain'de çalıştığı için (wwwroot üzerinden),
 // relative path kullanabiliriz.
-const API_URL = '/api';
+const API_URL = '/api/v1';
 
 export const api = axios.create({
   baseURL: API_URL,

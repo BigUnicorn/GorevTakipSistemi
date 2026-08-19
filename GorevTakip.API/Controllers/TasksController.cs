@@ -1,5 +1,6 @@
 using System;
-using System.Security.Claims; // Token içindeki rol ve ID'yi okumak için EKLENDİ
+using System.Security.Claims;
+using Asp.Versioning;
 using System.Threading.Tasks;
 using GorevTakip.Business.Features.Tasks.Commands;
 using GorevTakip.Business.Features.Tasks.Queries;
@@ -14,7 +15,8 @@ using MediatR;
 namespace GorevTakip.API.Controllers
 {
     [Authorize] // Frontend token gönderdiği için yetkilendirme zorunlu (Genel kural)
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     public class TasksController : ControllerBase
     {
