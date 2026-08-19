@@ -3,4 +3,5 @@
   <Project Path="GorevTakip.Business/GorevTakip.Business.csproj" />
   <Project Path="GorevTakip.DataAccess/GorevTakip.DataAccess.csproj" />
   <Project Path="GorevTakip.Entities/GorevTakip.Entities.csproj" />
+  <Project Path="GorevTakip.Tests/GorevTakip.Tests.csproj" />
 </Solution>

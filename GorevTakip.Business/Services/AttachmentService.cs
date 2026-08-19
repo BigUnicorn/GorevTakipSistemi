@@ -8,6 +8,7 @@ using GorevTakip.DataAccess.Repositories;
 using GorevTakip.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using GorevTakip.Business.Exceptions;
 
 namespace GorevTakip.Business.Services
 {
@@ -39,13 +40,22 @@ namespace GorevTakip.Business.Services
         public async Task<TaskAttachmentDto> UploadAttachmentAsync(int taskId, int userId, IFormFile file)
         {
             var task = await _taskRepository.GetByIdAsync(taskId);
-            if (task == null) throw new Exception("Görev bulunamadı.");
+            if (task == null) throw new NotFoundException("Görev bulunamadı.");
 
             if (file == null || file.Length == 0)
-                throw new Exception("Geçerli bir dosya yüklemediniz.");
+                throw new BadRequestException("Geçerli bir dosya yüklemediniz.");
 
             if (file.Length > 10 * 1024 * 1024) // 10 MB limit
-                throw new Exception("Dosya boyutu 10MB'dan büyük olamaz.");
+                throw new BadRequestException("Dosya boyutu 10MB'dan büyük olamaz.");
+
+            // Güvenlik: Sadece izin verilen dosya uzantıları
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            
+            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+            {
+                throw new BadRequestException("Bu dosya türünün yüklenmesine izin verilmiyor. Sadece resim, PDF, Office ve metin dosyaları yüklenebilir.");
+            }
 
             // Klasör yoksa oluştur
             if (!Directory.Exists(_uploadDirectory))
@@ -54,7 +64,6 @@ namespace GorevTakip.Business.Services
             }
 
             // Güvenli dosya adı oluşturma (Guid ekleyerek çakışmaları önleme)
-            var extension = Path.GetExtension(file.FileName);
             var safeFileName = $"{Guid.NewGuid()}{extension}";
             var physicalPath = Path.Combine(_uploadDirectory, safeFileName);
             var relativePath = $"/uploads/{safeFileName}"; // Web üzerinden erişilecek yol
@@ -116,12 +125,12 @@ namespace GorevTakip.Business.Services
         public async Task<(byte[] FileBytes, string ContentType, string FileName)> DownloadAttachmentAsync(int attachmentId)
         {
             var attachment = await _attachmentRepository.GetByIdAsync(attachmentId);
-            if (attachment == null) throw new Exception("Dosya bulunamadı.");
+            if (attachment == null) throw new NotFoundException("Dosya bulunamadı.");
 
             var physicalPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", attachment.FilePath.TrimStart('/'));
 
             if (!File.Exists(physicalPath))
-                throw new Exception("Dosya sunucuda bulunamadı.");
+                throw new NotFoundException("Dosya sunucuda bulunamadı.");
 
             var memory = new MemoryStream();
             using (var stream = new FileStream(physicalPath, FileMode.Open))
@@ -136,14 +145,14 @@ namespace GorevTakip.Business.Services
         public async Task DeleteAttachmentAsync(int attachmentId, int userId, string role)
         {
             var attachment = await _attachmentRepository.GetByIdAsync(attachmentId);
-            if (attachment == null) throw new Exception("Dosya bulunamadı.");
+            if (attachment == null) throw new NotFoundException("Dosya bulunamadı.");
 
             var task = await _taskRepository.GetByIdAsync(attachment.TaskId);
 
             // Sadece Admin, dosyayı yükleyen kişi VEYA görevin sahibi silebilir
             if (role != nameof(UserRole.Admin) && attachment.UploadedByUserId != userId && (task == null || task.AssignedUserId != userId))
             {
-                throw new Exception("Bu dosyayı silme yetkiniz yok.");
+                throw new UnauthorizedActionException("Bu dosyayı silme yetkiniz yok.");
             }
 
             // Fiziksel diskten sil

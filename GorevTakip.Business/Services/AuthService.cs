@@ -9,6 +9,7 @@ using GorevTakip.Entities;
 using GorevTakip.Entities.DTOs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using GorevTakip.Business.Exceptions;
 // BCrypt kütüphanesini kullanacağımız için ekstra bir using eklememize gerek yok, doğrudan çağırabiliriz.
 
 namespace GorevTakip.Business.Services
@@ -29,7 +30,7 @@ namespace GorevTakip.Business.Services
         public async Task RegisterAsync(UserRegisterDto registerDto)
         {
             if (await _userRepository.AnyAsync(u => u.Email == registerDto.Email))
-                throw new Exception("Bu email adresi zaten kullanılıyor.");
+                throw new BadRequestException("Bu email adresi zaten kullanılıyor.");
 
             // YENİ: BCrypt ile şifreleme işlemi
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
@@ -52,7 +53,7 @@ namespace GorevTakip.Business.Services
             var user = await _userRepository.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
-                throw new Exception("Kullanıcı adı veya şifre hatalı.");
+                throw new BadRequestException("Kullanıcı adı veya şifre hatalı.");
 
             var accessToken = GenerateJwtToken(user);
             var refreshToken = GenerateRefreshToken();
@@ -80,16 +81,16 @@ namespace GorevTakip.Business.Services
             // Here we should extract the user ID from the expired token
             var principal = GetPrincipalFromExpiredToken(token);
             if (principal == null)
-                throw new Exception("Geçersiz erişim belirteci.");
+                throw new UnauthorizedActionException("Geçersiz erişim belirteci.");
 
             var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
-                throw new Exception("Geçersiz erişim belirteci.");
+                throw new UnauthorizedActionException("Geçersiz erişim belirteci.");
 
             var user = await _userRepository.GetByIdAsync(userId);
 
             if (user == null || user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-                throw new Exception("Geçersiz veya süresi dolmuş yenileme belirteci.");
+                throw new UnauthorizedActionException("Geçersiz veya süresi dolmuş yenileme belirteci.");
 
             var newAccessToken = GenerateJwtToken(user);
             var newRefreshToken = GenerateRefreshToken();

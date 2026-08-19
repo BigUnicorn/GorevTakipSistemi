@@ -8,6 +8,7 @@ using GorevTakip.Entities;
 using Microsoft.Extensions.Caching.Distributed;
 using Moq;
 using Xunit;
+using GorevTakip.Business.Exceptions;
 
 namespace GorevTakip.Tests
 {
@@ -44,7 +45,7 @@ namespace GorevTakip.Tests
             // Act & Assert
             Func<Task> act = async () => await handler.Handle(command, CancellationToken.None);
 
-            await act.Should().ThrowAsync<Exception>().WithMessage("Görev bulunamadı.");
+            await act.Should().ThrowAsync<NotFoundException>().WithMessage("Görev bulunamadı.");
         }
 
         [Fact]

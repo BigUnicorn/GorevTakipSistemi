@@ -7,6 +7,7 @@ using GorevTakip.Entities;
 using GorevTakip.Entities.DTOs;
 using MediatR;
 using Microsoft.Extensions.Caching.Distributed;
+using GorevTakip.Business.Exceptions;
 
 namespace GorevTakip.Business.Features.Tasks.Commands
 {
@@ -41,7 +42,7 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             var taskDto = request.TaskDto;
             var userExists = await _userRepository.GetByIdAsync(taskDto.AssignedUserId);
             if (userExists == null)
-                throw new Exception("Atanan kullanıcı bulunamadı!");
+                throw new NotFoundException("Atanan kullanıcı bulunamadı!");
 
             var taskItem = _mapper.Map<TaskItem>(taskDto);
 
@@ -97,10 +98,10 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         {
             var taskDto = request.TaskDto;
             var existingTask = await _taskRepository.GetByIdAsync(taskDto.Id);
-            if (existingTask == null) throw new Exception("Güncellenecek görev bulunamadı.");
+            if (existingTask == null) throw new NotFoundException("Güncellenecek görev bulunamadı.");
 
             var userExists = await _userRepository.GetByIdAsync(taskDto.AssignedUserId);
-            if (userExists == null) throw new Exception("Atanan kullanıcı bulunamadı!");
+            if (userExists == null) throw new NotFoundException("Atanan kullanıcı bulunamadı!");
 
             int oldUserId = existingTask.AssignedUserId;
             int oldCategoryId = (int)existingTask.Category;
@@ -199,7 +200,7 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         public async Task Handle(UpdateTaskStatusCommand request, CancellationToken cancellationToken)
         {
             var task = await _taskRepository.GetByIdAsync(request.Id);
-            if (task == null) throw new Exception("Görev bulunamadı.");
+            if (task == null) throw new NotFoundException("Görev bulunamadı.");
 
             task.Status = request.NewStatus;
             _taskRepository.Update(task);
