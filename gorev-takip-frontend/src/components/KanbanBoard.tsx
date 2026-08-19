@@ -78,7 +78,7 @@ export default function KanbanBoard() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-140px)]">
+        <div className="flex flex-col md:flex-row gap-6 md:h-[calc(100vh-140px)] pb-20 md:pb-0">
           <KanbanColumn status={1} title="Yapılacaklar" tasks={todoTasks} onTaskClick={setSelectedTask} />
           <KanbanColumn status={2} title="Devam Edenler" tasks={inProgressTasks} onTaskClick={setSelectedTask} />
           <KanbanColumn status={3} title="Tamamlananlar" tasks={doneTasks} onTaskClick={setSelectedTask} />
