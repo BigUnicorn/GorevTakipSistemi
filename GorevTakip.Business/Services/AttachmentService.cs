@@ -47,6 +47,15 @@ namespace GorevTakip.Business.Services
             if (file.Length > 10 * 1024 * 1024) // 10 MB limit
                 throw new Exception("Dosya boyutu 10MB'dan büyük olamaz.");
 
+            // Güvenlik: Sadece izin verilen dosya uzantıları
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            
+            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+            {
+                throw new Exception("Bu dosya türünün yüklenmesine izin verilmiyor. Sadece resim, PDF, Office ve metin dosyaları yüklenebilir.");
+            }
+
             // Klasör yoksa oluştur
             if (!Directory.Exists(_uploadDirectory))
             {
@@ -54,7 +63,6 @@ namespace GorevTakip.Business.Services
             }
 
             // Güvenli dosya adı oluşturma (Guid ekleyerek çakışmaları önleme)
-            var extension = Path.GetExtension(file.FileName);
             var safeFileName = $"{Guid.NewGuid()}{extension}";
             var physicalPath = Path.Combine(_uploadDirectory, safeFileName);
             var relativePath = $"/uploads/{safeFileName}"; // Web üzerinden erişilecek yol
