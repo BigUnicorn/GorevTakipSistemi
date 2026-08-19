@@ -64,6 +64,9 @@ builder.Services.AddApplicationServices();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddSwaggerConfiguration();
 
+// Health Checks
+builder.Services.AddHealthChecks();
+
 // Redis Distributed Cache Yapılandırması
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -156,6 +159,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/api/health");
 
 app.MapHub<GorevTakip.API.Hubs.TaskHub>("/taskhub");
 
