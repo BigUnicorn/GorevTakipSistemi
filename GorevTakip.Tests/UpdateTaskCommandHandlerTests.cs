@@ -10,6 +10,7 @@ using GorevTakip.Entities.DTOs;
 using Microsoft.Extensions.Caching.Distributed;
 using Moq;
 using Xunit;
+using GorevTakip.Business.Exceptions;
 
 namespace GorevTakip.Tests
 {
@@ -53,7 +54,7 @@ namespace GorevTakip.Tests
             // Act & Assert
             Func<Task> act = async () => await handler.Handle(command, CancellationToken.None);
 
-            await act.Should().ThrowAsync<Exception>().WithMessage("Güncellenecek görev bulunamadı.");
+            await act.Should().ThrowAsync<NotFoundException>().WithMessage("Güncellenecek görev bulunamadı.");
         }
 
         [Fact]
@@ -81,7 +82,7 @@ namespace GorevTakip.Tests
             // Act & Assert
             Func<Task> act = async () => await handler.Handle(command, CancellationToken.None);
 
-            await act.Should().ThrowAsync<Exception>().WithMessage("Atanan kullanıcı bulunamadı!");
+            await act.Should().ThrowAsync<NotFoundException>().WithMessage("Atanan kullanıcı bulunamadı!");
         }
 
         [Fact]

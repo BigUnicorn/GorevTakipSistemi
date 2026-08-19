@@ -62,6 +62,39 @@ namespace GorevTakip.API.Middlewares
                     Instance = context.Request.Path
                 };
             }
+            else if (exception is GorevTakip.Business.Exceptions.NotFoundException notFoundException)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                problemDetails = new ProblemDetails
+                {
+                    Status = StatusCodes.Status404NotFound,
+                    Title = "Bulunamadı",
+                    Detail = notFoundException.Message,
+                    Instance = context.Request.Path
+                };
+            }
+            else if (exception is GorevTakip.Business.Exceptions.UnauthorizedActionException authException)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                problemDetails = new ProblemDetails
+                {
+                    Status = StatusCodes.Status403Forbidden,
+                    Title = "Yetkisiz Erişim",
+                    Detail = authException.Message,
+                    Instance = context.Request.Path
+                };
+            }
+            else if (exception is GorevTakip.Business.Exceptions.BadRequestException badRequestException)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                problemDetails = new ProblemDetails
+                {
+                    Status = StatusCodes.Status400BadRequest,
+                    Title = "Geçersiz İstek",
+                    Detail = badRequestException.Message,
+                    Instance = context.Request.Path
+                };
+            }
             // 2. Beklenmeyen Genel Sistem Hataları (500)
             else
             {
