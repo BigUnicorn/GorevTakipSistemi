@@ -13,8 +13,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   // Initialize auth
   useEffect(() => {
-    checkAuth();
-    setIsMounted(true);
+    const initAuth = async () => {
+      await checkAuth();
+      setIsMounted(true);
+    };
+    initAuth();
   }, [checkAuth]);
 
   // Route guarding

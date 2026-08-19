@@ -4,6 +4,10 @@ using Asp.Versioning;
 using GorevTakip.Business.Services;
 using GorevTakip.Entities.DTOs;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using System;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace GorevTakip.API.Controllers
 {
@@ -13,10 +17,26 @@ namespace GorevTakip.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IUserService _userService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IUserService userService)
         {
             _authService = authService;
+            _userService = userService;
+        }
+
+        private void SetTokenCookies(string accessToken, string refreshToken)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, // HTTPS / Proxy Arkası
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(7)
+            };
+            
+            Response.Cookies.Append("accessToken", accessToken, cookieOptions);
+            Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
         }
 
         [HttpPost("register")]
@@ -32,19 +52,58 @@ namespace GorevTakip.API.Controllers
         public async Task<IActionResult> Login([FromBody] UserLoginDto loginDto)
         {
             var tokenDto = await _authService.LoginAsync(loginDto);
-            return Ok(tokenDto); // Return TokenDto (AccessToken and RefreshToken)
+            SetTokenCookies(tokenDto.AccessToken, tokenDto.RefreshToken);
+            return Ok(new { tokenDto.UserId, tokenDto.FirstName, tokenDto.LastName, tokenDto.Email, tokenDto.Role });
         }
 
         [HttpPost("refresh")]
-        public async Task<IActionResult> Refresh([FromBody] RefreshTokenDto tokenDto)
+        public async Task<IActionResult> Refresh()
         {
-            if (tokenDto == null || string.IsNullOrEmpty(tokenDto.AccessToken) || string.IsNullOrEmpty(tokenDto.RefreshToken))
+            var accessToken = Request.Cookies["accessToken"];
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(refreshToken))
             {
-                return BadRequest("Invalid client request");
+                return BadRequest("Geçersiz yenileme isteği.");
             }
 
-            var newTokenDto = await _authService.RefreshTokenAsync(tokenDto.AccessToken, tokenDto.RefreshToken);
-            return Ok(newTokenDto);
+            var tokenDto = await _authService.RefreshTokenAsync(accessToken, refreshToken);
+            SetTokenCookies(tokenDto.AccessToken, tokenDto.RefreshToken);
+            return Ok(new { tokenDto.UserId, tokenDto.FirstName, tokenDto.LastName, tokenDto.Email, tokenDto.Role });
+        }
+
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            Response.Cookies.Delete("accessToken");
+            Response.Cookies.Delete("refreshToken");
+            return Ok(new { message = "Çıkış başarılı." });
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> Me()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out int userId))
+            {
+                return Unauthorized();
+            }
+
+            var user = await _userService.GetUserByIdAsync(userId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            return Ok(new 
+            { 
+                UserId = user.Id, 
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email, 
+                Role = (int)user.Role
+            });
         }
     }
 }

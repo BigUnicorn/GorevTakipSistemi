@@ -12,32 +12,31 @@ interface User {
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  login: (token: string, refreshToken: string, user: User) => void;
-  logout: () => void;
-  checkAuth: () => void;
+  login: (user: User) => void;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isAuthenticated: false,
-  login: (token, refreshToken, user) => {
-    sessionStorage.setItem('token', token);
-    sessionStorage.setItem('refreshToken', refreshToken);
-    sessionStorage.setItem('user', JSON.stringify(user));
+  login: (user) => {
     set({ user, isAuthenticated: true });
   },
-  logout: () => {
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('refreshToken');
-    sessionStorage.removeItem('user');
+  logout: async () => {
+    try {
+      await api.post('/Auth/logout');
+    } catch (e) {
+      console.error('Logout hatası', e);
+    }
     set({ user: null, isAuthenticated: false });
+    window.location.href = '/login'; // Çıkış yapınca login sayfasına yönlendir
   },
-  checkAuth: () => {
-    const token = sessionStorage.getItem('token');
-    const userStr = sessionStorage.getItem('user');
-    if (token && userStr) {
-      set({ user: JSON.parse(userStr), isAuthenticated: true });
-    } else {
+  checkAuth: async () => {
+    try {
+      const response = await api.get('/Auth/me');
+      set({ user: response.data, isAuthenticated: true });
+    } catch (error) {
       set({ user: null, isAuthenticated: false });
     }
   }
