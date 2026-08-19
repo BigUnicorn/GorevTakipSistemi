@@ -54,7 +54,7 @@ export default function TaskListView({ tasks, onTaskClick }: Props) {
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-2xl overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse min-w-[800px]">
           <thead>
             <tr className="bg-gray-800/80 text-gray-300 text-sm border-b border-gray-700">
               <th className="p-4 font-semibold">Görev Başlığı</th>

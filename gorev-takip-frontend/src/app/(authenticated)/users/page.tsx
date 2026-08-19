@@ -40,8 +40,8 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <div className="bg-gray-900/50 border border-gray-800 rounded-2xl overflow-hidden shadow-xl backdrop-blur-sm">
-        <table className="w-full text-left border-collapse">
+      <div className="bg-gray-900/50 border border-gray-800 rounded-2xl overflow-x-auto shadow-xl backdrop-blur-sm">
+        <table className="w-full text-left border-collapse min-w-[600px]">
           <thead>
             <tr className="bg-gray-800/80 border-b border-gray-700 text-gray-300 text-sm uppercase tracking-wider">
               <th className="p-5 font-semibold">Personel</th>
