@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:api": "npx openapi-typescript swagger.json -o src/types/api.d.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

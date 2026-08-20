@@ -1,39 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
-export interface Task {
-  id: number;
-  title: string;
-  description: string;
-  status: number; // 0: Todo, 1: InProgress, 2: Done
-  category: number;
-  dueDate: string;
-  assignedUserId: number;
-  assignedUserName: string;
-}
+import { components } from '../types/api';
 
-export interface TaskComment {
-  id: number;
-  text: string;
-  userName: string;
-  createdDate: string;
-}
-
-export interface TaskHistory {
-  actionMessage: string;
-  createdDate: string;
-}
-
-export interface TaskAttachment {
-  id: number;
-  taskId: number;
-  fileName: string;
-  filePath: string;
-  contentType: string;
-  fileSize: number;
-  uploadedAt: string;
-  uploadedByUserName: string;
-}
+export type Task = components["schemas"]["TaskDto"];
+export type TaskComment = components["schemas"]["TaskCommentDto"];
+export type TaskHistory = components["schemas"]["TaskHistoryDto"];
+export type TaskAttachment = components["schemas"]["TaskAttachmentDto"];
 
 // Queries
 export const useTasksQuery = () => {
