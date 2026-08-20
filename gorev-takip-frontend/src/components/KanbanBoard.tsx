@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useSensor, useSensors, closestCorners } from '@dnd-kit/core';
-import { useTaskStore, Task } from '@/store/useTaskStore';
+import { Task, useTasksQuery, useUpdateTaskStatusMutation } from '@/hooks/useTasks';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
 import TaskDetailModal from './TaskDetailModal';
 
 export default function KanbanBoard() {
-  const { tasks, updateTaskStatus } = useTaskStore();
+  const { data: tasks = [] } = useTasksQuery();
+  const { mutate: updateTaskStatus } = useUpdateTaskStatusMutation();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
@@ -20,9 +21,9 @@ export default function KanbanBoard() {
     })
   );
 
-  const todoTasks = tasks.filter(t => t.status === 1);
-  const inProgressTasks = tasks.filter(t => t.status === 2);
-  const doneTasks = tasks.filter(t => t.status === 3);
+  const todoTasks = tasks.filter((t: Task) => t.status === 1);
+  const inProgressTasks = tasks.filter((t: Task) => t.status === 2);
+  const doneTasks = tasks.filter((t: Task) => t.status === 3);
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -54,7 +55,7 @@ export default function KanbanBoard() {
       const activeTaskStatus = active.data.current?.task.status;
       
       if (newStatusId !== activeTaskStatus) {
-        updateTaskStatus(Number(activeId), newStatusId);
+        updateTaskStatus({ taskId: Number(activeId), newStatus: newStatusId });
       }
       return;
     }
@@ -65,7 +66,7 @@ export default function KanbanBoard() {
       const activeTaskStatus = active.data.current?.task.status;
 
       if (newStatusId !== activeTaskStatus) {
-        updateTaskStatus(Number(activeId), newStatusId);
+        updateTaskStatus({ taskId: Number(activeId), newStatus: newStatusId });
       }
     }
   };

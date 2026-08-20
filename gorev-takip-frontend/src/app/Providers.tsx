@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { useSignalR } from '@/hooks/useSignalR';
 import { useRouter, usePathname } from 'next/navigation';
 
+
 export default function Providers({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated } = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);

@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Task } from '@/store/useTaskStore';
+import { Task } from '@/hooks/useTasks';
 import { Calendar, Tag, User } from 'lucide-react';
 
 interface Props {
