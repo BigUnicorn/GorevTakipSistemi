@@ -134,7 +134,7 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
               <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Bitiş Tarihi *</label>
               <input 
                 type="date" 
-                value={formData.dueDate} 
+                value={formData.dueDate || ''} 
                 onChange={e => setFormData({...formData, dueDate: e.target.value})} 
                 className="w-full p-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 focus:ring-2 focus:ring-purple-500 outline-none" 
                 required 
