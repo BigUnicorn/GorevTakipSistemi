@@ -5,11 +5,13 @@ export interface Task {
   id: number;
   title: string;
   description: string;
-  status: number; // 0: Todo, 1: InProgress, 2: Done
-  category: number;
-  dueDate: string;
+  status: number;
+  createdDate: string;
+  dueDate: string | null;
   assignedUserId: number;
   assignedUserName: string;
+  category: number;
+  isOverdue: boolean;
 }
 
 export interface TaskComment {
@@ -26,13 +28,9 @@ export interface TaskHistory {
 
 export interface TaskAttachment {
   id: number;
-  taskId: number;
   fileName: string;
-  filePath: string;
-  contentType: string;
-  fileSize: number;
-  uploadedAt: string;
-  uploadedByUserName: string;
+  fileUrl: string;
+  uploadedDate: string;
 }
 
 // Queries

@@ -75,7 +75,7 @@ export default function TaskCard({ task, onClick }: Props) {
       <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-700/50 pt-3 mt-auto">
         <div className="flex items-center gap-1 bg-gray-900/50 px-2 py-1 rounded-md">
           <Calendar size={12} />
-          <span>{new Date(task.dueDate).toLocaleDateString('tr-TR')}</span>
+          <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('tr-TR') : 'Belirtilmedi'}</span>
         </div>
         <div className="flex items-center gap-1 bg-gray-900/50 px-2 py-1 rounded-md" title={task.assignedUserName}>
           <User size={12} />
