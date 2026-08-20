@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSignalR } from '@/hooks/useSignalR';
 import { useRouter, usePathname } from 'next/navigation';
+import ReactQueryProvider from './ReactQueryProvider';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated } = useAuthStore();
@@ -36,5 +37,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   if (!isMounted) return null; // Prevent hydration mismatch
 
-  return <>{children}</>;
+  return (
+    <ReactQueryProvider>
+      {children}
+    </ReactQueryProvider>
+  );
 }

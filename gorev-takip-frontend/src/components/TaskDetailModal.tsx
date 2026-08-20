@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { X, MessageSquare, History, Paperclip, Edit, Download, Send, Trash2 } from 'lucide-react';
-import { useTaskStore, Task, TaskComment, TaskHistory, TaskAttachment } from '@/store/useTaskStore';
+import { Task, useTaskCommentsQuery, useTaskHistoryQuery, useTaskAttachmentsQuery, useUpdateTaskDetailsMutation, useAddCommentMutation, useUploadAttachmentMutation, useDeleteAttachmentMutation } from '@/hooks/useTasks';
 import { useUserStore } from '@/store/useUserStore';
 import { useAuthStore } from '@/store/useAuthStore';
 
@@ -17,17 +17,16 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
   const isAdmin = user?.role === 1;
   const [activeTab, setActiveTab] = useState<'edit' | 'comments' | 'attachments' | 'history'>(isAdmin ? 'edit' : 'comments');
   
-  const { 
-    updateTaskDetails, 
-    fetchTaskComments, addTaskComment, 
-    fetchTaskAttachments, uploadTaskAttachment, 
-    fetchTaskHistory 
-  } = useTaskStore();
+  const { mutateAsync: updateTaskDetails } = useUpdateTaskDetailsMutation();
+  const { mutateAsync: addTaskComment } = useAddCommentMutation();
+  const { mutateAsync: uploadTaskAttachment } = useUploadAttachmentMutation();
+  const { mutateAsync: deleteTaskAttachment } = useDeleteAttachmentMutation();
+
   const { users, fetchUsers } = useUserStore();
 
-  const [comments, setComments] = useState<TaskComment[]>([]);
-  const [history, setHistory] = useState<TaskHistory[]>([]);
-  const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
+  const { data: comments = [] } = useTaskCommentsQuery(isOpen && activeTab === 'comments' ? task.id : 0);
+  const { data: history = [] } = useTaskHistoryQuery(isOpen && activeTab === 'history' ? task.id : 0);
+  const { data: attachments = [] } = useTaskAttachmentsQuery(isOpen && activeTab === 'attachments' ? task.id : 0);
   
   // Edit state
   const [editData, setEditData] = useState<Partial<Task>>({});
@@ -54,24 +53,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
     }
   }, [isOpen, task, isAdmin]);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadTabData(activeTab);
-    }
-  }, [isOpen, activeTab, task.id]);
-
-  const loadTabData = async (tab: string) => {
-    if (tab === 'comments') {
-      const data = await fetchTaskComments(task.id);
-      setComments(data || []);
-    } else if (tab === 'history') {
-      const data = await fetchTaskHistory(task.id);
-      setHistory(data || []);
-    } else if (tab === 'attachments') {
-      const data = await fetchTaskAttachments(task.id);
-      setAttachments(data || []);
-    }
-  };
+  // React Query handles data fetching based on the activeTab condition in the hook
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,16 +61,15 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
       ...editData,
       dueDate: editData.dueDate ? new Date(editData.dueDate).toISOString() : undefined
     };
-    await updateTaskDetails(task.id, formattedData);
+    await updateTaskDetails({ taskId: task.id, data: formattedData });
     onClose();
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    await addTaskComment(task.id, newComment);
+    await addTaskComment({ taskId: task.id, text: newComment });
     setNewComment('');
-    loadTabData('comments');
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,8 +83,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
 
     setUploading(true);
     try {
-      await uploadTaskAttachment(task.id, file);
-      loadTabData('attachments');
+      await uploadTaskAttachment({ taskId: task.id, file });
     } catch (error) {
       console.error(error);
       alert("Dosya yüklenirken bir hata oluştu.");
@@ -199,7 +179,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                 {comments.length === 0 ? (
                   <p className="text-gray-500 text-center py-4">Henüz not eklenmemiş. İlk notu siz ekleyin!</p>
                 ) : (
-                  comments.map(c => (
+                  comments.map((c: any) => (
                     <div key={c.id} className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg w-max max-w-[85%] border dark:border-blue-800/50">
                       <div className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1">
                         {c.userName} - {new Date(c.createdDate).toLocaleString()}
@@ -246,7 +226,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                 </button>
               </div>
               <div className="space-y-3">
-                {attachments.map(a => (
+                {attachments.map((a: any) => (
                   <div key={a.id} className="flex justify-between items-center p-4 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 shadow-sm">
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-600 rounded-full">
@@ -264,8 +244,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                       <button 
                         onClick={() => {
                           if (window.confirm("Bu dosyayı silmek istediğinize emin misiniz?")) {
-                            useTaskStore.getState().deleteTaskAttachment(a.id)
-                              .then(() => loadTabData('attachments'))
+                            deleteTaskAttachment({ attachmentId: a.id })
                               .catch(() => alert("Dosya silinirken bir hata oluştu."));
                           }
                         }}
@@ -290,7 +269,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                 <p className="text-gray-500 text-center py-4">Geçmiş kaydı bulunamadı.</p>
               ) : (
                 <div className="relative border-l-2 border-gray-200 dark:border-gray-700 ml-4 space-y-8 py-4">
-                  {history.map((h, i) => (
+                  {history.map((h: any, i: number) => (
                     <div key={i} className="pl-6 relative">
                       <div className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full -left-[9px] top-1 dark:bg-gray-800"></div>
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{h.actionMessage}</p>

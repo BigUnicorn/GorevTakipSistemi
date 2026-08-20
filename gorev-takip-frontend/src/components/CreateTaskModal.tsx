@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { useTaskStore, Task } from '@/store/useTaskStore';
+import { Task, useCreateTaskMutation } from '@/hooks/useTasks';
 import { useUserStore } from '@/store/useUserStore';
 
 interface CreateTaskModalProps {
@@ -11,7 +11,7 @@ interface CreateTaskModalProps {
 }
 
 export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProps) {
-  const { createTask } = useTaskStore();
+  const { mutateAsync: createTask } = useCreateTaskMutation();
   const { users, fetchUsers } = useUserStore();
   
   const [formData, setFormData] = useState<Partial<Task>>({

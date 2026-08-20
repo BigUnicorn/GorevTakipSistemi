@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { useAuthStore } from '@/store/useAuthStore';
-import { useTaskStore } from '@/store/useTaskStore';
 import { useNotificationStore } from '@/store/useNotificationStore';
+import { useQueryClient } from '@tanstack/react-query';
+import { Task } from '@/hooks/useTasks';
 
 export const useSignalR = () => {
   const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
   const { isAuthenticated } = useAuthStore();
-  const { fetchTasks } = useTaskStore();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -18,12 +19,11 @@ export const useSignalR = () => {
       return;
     }
 
-    const token = sessionStorage.getItem('token');
-    
+    // Token is handled via HTTPOnly cookies, but SignalR requires withCredentials for cookies
+    // For non-browser clients or if fallback is needed, we could fetch from an endpoint.
+    // However, signalR withUrl will send cookies automatically if withCredentials is true (which is default for same-origin)
     const newConnection = new signalR.HubConnectionBuilder()
-      .withUrl('/taskhub', {
-        accessTokenFactory: () => token || ''
-      })
+      .withUrl('/taskhub')
       .withAutomaticReconnect()
       .build();
 
@@ -31,7 +31,6 @@ export const useSignalR = () => {
   }, [isAuthenticated]);
 
   const { user } = useAuthStore();
-  const { tasks } = useTaskStore();
   const { addNotification } = useNotificationStore();
 
   useEffect(() => {
@@ -55,13 +54,13 @@ export const useSignalR = () => {
               }
             }
 
-            // Re-fetch tasks to keep it simple, or update zustand store directly
-            fetchTasks();
+            // Invalidate queries to trigger a refetch
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
           });
 
           connection.on('ReceiveNewComment', (taskId: number) => {
-            // Find task to check if it's assigned to current user
-            const task = useTaskStore.getState().tasks.find(t => t.id === taskId);
+            const tasks = queryClient.getQueryData<Task[]>(['tasks']) || [];
+            const task = tasks.find((t: any) => t.id === taskId);
             const isRelevant = user?.role === 1 || task?.assignedUserId === user?.id;
             
             if (isRelevant) {
@@ -71,7 +70,7 @@ export const useSignalR = () => {
         })
         .catch(e => console.log('SignalR Connection Error: ', e));
     }
-  }, [connection, fetchTasks, addNotification, user]);
+  }, [connection, queryClient, addNotification, user]);
 
   return connection;
 };

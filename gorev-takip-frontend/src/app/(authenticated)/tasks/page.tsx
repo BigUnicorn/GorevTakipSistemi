@@ -5,27 +5,17 @@ import KanbanBoard from '@/components/KanbanBoard';
 import TaskListView from '@/components/TaskListView';
 import CreateTaskModal from '@/components/CreateTaskModal';
 import TaskDetailModal from '@/components/TaskDetailModal';
-import { useTaskStore, Task } from '@/store/useTaskStore';
+import { Task, useTasksQuery } from '@/hooks/useTasks';
 import { useAuthStore } from '@/store/useAuthStore';
 import { LayoutGrid, List } from 'lucide-react';
 
 export default function TasksPage() {
-  const { fetchTasks, tasks } = useTaskStore();
+  const { data: tasks = [], isLoading: loading } = useTasksQuery();
   const { user } = useAuthStore();
-  const [loading, setLoading] = useState(true);
   
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-
-  useEffect(() => {
-    const loadTasks = async () => {
-      await fetchTasks();
-      setLoading(false);
-    };
-    
-    loadTasks();
-  }, [fetchTasks]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-full text-gray-400">Görevler yükleniyor...</div>;

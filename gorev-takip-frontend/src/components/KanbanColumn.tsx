@@ -2,7 +2,7 @@
 
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Task } from '@/store/useTaskStore';
+import { Task } from '@/hooks/useTasks';
 import TaskCard from './TaskCard';
 
 interface Props {
