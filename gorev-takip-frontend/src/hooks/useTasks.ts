@@ -105,7 +105,7 @@ export const useUpdateTaskStatusMutation = () => {
     // Optimistic Update
     onMutate: async ({ taskId, newStatus }: { taskId: number, newStatus: number }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      
+
       const previousTasks = queryClient.getQueryData<Task[]>(['tasks']);
 
       if (previousTasks) {

@@ -38,12 +38,12 @@ export const useSignalR = () => {
       connection.start()
         .then(() => {
           console.log('SignalR Connected!');
-          
+
           connection.on('ReceiveTaskUpdate', (data: any) => {
             console.log('Task Update Received:', data);
-            
+
             const isRelevant = user?.role === 1 || data.task?.assignedUserId === user?.id;
-            
+
             if (isRelevant) {
               if (data.action === 'Create') {
                 addNotification(`Yeni görev oluşturuldu: ${data.task?.title || 'Bilinmiyor'}`);
@@ -62,7 +62,7 @@ export const useSignalR = () => {
             const tasks = queryClient.getQueryData<Task[]>(['tasks']) || [];
             const task = tasks.find((t: any) => t.id === taskId);
             const isRelevant = user?.role === 1 || task?.assignedUserId === user?.id;
-            
+
             if (isRelevant) {
               addNotification(`#${taskId} numaralı göreve yeni bir yorum yapıldı.`);
             }
