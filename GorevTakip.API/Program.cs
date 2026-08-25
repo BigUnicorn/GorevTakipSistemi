@@ -231,3 +231,5 @@ app.Run();
 
 //docker-compose stop --> Duraklatmak için
 //docker-compose start --> Başlatmak için
+
+public partial class Program { }
