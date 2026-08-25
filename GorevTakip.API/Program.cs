@@ -9,6 +9,7 @@ using Serilog.Sinks.PostgreSQL;
 using NpgsqlTypes;
 using System.Collections.Generic;
 using GorevTakip.API.HostedServices;
+using GorevTakip.API.Services;
 using GorevTakip.API.Filters;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
@@ -120,6 +121,9 @@ builder.Services.AddCors(options =>
 
 // Arka plan log temizleme servisini sisteme ekliyoruz
 builder.Services.AddHostedService<LogCleanupService>();
+
+// Outbox Pattern için arka plan servisi
+builder.Services.AddHostedService<OutboxBackgroundService>();
 
 // Rate Limiting Ayarları
 builder.Services.AddRateLimiter(options =>

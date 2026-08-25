@@ -18,6 +18,7 @@ namespace GorevTakip.DataAccess
         public DbSet<TaskComment> Comments { get; set; }
         public DbSet<TaskHistory> TaskHistories { get; set; }
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
 
         // Tablo ilişkilerini ve kısıtlamalarını detaylı ayarladığımız (Fluent API) metot
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -40,6 +41,13 @@ namespace GorevTakip.DataAccess
                 .OnDelete(DeleteBehavior.Restrict);
                 
             modelBuilder.Entity<TaskItem>().HasQueryFilter(t => !t.IsDeleted);
+
+            modelBuilder.Entity<OutboxMessage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Type).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.Payload).IsRequired();
+            });
 
             base.OnModelCreating(modelBuilder);
         }

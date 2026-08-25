@@ -21,6 +21,8 @@ namespace GorevTakip.Tests
         private readonly Mock<ITaskHistoryRepository> _historyRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IDistributedCache> _cacheMock;
+        private readonly Mock<IOutboxRepository> _outboxRepositoryMock;
+        private readonly Mock<IMapper> _mapperMock;
 
         public UpdateTaskCommandHandlerTests()
         {
@@ -29,6 +31,8 @@ namespace GorevTakip.Tests
             _historyRepositoryMock = new Mock<ITaskHistoryRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _cacheMock = new Mock<IDistributedCache>();
+            _outboxRepositoryMock = new Mock<IOutboxRepository>();
+            _mapperMock = new Mock<IMapper>();
         }
 
         [Fact]
@@ -48,7 +52,9 @@ namespace GorevTakip.Tests
                 _userRepositoryMock.Object,
                 _historyRepositoryMock.Object,
                 _unitOfWorkMock.Object,
-                _cacheMock.Object
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object,
+                _mapperMock.Object
             );
 
             // Act & Assert
@@ -76,7 +82,9 @@ namespace GorevTakip.Tests
                 _userRepositoryMock.Object,
                 _historyRepositoryMock.Object,
                 _unitOfWorkMock.Object,
-                _cacheMock.Object
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object,
+                _mapperMock.Object
             );
 
             // Act & Assert
@@ -112,7 +120,9 @@ namespace GorevTakip.Tests
                 _userRepositoryMock.Object,
                 _historyRepositoryMock.Object,
                 _unitOfWorkMock.Object,
-                _cacheMock.Object
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object,
+                _mapperMock.Object
             );
 
             // Act

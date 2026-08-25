@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using GorevTakip.Business.DTOs;
 using GorevTakip.DataAccess.Repositories;
@@ -19,6 +20,7 @@ namespace GorevTakip.Business.Services
         private readonly IGenericRepository<User> _userRepository;
         private readonly ITaskHistoryRepository _historyRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IOutboxRepository _outboxRepository;
 
         // Dosyaların kaydedileceği klasör
         private readonly string _uploadDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
@@ -28,13 +30,15 @@ namespace GorevTakip.Business.Services
             ITaskRepository taskRepository,
             IGenericRepository<User> userRepository,
             ITaskHistoryRepository historyRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IOutboxRepository outboxRepository)
         {
             _attachmentRepository = attachmentRepository;
             _taskRepository = taskRepository;
             _userRepository = userRepository;
             _historyRepository = historyRepository;
             _unitOfWork = unitOfWork;
+            _outboxRepository = outboxRepository;
         }
 
         public async Task<TaskAttachmentDto> UploadAttachmentAsync(int taskId, int userId, IFormFile file)
@@ -88,13 +92,19 @@ namespace GorevTakip.Business.Services
 
             await _attachmentRepository.AddAsync(attachment);
 
-            // Geçmişe ekle
             var history = new TaskHistory
             {
                 TaskId = taskId,
                 ActionMessage = $"'{file.FileName}' adlı dosya eklendi."
             };
             await _historyRepository.AddAsync(history);
+
+            var outboxMessage = new OutboxMessage
+            {
+                Type = "ReceiveTaskUpdate",
+                Payload = JsonSerializer.Serialize(new { Action = "AttachmentAdded", TaskId = taskId })
+            };
+            await _outboxRepository.AddAsync(outboxMessage);
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -165,13 +175,19 @@ namespace GorevTakip.Business.Services
             // DB'den sil
             _attachmentRepository.Delete(attachment);
 
-            // Geçmişe ekle
             var history = new TaskHistory
             {
                 TaskId = attachment.TaskId,
                 ActionMessage = $"'{attachment.FileName}' adlı dosya silindi."
             };
             await _historyRepository.AddAsync(history);
+
+            var outboxMessage = new OutboxMessage
+            {
+                Type = "ReceiveTaskUpdate",
+                Payload = JsonSerializer.Serialize(new { Action = "AttachmentDeleted" })
+            };
+            await _outboxRepository.AddAsync(outboxMessage);
 
             await _unitOfWork.SaveChangesAsync();
         }

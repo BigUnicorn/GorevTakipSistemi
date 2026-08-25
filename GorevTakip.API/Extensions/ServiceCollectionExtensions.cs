@@ -29,6 +29,7 @@ namespace GorevTakip.API.Extensions
             services.AddScoped<ITaskHistoryRepository, TaskHistoryRepository>();
             services.AddScoped<ITaskCommentRepository, TaskCommentRepository>();
             services.AddScoped<ITaskAttachmentRepository, TaskAttachmentRepository>();
+            services.AddScoped<IOutboxRepository, OutboxRepository>();
 
             // 3. Business (Servis) Katmanı Kayıtları (Mevcut kodunuz)
             services.AddScoped<IUserService, UserService>();
