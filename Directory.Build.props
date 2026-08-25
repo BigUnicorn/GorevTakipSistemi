@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Tüm projelerde uyarıları hata (error) olarak kabul et -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>
