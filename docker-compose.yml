@@ -84,7 +84,7 @@ services:
     container_name: gorevtakip-grafana
     environment:
       - GF_SERVER_ROOT_URL=http://localhost:5074/grafana/
-      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GF_SERVER_SERVE_FROM_SUB_PATH=false
     depends_on:
       - prometheus
       - jaeger
