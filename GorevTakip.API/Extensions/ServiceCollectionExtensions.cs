@@ -24,17 +24,20 @@ namespace GorevTakip.API.Extensions
 
             services.AddValidatorsFromAssemblyContaining<TaskCreateDtoValidator>();
             
-            // 2. YENİ EKLENEN SPESİFİK REPOSITORY KAYITLARI (İşte burası!)
-            services.AddScoped<ITaskRepository, TaskRepository>();
-            services.AddScoped<ITaskHistoryRepository, TaskHistoryRepository>();
-            services.AddScoped<ITaskCommentRepository, TaskCommentRepository>();
-            services.AddScoped<ITaskAttachmentRepository, TaskAttachmentRepository>();
-            services.AddScoped<IOutboxRepository, OutboxRepository>();
-
-            // 3. Business (Servis) Katmanı Kayıtları (Mevcut kodunuz)
-            services.AddScoped<IUserService, UserService>();
-            services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IAttachmentService, AttachmentService>();
+            // 2. Scrutor ile Dinamik Bağımlılık Enjeksiyonu (DI)
+            services.Scan(scan => scan
+                // DataAccess Assembly'sindeki Repository'leri otomatik kaydet
+                .FromAssembliesOf(typeof(TaskRepository))
+                    .AddClasses(classes => classes.Where(type => type.Name.EndsWith("Repository") && !type.IsGenericType))
+                    .AsImplementedInterfaces()
+                    .WithScopedLifetime()
+                    
+                // Business Assembly'sindeki Servisleri otomatik kaydet
+                .FromAssembliesOf(typeof(UserService))
+                    .AddClasses(classes => classes.Where(type => type.Name.EndsWith("Service") && !type.IsGenericType))
+                    .AsImplementedInterfaces()
+                    .WithScopedLifetime()
+            );
 
             // MediatR Kaydı
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(GorevTakip.Business.Mapping.MappingProfile).Assembly));
