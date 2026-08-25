@@ -43,7 +43,7 @@ namespace GorevTakip.Tests
             };
 
             _userRepositoryMock.Setup(repo => repo.GetByIdAsync(99))
-                .ReturnsAsync((User)null); // Kullanıcı yok
+                .ReturnsAsync((User?)null); // Kullanıcı yok
 
             var handler = new CreateTaskCommandHandler(
                 _taskRepositoryMock.Object,

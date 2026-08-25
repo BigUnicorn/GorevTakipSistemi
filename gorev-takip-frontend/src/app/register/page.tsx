@@ -30,8 +30,9 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push('/login');
       }, 2000);
-    } catch (err: any) {
-      setError(err.response?.data || 'Kayıt işlemi başarısız oldu.');
+    } catch (err) {
+      const axiosError = err as { response?: { data?: string } };
+      setError(axiosError.response?.data || 'Kayıt işlemi başarısız oldu.');
     } finally {
       setIsLoading(false);
     }

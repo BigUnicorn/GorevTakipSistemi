@@ -33,7 +33,7 @@ namespace GorevTakip.Tests
             // Arrange
             var command = new UpdateTaskStatusCommand { Id = 1, NewStatus = WorkStatus.Done };
 
-            _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync((TaskItem)null);
+            _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync((TaskItem?)null);
 
             var handler = new UpdateTaskStatusCommandHandler(
                 _taskRepositoryMock.Object,

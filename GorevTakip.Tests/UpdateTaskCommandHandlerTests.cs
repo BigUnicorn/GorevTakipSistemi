@@ -41,7 +41,7 @@ namespace GorevTakip.Tests
             };
 
             _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1))
-                .ReturnsAsync((TaskItem)null);
+                .ReturnsAsync((TaskItem?)null);
 
             var handler = new UpdateTaskCommandHandler(
                 _taskRepositoryMock.Object,
@@ -69,7 +69,7 @@ namespace GorevTakip.Tests
             var existingTask = new TaskItem { Id = 1, AssignedUserId = 1, Category = TaskCategory.Backend };
             
             _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(existingTask);
-            _userRepositoryMock.Setup(repo => repo.GetByIdAsync(99)).ReturnsAsync((User)null);
+            _userRepositoryMock.Setup(repo => repo.GetByIdAsync(99)).ReturnsAsync((User?)null);
 
             var handler = new UpdateTaskCommandHandler(
                 _taskRepositoryMock.Object,

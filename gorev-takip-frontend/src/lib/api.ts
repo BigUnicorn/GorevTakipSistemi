@@ -30,10 +30,11 @@ api.interceptors.response.use(
             // Sadece Auth/refresh rotasına istek atıyoruz. Token'lar çerezden gidecek.
             await axios.post(`${API_URL}/Auth/refresh`, {}, { withCredentials: true });
             return true;
-          } catch (refreshError) {
+          } catch {
             // Token yenilenemediyse çıkış yap.
             // window.location.href kullanmak sonsuz döngüye sebep olur, React Router yönlendirmeyi halledecek.
             if (typeof window !== 'undefined' && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+              // eslint-disable-next-line @next/next/no-location-assign-relative-destination
               window.location.href = '/login';
             }
             return false;

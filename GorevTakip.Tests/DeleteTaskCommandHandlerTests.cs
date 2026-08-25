@@ -54,7 +54,7 @@ namespace GorevTakip.Tests
             // Arrange
             var command = new DeleteTaskCommand { Id = 1 };
 
-            _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync((TaskItem)null);
+            _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync((TaskItem?)null);
 
             var handler = new DeleteTaskCommandHandler(
                 _taskRepositoryMock.Object,

@@ -12,22 +12,20 @@ export const useSignalR = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      if (connection) {
-        connection.stop();
-        setConnection(null);
-      }
       return;
     }
 
-    // Token is handled via HTTPOnly cookies, but SignalR requires withCredentials for cookies
-    // For non-browser clients or if fallback is needed, we could fetch from an endpoint.
-    // However, signalR withUrl will send cookies automatically if withCredentials is true (which is default for same-origin)
     const newConnection = new signalR.HubConnectionBuilder()
       .withUrl('/taskhub')
       .withAutomaticReconnect()
       .build();
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setConnection(newConnection);
+
+    return () => {
+      newConnection.stop();
+    };
   }, [isAuthenticated]);
 
   const { user } = useAuthStore();
@@ -39,7 +37,7 @@ export const useSignalR = () => {
         .then(() => {
           console.log('SignalR Connected!');
 
-          connection.on('ReceiveTaskUpdate', (data: any) => {
+          connection.on('ReceiveTaskUpdate', (data: { action: string; task: Task }) => {
             console.log('Task Update Received:', data);
 
             const isRelevant = user?.role === 1 || data.task?.assignedUserId === user?.id;
@@ -60,7 +58,7 @@ export const useSignalR = () => {
 
           connection.on('ReceiveNewComment', (taskId: number) => {
             const tasks = queryClient.getQueryData<Task[]>(['tasks']) || [];
-            const task = tasks.find((t: any) => t.id === taskId);
+            const task = tasks.find((t: Task) => t.id === taskId);
             const isRelevant = user?.role === 1 || task?.assignedUserId === user?.id;
 
             if (isRelevant) {

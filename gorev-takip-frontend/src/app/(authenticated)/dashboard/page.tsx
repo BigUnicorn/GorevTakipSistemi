@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useUserStore } from '@/store/useUserStore';
-import { CheckCircle2, CircleDashed, Clock, Layout, Code, Database, Bug, Smartphone, TerminalSquare, Filter } from 'lucide-react';
+import { CheckCircle2, CircleDashed, Clock, Layout, Filter } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface TaskStats {
@@ -20,9 +20,23 @@ interface TaskStats {
   devOpsTasks: number;
 }
 
+const StatCard = ({ title, value, icon: Icon, colorClass, borderClass }: { title: string; value?: number; icon: React.ElementType; colorClass: string; borderClass: string }) => (
+  <div className={`bg-gray-900/60 p-6 rounded-2xl border ${borderClass} backdrop-blur-sm relative overflow-hidden group hover:scale-[1.02] transition-transform`}>
+    <div className={`absolute -right-6 -top-6 w-24 h-24 ${colorClass} rounded-full opacity-10 group-hover:opacity-20 transition-opacity blur-2xl`}></div>
+    <div className="flex justify-between items-start relative z-10">
+      <div>
+        <p className="text-gray-400 text-sm font-medium mb-1">{title}</p>
+        <h3 className="text-3xl font-bold text-white">{value === undefined ? '...' : value}</h3>
+      </div>
+      <div className={`p-3 rounded-xl ${colorClass} bg-opacity-10 text-white`}>
+        <Icon size={24} />
+      </div>
+    </div>
+  </div>
+);
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<TaskStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const { user } = useAuthStore();
   const { users, fetchUsers } = useUserStore();
 
@@ -33,11 +47,10 @@ export default function DashboardPage() {
     if (user?.role === 1) {
       fetchUsers();
     }
-  }, [user]);
+  }, [user, fetchUsers]);
 
   useEffect(() => {
     const fetchStats = async () => {
-      setLoading(true);
       try {
         let url = '/Tasks/statistics?';
         
@@ -56,8 +69,6 @@ export default function DashboardPage() {
         setStats(res.data);
       } catch (error) {
         console.error('İstatistikler yüklenemedi', error);
-      } finally {
-        setLoading(false);
       }
     };
     
@@ -66,20 +77,6 @@ export default function DashboardPage() {
     }
   }, [user, selectedUserId, selectedCategoryId]);
 
-  const StatCard = ({ title, value, icon: Icon, colorClass, borderClass }: any) => (
-    <div className={`bg-gray-900/60 p-6 rounded-2xl border ${borderClass} backdrop-blur-sm relative overflow-hidden group hover:scale-[1.02] transition-transform`}>
-      <div className={`absolute -right-6 -top-6 w-24 h-24 ${colorClass} rounded-full opacity-10 group-hover:opacity-20 transition-opacity blur-2xl`}></div>
-      <div className="flex justify-between items-start relative z-10">
-        <div>
-          <p className="text-gray-400 text-sm font-medium mb-1">{title}</p>
-          <h3 className="text-3xl font-bold text-white">{loading ? '...' : (value || 0)}</h3>
-        </div>
-        <div className={`p-3 rounded-xl ${colorClass} bg-opacity-10 text-white`}>
-          <Icon size={24} />
-        </div>
-      </div>
-    </div>
-  );
 
   const statusData = stats ? [
     { name: 'Yapılacaklar', value: stats.todoTasks, color: '#9CA3AF' },
@@ -170,6 +167,7 @@ export default function DashboardPage() {
                 <Tooltip 
                   contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
                   itemStyle={{ color: '#fff' }}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [value, 'Görev Sayısı']}
                 />
                 <Legend verticalAlign="bottom" height={36} />
@@ -188,6 +186,7 @@ export default function DashboardPage() {
                 <Tooltip 
                   cursor={{ fill: '#374151', opacity: 0.4 }}
                   contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', borderRadius: '0.5rem', color: '#fff' }}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   formatter={(value: any) => [value, 'Görev Sayısı']}
                 />
                 <Bar dataKey="value" name="Görev Sayısı" fill="#8B5CF6" radius={[4, 4, 0, 0]} maxBarSize={50} />

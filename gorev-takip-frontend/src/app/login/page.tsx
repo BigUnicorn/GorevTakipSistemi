@@ -32,8 +32,9 @@ export default function LoginPage() {
       
       // Redirect to dashboard
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
+    } catch (err) {
+      const axiosError = err as { response?: { data?: string } };
+      setError(axiosError.response?.data || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
     } finally {
       setIsLoading(false);
     }

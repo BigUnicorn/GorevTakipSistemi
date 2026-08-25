@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Task } from '@/hooks/useTasks';
-import { Calendar, User, Layout, Code, Database, Bug, Smartphone, TerminalSquare } from 'lucide-react';
+import { Calendar, Layout, Code, Database, Bug, Smartphone, TerminalSquare } from 'lucide-react';
 
 interface Props {
   tasks: Task[];

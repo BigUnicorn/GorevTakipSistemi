@@ -5,7 +5,7 @@ import { useNotificationStore } from '@/store/useNotificationStore';
 import { useSidebarStore } from '@/store/useSidebarStore';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, CheckSquare, LogOut, Settings, User, X } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, LogOut, User, X } from 'lucide-react';
 
 export default function Sidebar() {
   const { user, logout } = useAuthStore();
