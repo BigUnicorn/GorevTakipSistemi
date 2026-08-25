@@ -9,6 +9,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Moq;
 using Xunit;
 using GorevTakip.Business.Exceptions;
+using AutoMapper;
 
 namespace GorevTakip.Tests
 {
@@ -18,6 +19,8 @@ namespace GorevTakip.Tests
         private readonly Mock<ITaskHistoryRepository> _historyRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IDistributedCache> _cacheMock;
+        private readonly Mock<IOutboxRepository> _outboxRepositoryMock;
+        private readonly Mock<IMapper> _mapperMock;
 
         public UpdateTaskStatusCommandHandlerTests()
         {
@@ -25,6 +28,8 @@ namespace GorevTakip.Tests
             _historyRepositoryMock = new Mock<ITaskHistoryRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _cacheMock = new Mock<IDistributedCache>();
+            _outboxRepositoryMock = new Mock<IOutboxRepository>();
+            _mapperMock = new Mock<IMapper>();
         }
 
         [Fact]
@@ -33,13 +38,15 @@ namespace GorevTakip.Tests
             // Arrange
             var command = new UpdateTaskStatusCommand { Id = 1, NewStatus = WorkStatus.Done };
 
-            _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync((TaskItem)null);
+            _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync((TaskItem?)null);
 
             var handler = new UpdateTaskStatusCommandHandler(
                 _taskRepositoryMock.Object,
                 _historyRepositoryMock.Object,
                 _unitOfWorkMock.Object,
-                _cacheMock.Object
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object,
+                _mapperMock.Object
             );
 
             // Act & Assert
@@ -61,7 +68,9 @@ namespace GorevTakip.Tests
                 _taskRepositoryMock.Object,
                 _historyRepositoryMock.Object,
                 _unitOfWorkMock.Object,
-                _cacheMock.Object
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object,
+                _mapperMock.Object
             );
 
             // Act

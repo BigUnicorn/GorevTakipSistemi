@@ -30,13 +30,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error('Logout hatası', e);
     }
     set({ user: null, isAuthenticated: false });
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
     window.location.href = '/login'; // Çıkış yapınca login sayfasına yönlendir
   },
   checkAuth: async () => {
     try {
       const response = await api.get('/Auth/me');
       set({ user: response.data, isAuthenticated: true });
-    } catch (error) {
+    } catch {
       set({ user: null, isAuthenticated: false });
     }
   }

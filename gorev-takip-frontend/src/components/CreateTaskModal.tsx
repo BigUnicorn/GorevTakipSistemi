@@ -29,7 +29,7 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
     if (isOpen) {
       fetchUsers();
     }
-  }, [isOpen]);
+  }, [isOpen, fetchUsers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +55,7 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
         dueDate: '',
         assignedUserId: 0
       });
-    } catch (error) {
+    } catch {
       alert("Görev oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.");
     } finally {
       setIsSubmitting(false);

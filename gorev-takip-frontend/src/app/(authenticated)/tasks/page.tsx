@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import KanbanBoard from '@/components/KanbanBoard';
 import TaskListView from '@/components/TaskListView';
 import CreateTaskModal from '@/components/CreateTaskModal';

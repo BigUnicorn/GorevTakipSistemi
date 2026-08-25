@@ -40,6 +40,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTab(isAdmin ? 'edit' : 'comments');
       setEditData({
         title: task.title,
@@ -51,7 +52,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
       });
       fetchUsers();
     }
-  }, [isOpen, task, isAdmin]);
+  }, [isOpen, task, isAdmin, fetchUsers]);
 
   // React Query handles data fetching based on the activeTab condition in the hook
 
@@ -179,7 +180,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                 {comments.length === 0 ? (
                   <p className="text-gray-500 text-center py-4">Henüz not eklenmemiş. İlk notu siz ekleyin!</p>
                 ) : (
-                  comments.map((c: any) => (
+                  comments.map((c: import('@/hooks/useTasks').TaskComment) => (
                     <div key={c.id} className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-lg w-max max-w-[85%] border dark:border-blue-800/50">
                       <div className="text-xs font-semibold text-blue-800 dark:text-blue-300 mb-1">
                         {c.userName} - {new Date(c.createdDate).toLocaleString()}
@@ -226,7 +227,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                 </button>
               </div>
               <div className="space-y-3">
-                {attachments.map((a: any) => (
+                {attachments.map((a: import('@/hooks/useTasks').TaskAttachment & { fileSize?: number, uploadedByUserName?: string, uploadedAt?: string }) => (
                   <div key={a.id} className="flex justify-between items-center p-4 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 shadow-sm">
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-600 rounded-full">
@@ -234,7 +235,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                       </div>
                       <div>
                         <p className="text-sm font-medium">{a.fileName}</p>
-                        <p className="text-xs text-gray-500 mt-1">{(a.fileSize / 1024 / 1024).toFixed(2)} MB • {a.uploadedByUserName} • {new Date(a.uploadedAt).toLocaleDateString()}</p>
+                        <p className="text-xs text-gray-500 mt-1">{((a.fileSize || 0) / 1024 / 1024).toFixed(2)} MB • {a.uploadedByUserName || 'Bilinmiyor'} • {a.uploadedAt ? new Date(a.uploadedAt).toLocaleDateString() : 'Tarih Yok'}</p>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -269,7 +270,7 @@ export default function TaskDetailModal({ task, isOpen, onClose }: TaskDetailMod
                 <p className="text-gray-500 text-center py-4">Geçmiş kaydı bulunamadı.</p>
               ) : (
                 <div className="relative border-l-2 border-gray-200 dark:border-gray-700 ml-4 space-y-8 py-4">
-                  {history.map((h: any, i: number) => (
+                  {history.map((h: import('@/hooks/useTasks').TaskHistory, i: number) => (
                     <div key={i} className="pl-6 relative">
                       <div className="absolute w-4 h-4 bg-white border-2 border-blue-500 rounded-full -left-[9px] top-1 dark:bg-gray-800"></div>
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{h.actionMessage}</p>

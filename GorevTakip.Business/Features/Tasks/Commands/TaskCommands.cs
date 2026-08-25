@@ -5,6 +5,7 @@ using AutoMapper;
 using GorevTakip.DataAccess.Repositories;
 using GorevTakip.Entities;
 using GorevTakip.Entities.DTOs;
+using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.Caching.Distributed;
 using GorevTakip.Business.Exceptions;
@@ -25,9 +26,10 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IDistributedCache _cache;
+        private readonly IOutboxRepository _outboxRepository;
 
         public CreateTaskCommandHandler(ITaskRepository taskRepository, IGenericRepository<User> userRepository, 
-            ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IMapper mapper, IDistributedCache cache)
+            ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IMapper mapper, IDistributedCache cache, IOutboxRepository outboxRepository)
         {
             _taskRepository = taskRepository;
             _userRepository = userRepository;
@@ -35,6 +37,7 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _cache = cache;
+            _outboxRepository = outboxRepository;
         }
 
         public async Task<TaskResponseDto> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
@@ -55,10 +58,19 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             };
             
             await _historyRepository.AddAsync(history);
+            
+            var responseDto = _mapper.Map<TaskResponseDto>(taskItem);
+            var outboxMessage = new OutboxMessage
+            {
+                Type = "ReceiveTaskUpdate",
+                Payload = JsonSerializer.Serialize(new { Action = "Create", Task = responseDto })
+            };
+            await _outboxRepository.AddAsync(outboxMessage);
+            
             await _unitOfWork.SaveChangesAsync();
 
             await InvalidateTaskCacheAsync(taskItem.AssignedUserId, (int)taskItem.Category);
-            return _mapper.Map<TaskResponseDto>(taskItem);
+            return responseDto;
         }
 
         private async Task InvalidateTaskCacheAsync(int? userId = null, int? categoryId = null)
@@ -83,15 +95,19 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly ITaskHistoryRepository _historyRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDistributedCache _cache;
+        private readonly IOutboxRepository _outboxRepository;
+        private readonly IMapper _mapper;
 
         public UpdateTaskCommandHandler(ITaskRepository taskRepository, IGenericRepository<User> userRepository, 
-            ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IDistributedCache cache)
+            ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository, IMapper mapper)
         {
             _taskRepository = taskRepository;
             _userRepository = userRepository;
             _historyRepository = historyRepository;
             _unitOfWork = unitOfWork;
             _cache = cache;
+            _outboxRepository = outboxRepository;
+            _mapper = mapper;
         }
 
         public async Task Handle(UpdateTaskCommand request, CancellationToken cancellationToken)
@@ -121,6 +137,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
                 ActionMessage = "Görevin detayları güncellendi." 
             };
             await _historyRepository.AddAsync(history);
+            
+            var outboxMessage = new OutboxMessage
+            {
+                Type = "ReceiveTaskUpdate",
+                Payload = JsonSerializer.Serialize(new { Action = "Update", Task = _mapper.Map<TaskResponseDto>(existingTask) })
+            };
+            await _outboxRepository.AddAsync(outboxMessage);
+
             await _unitOfWork.SaveChangesAsync();
 
             await InvalidateTaskCacheAsync(oldUserId, oldCategoryId);
@@ -147,12 +171,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly ITaskRepository _taskRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDistributedCache _cache;
+        private readonly IOutboxRepository _outboxRepository;
 
-        public DeleteTaskCommandHandler(ITaskRepository taskRepository, IUnitOfWork unitOfWork, IDistributedCache cache)
+        public DeleteTaskCommandHandler(ITaskRepository taskRepository, IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository)
         {
             _taskRepository = taskRepository;
             _unitOfWork = unitOfWork;
             _cache = cache;
+            _outboxRepository = outboxRepository;
         }
 
         public async Task Handle(DeleteTaskCommand request, CancellationToken cancellationToken)
@@ -164,6 +190,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
                 int categoryId = (int)task.Category;
                 
                 _taskRepository.Delete(task);
+
+                var outboxMessage = new OutboxMessage
+                {
+                    Type = "ReceiveTaskUpdate",
+                    Payload = JsonSerializer.Serialize(new { Action = "Delete", TaskId = request.Id })
+                };
+                await _outboxRepository.AddAsync(outboxMessage);
+
                 await _unitOfWork.SaveChangesAsync();
                 
                 await _cache.RemoveAsync("TaskStats_User_0_Cat_0");
@@ -187,14 +221,18 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly ITaskHistoryRepository _historyRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDistributedCache _cache;
+        private readonly IOutboxRepository _outboxRepository;
+        private readonly IMapper _mapper;
 
         public UpdateTaskStatusCommandHandler(ITaskRepository taskRepository, ITaskHistoryRepository historyRepository, 
-            IUnitOfWork unitOfWork, IDistributedCache cache)
+            IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository, IMapper mapper)
         {
             _taskRepository = taskRepository;
             _historyRepository = historyRepository;
             _unitOfWork = unitOfWork;
             _cache = cache;
+            _outboxRepository = outboxRepository;
+            _mapper = mapper;
         }
 
         public async Task Handle(UpdateTaskStatusCommand request, CancellationToken cancellationToken)
@@ -211,6 +249,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
                 ActionMessage = $"Görev durumu güncellendi: {request.NewStatus}" 
             };
             await _historyRepository.AddAsync(history);
+            
+            var outboxMessage = new OutboxMessage
+            {
+                Type = "ReceiveTaskUpdate",
+                Payload = JsonSerializer.Serialize(new { Action = "Update", Task = _mapper.Map<TaskResponseDto>(task) })
+            };
+            await _outboxRepository.AddAsync(outboxMessage);
+
             await _unitOfWork.SaveChangesAsync();
 
             await _cache.RemoveAsync("TaskStats_User_0_Cat_0");
@@ -233,12 +279,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly ITaskCommentRepository _commentRepository;
         private readonly ITaskHistoryRepository _historyRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IOutboxRepository _outboxRepository;
 
-        public AddCommentCommandHandler(ITaskCommentRepository commentRepository, ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork)
+        public AddCommentCommandHandler(ITaskCommentRepository commentRepository, ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IOutboxRepository outboxRepository)
         {
             _commentRepository = commentRepository;
             _historyRepository = historyRepository;
             _unitOfWork = unitOfWork;
+            _outboxRepository = outboxRepository;
         }
 
         public async Task Handle(AddCommentCommand request, CancellationToken cancellationToken)
@@ -258,6 +306,13 @@ namespace GorevTakip.Business.Features.Tasks.Commands
                 ActionMessage = "Göreve yeni bir not eklendi." 
             };
             await _historyRepository.AddAsync(history);
+
+            var outboxMessage = new OutboxMessage
+            {
+                Type = "ReceiveNewComment",
+                Payload = JsonSerializer.Serialize(request.TaskId)
+            };
+            await _outboxRepository.AddAsync(outboxMessage);
 
             await _unitOfWork.SaveChangesAsync();
         }

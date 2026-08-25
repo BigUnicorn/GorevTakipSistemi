@@ -22,6 +22,7 @@ namespace GorevTakip.Tests
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly Mock<IDistributedCache> _cacheMock;
+        private readonly Mock<IOutboxRepository> _outboxRepositoryMock;
 
         public CreateTaskCommandHandlerTests()
         {
@@ -31,6 +32,7 @@ namespace GorevTakip.Tests
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _mapperMock = new Mock<IMapper>();
             _cacheMock = new Mock<IDistributedCache>();
+            _outboxRepositoryMock = new Mock<IOutboxRepository>();
         }
 
         [Fact]
@@ -43,7 +45,7 @@ namespace GorevTakip.Tests
             };
 
             _userRepositoryMock.Setup(repo => repo.GetByIdAsync(99))
-                .ReturnsAsync((User)null); // Kullanıcı yok
+                .ReturnsAsync((User?)null); // Kullanıcı yok
 
             var handler = new CreateTaskCommandHandler(
                 _taskRepositoryMock.Object,
@@ -51,7 +53,8 @@ namespace GorevTakip.Tests
                 _historyRepositoryMock.Object,
                 _unitOfWorkMock.Object,
                 _mapperMock.Object,
-                _cacheMock.Object
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object
             );
 
             // Act & Assert
@@ -81,7 +84,8 @@ namespace GorevTakip.Tests
                 _historyRepositoryMock.Object,
                 _unitOfWorkMock.Object,
                 _mapperMock.Object,
-                _cacheMock.Object
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object
             );
 
             // Act

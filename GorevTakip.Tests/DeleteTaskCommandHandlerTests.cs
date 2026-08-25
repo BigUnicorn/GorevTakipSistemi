@@ -16,12 +16,14 @@ namespace GorevTakip.Tests
         private readonly Mock<ITaskRepository> _taskRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IDistributedCache> _cacheMock;
+        private readonly Mock<IOutboxRepository> _outboxRepositoryMock;
 
         public DeleteTaskCommandHandlerTests()
         {
             _taskRepositoryMock = new Mock<ITaskRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _cacheMock = new Mock<IDistributedCache>();
+            _outboxRepositoryMock = new Mock<IOutboxRepository>();
         }
 
         [Fact]
@@ -36,7 +38,8 @@ namespace GorevTakip.Tests
             var handler = new DeleteTaskCommandHandler(
                 _taskRepositoryMock.Object,
                 _unitOfWorkMock.Object,
-                _cacheMock.Object
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object
             );
 
             // Act
@@ -54,12 +57,13 @@ namespace GorevTakip.Tests
             // Arrange
             var command = new DeleteTaskCommand { Id = 1 };
 
-            _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync((TaskItem)null);
+            _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync((TaskItem?)null);
 
             var handler = new DeleteTaskCommandHandler(
                 _taskRepositoryMock.Object,
                 _unitOfWorkMock.Object,
-                _cacheMock.Object
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object
             );
 
             // Act

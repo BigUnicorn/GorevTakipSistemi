@@ -116,7 +116,7 @@ export const useUpdateTaskStatusMutation = () => {
 
       return { previousTasks };
     },
-    onError: (err: any, newTodo: any, context: any) => {
+    onError: (err: Error, newTodo: { taskId: number, newStatus: number }, context: { previousTasks?: Task[] } | undefined) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(['tasks'], context.previousTasks);
       }
@@ -147,7 +147,7 @@ export const useAddCommentMutation = () => {
     mutationFn: async ({ taskId, text }: { taskId: number; text: string }) => {
       await api.post(`/Tasks/${taskId}/comments`, { text });
     },
-    onSuccess: (_: any, variables: any) => {
+    onSuccess: (_: unknown, variables: { taskId: number, text: string }) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', variables.taskId, 'comments'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', variables.taskId, 'history'] });
     },
@@ -166,7 +166,7 @@ export const useUploadAttachmentMutation = () => {
       });
       return res.data;
     },
-    onSuccess: (_: any, variables: any) => {
+    onSuccess: (_: unknown, variables: { taskId: number, file: File }) => {
       queryClient.invalidateQueries({ queryKey: ['tasks', variables.taskId, 'attachments'] });
       queryClient.invalidateQueries({ queryKey: ['tasks', variables.taskId, 'history'] });
     },

@@ -8,8 +8,6 @@ using GorevTakip.Entities.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using GorevTakip.Entities;
-using Microsoft.AspNetCore.SignalR;
-using GorevTakip.API.Hubs;
 using MediatR;
 
 namespace GorevTakip.API.Controllers
@@ -21,12 +19,10 @@ namespace GorevTakip.API.Controllers
     public class TasksController : ControllerBase
     {
         private readonly IMediator _mediator;
-        private readonly IHubContext<TaskHub> _hubContext;
 
-        public TasksController(IMediator mediator, IHubContext<TaskHub> hubContext)
+        public TasksController(IMediator mediator)
         {
             _mediator = mediator;
-            _hubContext = hubContext;
         }
 
         // GET: api/Tasks
@@ -71,8 +67,7 @@ namespace GorevTakip.API.Controllers
         [Authorize(Roles = nameof(UserRole.Admin))] 
         public async Task<IActionResult> CreateTask([FromBody] TaskCreateDto taskDto)
         {
-            var createdTask = await _mediator.Send(new CreateTaskCommand { TaskDto = taskDto });
-            await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveTaskUpdate, new { Action = "Create", Task = createdTask });
+            await _mediator.Send(new CreateTaskCommand { TaskDto = taskDto });
             return Ok("Görev başarıyla oluşturuldu.");
         }
 
@@ -85,8 +80,6 @@ namespace GorevTakip.API.Controllers
                 return BadRequest("URL içindeki ID ile gönderilen görev ID'si uyuşmuyor.");
 
             await _mediator.Send(new UpdateTaskCommand { TaskDto = taskDto });
-            var updatedTask = await _mediator.Send(new GetTaskByIdQuery { Id = taskDto.Id });
-            await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveTaskUpdate, new { Action = "Update", Task = updatedTask });
             return Ok("Görev başarıyla güncellendi.");
         }
 
@@ -111,8 +104,6 @@ namespace GorevTakip.API.Controllers
             }
 
             await _mediator.Send(new UpdateTaskStatusCommand { Id = id, NewStatus = newStatus });
-            var updatedTask = await _mediator.Send(new GetTaskByIdQuery { Id = id });
-            await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveTaskUpdate, new { Action = "Update", Task = updatedTask });
             return Ok("Görev durumu başarıyla güncellendi.");
         }
 
@@ -123,7 +114,6 @@ namespace GorevTakip.API.Controllers
         public async Task<IActionResult> DeleteTask(int id)
         {
             await _mediator.Send(new DeleteTaskCommand { Id = id });
-            await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveTaskUpdate, new { Action = "Delete", TaskId = id });
             return Ok("Görev başarıyla silindi.");
         }
 
@@ -178,7 +168,6 @@ namespace GorevTakip.API.Controllers
             if (!int.TryParse(userIdStr, out int userId)) return Unauthorized();
 
             await _mediator.Send(new AddCommentCommand { TaskId = id, UserId = userId, Text = dto.Text });
-            await _hubContext.Clients.All.SendAsync(HubConstants.ReceiveNewComment, id);
             return Ok("Yorum eklendi.");
         }
     }

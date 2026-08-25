@@ -3,7 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Task } from '@/hooks/useTasks';
-import { Calendar, Tag, User } from 'lucide-react';
+import { Calendar, User } from 'lucide-react';
 
 interface Props {
   task: Task;

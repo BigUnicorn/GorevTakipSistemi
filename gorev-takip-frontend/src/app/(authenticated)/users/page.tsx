@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUserStore, User } from '@/store/useUserStore';
+import { useUserStore } from '@/store/useUserStore';
 import { useAuthStore } from '@/store/useAuthStore';
-import { Shield, ShieldAlert, User as UserIcon, Mail, ShieldCheck } from 'lucide-react';
+import { ShieldAlert, User as UserIcon, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function UsersPage() {
