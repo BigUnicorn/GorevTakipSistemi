@@ -15,7 +15,7 @@ namespace GorevTakip.DataAccess.Repositories
 
         public async Task<(IEnumerable<TaskItem> Tasks, int TotalRecords)> GetFilteredTasksWithUsersAsync(TaskFilterDto filter)
         {
-            var query = _context.Tasks.Include(t => t.AssignedUser).AsQueryable();
+            var query = _context.Tasks.AsNoTracking().Include(t => t.AssignedUser).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(filter.SearchText))
             {

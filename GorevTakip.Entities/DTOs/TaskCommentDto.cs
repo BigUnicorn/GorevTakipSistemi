@@ -2,7 +2,7 @@ using System;
 
 namespace GorevTakip.Entities.DTOs
 {
-    public class TaskCommentDto
+    public record TaskCommentDto
     {
         public int Id { get; set; }
         public string Text { get; set; } = string.Empty;

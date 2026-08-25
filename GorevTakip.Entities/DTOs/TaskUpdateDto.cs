@@ -2,7 +2,7 @@ using System;
 
 namespace GorevTakip.Entities.DTOs
 {
-    public class TaskUpdateDto
+    public record TaskUpdateDto
     {
         public int Id { get; set; }
         public string Title { get; set; } = string.Empty;

@@ -2,7 +2,7 @@ using System;
 
 namespace GorevTakip.Business.DTOs
 {
-    public class TaskAttachmentDto
+    public record TaskAttachmentDto
     {
         public int Id { get; set; }
         public int TaskId { get; set; }
