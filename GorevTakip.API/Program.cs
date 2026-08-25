@@ -225,6 +225,7 @@ app.Run();
 
 //docker-compose up -d --> Başlatmak için
 //docker-compose up -d --build --> Kodları güncelleyip başlatmak için
+//docker compose up -d --force-recreate --> yeniden başlatma
 //docker-compose down --> Durdurmak için
 //docker-compose down -v --> Durdurmak ve veritabanını silmek için
 //docker builder prune -a -f --> Gereksiz docker image'larını silmek için
