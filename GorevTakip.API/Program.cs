@@ -14,6 +14,9 @@ using GorevTakip.API.Filters;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +82,26 @@ builder.Services.AddApiVersioning(options =>
 
 // Health Checks
 builder.Services.AddHealthChecks();
+
+// OpenTelemetry (Gözlemlenebilirlik) Yapılandırması
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("GorevTakip.API"))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(opts => 
+        {
+            var endpoint = builder.Configuration["Otlp:Endpoint"] ?? "http://jaeger:4317";
+            opts.Endpoint = new Uri(endpoint);
+        })
+    )
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddPrometheusExporter()
+    );
 
 // Redis Distributed Cache Yapılandırması
 builder.Services.AddStackExchangeRedisCache(options =>
@@ -186,6 +209,9 @@ app.UseAuthorization();
 app.MapControllers().RequireRateLimiting("ApiLimit");
 
 app.MapHealthChecks("/api/health");
+
+// Prometheus Metrics Endpoint (Verileri çekmek için)
+app.MapPrometheusScrapingEndpoint();
 
 app.MapHub<GorevTakip.API.Hubs.TaskHub>("/taskhub");
 
