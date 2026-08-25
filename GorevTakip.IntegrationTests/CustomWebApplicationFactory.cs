@@ -15,15 +15,14 @@ namespace GorevTakip.IntegrationTests;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
-        .WithImage("postgres:15-alpine")
+    private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder("postgres:15-alpine")
         .WithDatabase("GorevTakipIntegrationDb")
         .WithUsername("postgres")
         .WithPassword("postgres")
         .Build();
 
-    private readonly RedisContainer _redisContainer = new RedisBuilder()
-        .WithImage("redis:7-alpine")
+    private readonly RedisContainer _redisContainer = new RedisBuilder("redis:7-alpine")
+        .WithPortBinding(6379, true)
         .Build();
 
     public async Task InitializeAsync()

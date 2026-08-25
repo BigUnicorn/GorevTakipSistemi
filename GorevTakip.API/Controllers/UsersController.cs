@@ -5,7 +5,8 @@ using GorevTakip.Business.Services;
 using GorevTakip.Entities; // YENİ EKLENDİ: UserRole enum'u için
 using GorevTakip.Entities.DTOs;
 using System.Threading.Tasks;
-
+using System.Collections.Generic;
+using Microsoft.AspNetCore.Http;
 namespace GorevTakip.API.Controllers
 {
     [Authorize]
@@ -22,6 +23,7 @@ namespace GorevTakip.API.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<User>))]
         public async Task<IActionResult> GetAllUsers()
         {
             var users = await _userService.GetAllUsersAsync();
@@ -29,6 +31,7 @@ namespace GorevTakip.API.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(User))]
         public async Task<IActionResult> CreateUser([FromBody] User user)
         {
             var createdUser = await _userService.CreateUserAsync(user);
@@ -38,6 +41,8 @@ namespace GorevTakip.API.Controllers
         [HttpPut("{id}/role")]
         // YENİ HALİ: Enum üzerinden Authorize yapıyoruz, "Admin" string'ini kaldırdık
         [Authorize(Roles = nameof(UserRole.Admin))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateUserRole(int id, [FromBody] UserRoleUpdateDto updateDto)
         {
             if (id != updateDto.UserId)

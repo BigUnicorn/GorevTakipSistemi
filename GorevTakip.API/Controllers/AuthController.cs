@@ -41,6 +41,8 @@ namespace GorevTakip.API.Controllers
 
         [HttpPost("register")]
         [EnableRateLimiting("AuthLimit")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Register([FromBody] UserRegisterDto registerDto)
         {
             await _authService.RegisterAsync(registerDto);
@@ -49,6 +51,8 @@ namespace GorevTakip.API.Controllers
 
         [HttpPost("login")]
         [EnableRateLimiting("AuthLimit")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthResponseDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Login([FromBody] UserLoginDto loginDto)
         {
             var tokenDto = await _authService.LoginAsync(loginDto);
@@ -57,6 +61,8 @@ namespace GorevTakip.API.Controllers
         }
 
         [HttpPost("refresh")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthResponseDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Refresh()
         {
             var accessToken = Request.Cookies["accessToken"];
@@ -73,6 +79,7 @@ namespace GorevTakip.API.Controllers
         }
 
         [HttpPost("logout")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object))]
         public IActionResult Logout()
         {
             Response.Cookies.Delete("accessToken");
@@ -82,6 +89,8 @@ namespace GorevTakip.API.Controllers
 
         [HttpGet("me")]
         [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(AuthResponseDto))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Me()
         {
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
