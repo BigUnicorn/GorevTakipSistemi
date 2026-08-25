@@ -1,6 +1,6 @@
 namespace GorevTakip.Entities.DTOs
 {
-    public class TaskStatisticsDto
+    public record TaskStatisticsDto
     {
         public int TotalTasks { get; set; }
         public int TodoTasks { get; set; }

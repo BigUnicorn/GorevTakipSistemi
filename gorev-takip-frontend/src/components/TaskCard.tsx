@@ -4,6 +4,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Task } from '@/hooks/useTasks';
 import { Calendar, User } from 'lucide-react';
+import { memo } from 'react';
 
 interface Props {
   task: Task;
@@ -28,7 +29,7 @@ const categoryLabels: Record<number, string> = {
   6: 'DevOps',
 };
 
-export default function TaskCard({ task, onClick }: Props) {
+function TaskCard({ task, onClick }: Props) {
   const {
     attributes,
     listeners,
@@ -85,3 +86,5 @@ export default function TaskCard({ task, onClick }: Props) {
     </div>
   );
 }
+
+export default memo(TaskCard);

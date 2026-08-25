@@ -4,6 +4,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Task } from '@/hooks/useTasks';
 import TaskCard from './TaskCard';
+import { memo } from 'react';
 
 interface Props {
   status: number;
@@ -12,7 +13,7 @@ interface Props {
   onTaskClick?: (task: Task) => void;
 }
 
-export default function KanbanColumn({ status, title, tasks, onTaskClick }: Props) {
+function KanbanColumn({ status, title, tasks, onTaskClick }: Props) {
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${status}`,
     data: {
@@ -51,3 +52,5 @@ export default function KanbanColumn({ status, title, tasks, onTaskClick }: Prop
     </div>
   );
 }
+
+export default memo(KanbanColumn);

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace GorevTakip.Entities.DTOs
 {
-    public class PagedResponseDto<T>
+    public record PagedResponseDto<T>
     {
         public IEnumerable<T> Data { get; set; } = new List<T>();
         public int TotalRecords { get; set; }

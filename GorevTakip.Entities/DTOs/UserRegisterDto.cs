@@ -1,6 +1,6 @@
 namespace GorevTakip.Entities.DTOs
 {
-    public class UserRegisterDto
+    public record UserRegisterDto
     {
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;

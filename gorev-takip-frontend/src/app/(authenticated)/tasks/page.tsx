@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import KanbanBoard from '@/components/KanbanBoard';
 import TaskListView from '@/components/TaskListView';
-import CreateTaskModal from '@/components/CreateTaskModal';
-import TaskDetailModal from '@/components/TaskDetailModal';
+const CreateTaskModal = dynamic(() => import('@/components/CreateTaskModal'), { ssr: false });
+const TaskDetailModal = dynamic(() => import('@/components/TaskDetailModal'), { ssr: false });
 import { Task, useTasksQuery } from '@/hooks/useTasks';
 import { useAuthStore } from '@/store/useAuthStore';
 import { LayoutGrid, List } from 'lucide-react';

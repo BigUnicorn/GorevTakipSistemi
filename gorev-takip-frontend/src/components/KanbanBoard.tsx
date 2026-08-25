@@ -5,7 +5,8 @@ import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, u
 import { Task, useTasksQuery, useUpdateTaskStatusMutation } from '@/hooks/useTasks';
 import KanbanColumn from './KanbanColumn';
 import TaskCard from './TaskCard';
-import TaskDetailModal from './TaskDetailModal';
+import dynamic from 'next/dynamic';
+const TaskDetailModal = dynamic(() => import('./TaskDetailModal'), { ssr: false });
 
 export default function KanbanBoard() {
   const { data: tasks = [] } = useTasksQuery();

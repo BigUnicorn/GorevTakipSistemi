@@ -17,7 +17,7 @@ namespace GorevTakip.DataAccess.Repositories
         // Önceki metotların...
         public async Task<IEnumerable<T>> GetAllAsync()
         {
-            return await _context.Set<T>().ToListAsync();
+            return await _context.Set<T>().AsNoTracking().ToListAsync();
         }
 
         public async Task<T?> GetByIdAsync(int id)

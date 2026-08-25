@@ -1,6 +1,6 @@
 namespace GorevTakip.Entities.DTOs
 {
-    public class TaskFilterDto
+    public record TaskFilterDto
     {
         public string? SearchText { get; set; }
         public int? Status { get; set; }
