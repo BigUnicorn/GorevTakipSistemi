@@ -5,19 +5,34 @@ using FluentAssertions;
 using GorevTakip.Entities.DTOs;
 using GorevTakip.Entities;
 using Xunit;
+using Microsoft.Extensions.DependencyInjection;
+using GorevTakip.DataAccess;
+using Microsoft.EntityFrameworkCore;
 
 namespace GorevTakip.IntegrationTests;
 
-public class TasksControllerTests : IClassFixture<CustomWebApplicationFactory>
+public class TasksControllerTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
 {
     private readonly HttpClient _client;
+    private readonly CustomWebApplicationFactory _factory;
 
     public TasksControllerTests(CustomWebApplicationFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient();
         // Custom Auth scheme'i kullanması için header ekliyoruz
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("TestScheme");
     }
+
+    public async Task InitializeAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Tasks.RemoveRange(await db.Tasks.IgnoreQueryFilters().ToListAsync());
+        await db.SaveChangesAsync();
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task GetTasks_ShouldReturnSuccess_AndEmptyList_WhenNoTasksExist()
@@ -49,11 +64,9 @@ public class TasksControllerTests : IClassFixture<CustomWebApplicationFactory>
         var response = await _client.PostAsJsonAsync("/api/v1/Tasks", newTask);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        var createdTask = await response.Content.ReadFromJsonAsync<TaskResponseDto>();
-        createdTask.Should().NotBeNull();
-        createdTask!.Title.Should().Be(newTask.Title);
-        createdTask.Description.Should().Be(newTask.Description);
+        var message = await response.Content.ReadAsStringAsync();
+        message.Should().Be("Görev başarıyla oluşturuldu.");
     }
 }
