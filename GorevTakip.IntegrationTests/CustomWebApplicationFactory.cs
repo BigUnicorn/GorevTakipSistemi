@@ -26,6 +26,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         .WithPortBinding(6379, true)
         .Build();
 
+    public CustomWebApplicationFactory()
+    {
+        Environment.SetEnvironmentVariable("Jwt__Key", "ThisIsADummySecretKeyForIntegrationTestsOnly1234567890!");
+    }
+
     public async Task InitializeAsync()
     {
         await _dbContainer.StartAsync();
