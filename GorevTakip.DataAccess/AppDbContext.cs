@@ -19,6 +19,7 @@ namespace GorevTakip.DataAccess
         public DbSet<TaskHistory> TaskHistories { get; set; }
         public DbSet<TaskAttachment> TaskAttachments { get; set; }
         public DbSet<OutboxMessage> OutboxMessages { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         // Tablo ilişkilerini ve kısıtlamalarını detaylı ayarladığımız (Fluent API) metot
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -48,6 +49,12 @@ namespace GorevTakip.DataAccess
                 entity.Property(e => e.Type).IsRequired().HasMaxLength(255);
                 entity.Property(e => e.Payload).IsRequired();
             });
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             base.OnModelCreating(modelBuilder);
         }
