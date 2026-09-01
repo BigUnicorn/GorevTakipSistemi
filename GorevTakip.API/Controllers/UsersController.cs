@@ -30,13 +30,7 @@ namespace GorevTakip.API.Controllers
             return Ok(users);
         }
 
-        [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(User))]
-        public async Task<IActionResult> CreateUser([FromBody] User user)
-        {
-            var createdUser = await _userService.CreateUserAsync(user);
-            return Ok(createdUser);
-        }
+
 
         [HttpPut("{id}/role")]
         // YENİ HALİ: Enum üzerinden Authorize yapıyoruz, "Admin" string'ini kaldırdık
