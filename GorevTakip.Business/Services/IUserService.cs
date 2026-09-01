@@ -10,6 +10,5 @@ namespace GorevTakip.Business.Services
         Task<User?> GetUserByEmailAsync(string email);
         Task UpdateUserRoleAsync(UserRoleUpdateDto updateDto);
         Task<IEnumerable<User>> GetAllUsersAsync();
-        Task<User> CreateUserAsync(User user);
     }
 }

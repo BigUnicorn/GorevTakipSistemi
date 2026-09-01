@@ -42,12 +42,5 @@ namespace GorevTakip.Business.Services
         {
             return await _userRepository.GetAllAsync();
         }
-
-        public async Task<User> CreateUserAsync(User user)
-        {
-            await _userRepository.AddAsync(user);
-            await _unitOfWork.SaveChangesAsync();
-            return user;
-        }
     }
 }

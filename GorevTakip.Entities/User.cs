@@ -9,9 +9,13 @@ namespace GorevTakip.Entities
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        [JsonIgnore]
         public string PasswordHash { get; set; } = string.Empty; 
         
+        [JsonIgnore]
         public string? RefreshToken { get; set; }
+        
+        [JsonIgnore]
         public System.DateTime? RefreshTokenExpiryTime { get; set; }
 
         public UserRole Role { get; set; } = UserRole.Employee;
