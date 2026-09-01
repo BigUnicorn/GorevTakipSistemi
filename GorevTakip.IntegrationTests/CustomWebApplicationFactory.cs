@@ -1,5 +1,6 @@
 using System.Data.Common;
 using GorevTakip.DataAccess;
+using GorevTakip.Entities;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -80,6 +81,19 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             using var scope = sp.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             db.Database.Migrate();
+
+            if (!db.Users.Any(u => u.Id == 1))
+            {
+                // Identity insert if necessary, or let EF assign it (usually 1 for the first record)
+                db.Users.Add(new User 
+                { 
+                    FirstName = "Test", 
+                    LastName = "User", 
+                    Email = "test@example.com", 
+                    PasswordHash = "dummyhash"
+                });
+                db.SaveChanges();
+            }
 
             // Authentication'ı by-pass etmek için TestScheme kullanıyoruz
             services.AddAuthentication("TestScheme")
