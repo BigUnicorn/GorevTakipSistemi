@@ -3,16 +3,14 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bell, Search, CheckCircle2, Menu } from 'lucide-react';
-import { useNotificationStore } from '@/store/useNotificationStore';
+import { useNotifications } from '@/hooks/useNotifications';
 import { useSidebarStore } from '@/store/useSidebarStore';
 
 export default function Header() {
   const pathname = usePathname();
   const [showNotifications, setShowNotifications] = useState(false);
-  const { notifications, markAsRead, markAllAsRead } = useNotificationStore();
+  const { notifications, markAsRead, markAllAsRead, unreadCount, isLoading } = useNotifications();
   const { toggle: toggleSidebar } = useSidebarStore();
-  
-  const unreadCount = notifications.filter(n => !n.read).length;
   
   const getPageTitle = () => {
     if (pathname.startsWith('/dashboard')) return 'Kontrol Paneli';
@@ -51,7 +49,7 @@ export default function Header() {
             <Bell size={20} />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-purple-500 rounded-full border-2 border-gray-900 text-[8px] flex items-center justify-center text-white font-bold">
-                {unreadCount}
+                {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </button>
@@ -63,7 +61,7 @@ export default function Header() {
                 <h3 className="font-semibold text-white">Bildirimler</h3>
                 {unreadCount > 0 && (
                   <button 
-                    onClick={markAllAsRead}
+                    onClick={() => markAllAsRead()}
                     className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
                   >
                     Tümünü Okundu İşaretle
@@ -71,7 +69,11 @@ export default function Header() {
                 )}
               </div>
               <div className="max-h-80 overflow-y-auto">
-                {notifications.length === 0 ? (
+                {isLoading ? (
+                  <div className="p-6 text-center text-sm text-gray-500">
+                    Yükleniyor...
+                  </div>
+                ) : notifications.length === 0 ? (
                   <div className="p-6 text-center text-sm text-gray-500">
                     Henüz bildiriminiz yok.
                   </div>
@@ -79,18 +81,18 @@ export default function Header() {
                   notifications.map(notif => (
                     <div 
                       key={notif.id} 
-                      className={`p-4 border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors cursor-pointer flex gap-3 ${!notif.read ? 'bg-purple-900/10' : ''}`}
-                      onClick={() => markAsRead(notif.id)}
+                      className={`p-4 border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors cursor-pointer flex gap-3 ${!notif.isRead ? 'bg-purple-900/10' : ''}`}
+                      onClick={() => !notif.isRead && markAsRead(notif.id)}
                     >
                       <div className="mt-0.5">
-                        <CheckCircle2 size={16} className={notif.read ? 'text-gray-600' : 'text-purple-500'} />
+                        <CheckCircle2 size={16} className={notif.isRead ? 'text-gray-600' : 'text-purple-500'} />
                       </div>
                       <div>
-                        <p className={`text-sm ${notif.read ? 'text-gray-400' : 'text-gray-200 font-medium'}`}>
+                        <p className={`text-sm ${notif.isRead ? 'text-gray-400' : 'text-gray-200 font-medium'}`}>
                           {notif.message}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {notif.date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(notif.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>

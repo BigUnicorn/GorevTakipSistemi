@@ -6,6 +6,7 @@ using GorevTakip.DataAccess.Repositories;
 using GorevTakip.Entities;
 using GorevTakip.Entities.DTOs;
 using System.Text.Json;
+using GorevTakip.Business.Services;
 using MediatR;
 using Microsoft.Extensions.Caching.Distributed;
 using GorevTakip.Business.Exceptions;
@@ -27,9 +28,10 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly IMapper _mapper;
         private readonly IDistributedCache _cache;
         private readonly IOutboxRepository _outboxRepository;
+        private readonly INotificationService _notificationService;
 
         public CreateTaskCommandHandler(ITaskRepository taskRepository, IGenericRepository<User> userRepository, 
-            ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IMapper mapper, IDistributedCache cache, IOutboxRepository outboxRepository)
+            ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IMapper mapper, IDistributedCache cache, IOutboxRepository outboxRepository, INotificationService notificationService)
         {
             _taskRepository = taskRepository;
             _userRepository = userRepository;
@@ -38,6 +40,7 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             _mapper = mapper;
             _cache = cache;
             _outboxRepository = outboxRepository;
+            _notificationService = notificationService;
         }
 
         public async Task<TaskResponseDto> Handle(CreateTaskCommand request, CancellationToken cancellationToken)
@@ -60,12 +63,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             await _historyRepository.AddAsync(history);
             
             var responseDto = _mapper.Map<TaskResponseDto>(taskItem);
+            await _notificationService.CreateNotificationsAsync($"Yeni görev oluşturuldu: {taskItem.Title}", taskItem.AssignedUserId, taskItem.Id);
             var outboxMessage = new OutboxMessage
             {
                 Type = "ReceiveTaskUpdate",
                 Payload = JsonSerializer.Serialize(new { Action = "Create", Task = responseDto })
             };
             await _outboxRepository.AddAsync(outboxMessage);
+            // Notification injection handled dynamically
             
             await _unitOfWork.SaveChangesAsync();
 
@@ -96,10 +101,11 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDistributedCache _cache;
         private readonly IOutboxRepository _outboxRepository;
+        private readonly INotificationService _notificationService;
         private readonly IMapper _mapper;
 
         public UpdateTaskCommandHandler(ITaskRepository taskRepository, IGenericRepository<User> userRepository, 
-            ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository, IMapper mapper)
+            ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository, INotificationService notificationService, IMapper mapper)
         {
             _taskRepository = taskRepository;
             _userRepository = userRepository;
@@ -107,6 +113,7 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             _unitOfWork = unitOfWork;
             _cache = cache;
             _outboxRepository = outboxRepository;
+            _notificationService = notificationService;
             _mapper = mapper;
         }
 
@@ -138,12 +145,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             };
             await _historyRepository.AddAsync(history);
             
+            await _notificationService.CreateNotificationsAsync($"Görev güncellendi: {existingTask.Title}", existingTask.AssignedUserId, existingTask.Id);
             var outboxMessage = new OutboxMessage
             {
                 Type = "ReceiveTaskUpdate",
                 Payload = JsonSerializer.Serialize(new { Action = "Update", Task = _mapper.Map<TaskResponseDto>(existingTask) })
             };
             await _outboxRepository.AddAsync(outboxMessage);
+            // Notification injection handled dynamically
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -172,13 +181,15 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDistributedCache _cache;
         private readonly IOutboxRepository _outboxRepository;
+        private readonly INotificationService _notificationService;
 
-        public DeleteTaskCommandHandler(ITaskRepository taskRepository, IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository)
+        public DeleteTaskCommandHandler(ITaskRepository taskRepository, IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository, INotificationService notificationService)
         {
             _taskRepository = taskRepository;
             _unitOfWork = unitOfWork;
             _cache = cache;
             _outboxRepository = outboxRepository;
+            _notificationService = notificationService;
         }
 
         public async Task Handle(DeleteTaskCommand request, CancellationToken cancellationToken)
@@ -191,12 +202,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
                 
                 _taskRepository.Delete(task);
 
+                await _notificationService.CreateNotificationsAsync($"Bir görev silindi: {task.Title}", task.AssignedUserId, null);
                 var outboxMessage = new OutboxMessage
                 {
                     Type = "ReceiveTaskUpdate",
                     Payload = JsonSerializer.Serialize(new { Action = "Delete", TaskId = request.Id })
                 };
                 await _outboxRepository.AddAsync(outboxMessage);
+            // Notification injection handled dynamically
 
                 await _unitOfWork.SaveChangesAsync();
                 
@@ -222,16 +235,18 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDistributedCache _cache;
         private readonly IOutboxRepository _outboxRepository;
+        private readonly INotificationService _notificationService;
         private readonly IMapper _mapper;
 
         public UpdateTaskStatusCommandHandler(ITaskRepository taskRepository, ITaskHistoryRepository historyRepository, 
-            IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository, IMapper mapper)
+            IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository, INotificationService notificationService, IMapper mapper)
         {
             _taskRepository = taskRepository;
             _historyRepository = historyRepository;
             _unitOfWork = unitOfWork;
             _cache = cache;
             _outboxRepository = outboxRepository;
+            _notificationService = notificationService;
             _mapper = mapper;
         }
 
@@ -250,12 +265,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             };
             await _historyRepository.AddAsync(history);
             
+            await _notificationService.CreateNotificationsAsync($"Görev durumu güncellendi: {request.NewStatus}", task.AssignedUserId, task.Id);
             var outboxMessage = new OutboxMessage
             {
                 Type = "ReceiveTaskUpdate",
                 Payload = JsonSerializer.Serialize(new { Action = "Update", Task = _mapper.Map<TaskResponseDto>(task) })
             };
             await _outboxRepository.AddAsync(outboxMessage);
+            // Notification injection handled dynamically
 
             await _unitOfWork.SaveChangesAsync();
 
@@ -280,13 +297,15 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly ITaskHistoryRepository _historyRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IOutboxRepository _outboxRepository;
+        private readonly INotificationService _notificationService;
 
-        public AddCommentCommandHandler(ITaskCommentRepository commentRepository, ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IOutboxRepository outboxRepository)
+        public AddCommentCommandHandler(ITaskCommentRepository commentRepository, ITaskHistoryRepository historyRepository, IUnitOfWork unitOfWork, IOutboxRepository outboxRepository, INotificationService notificationService)
         {
             _commentRepository = commentRepository;
             _historyRepository = historyRepository;
             _unitOfWork = unitOfWork;
             _outboxRepository = outboxRepository;
+            _notificationService = notificationService;
         }
 
         public async Task Handle(AddCommentCommand request, CancellationToken cancellationToken)
@@ -307,12 +326,14 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             };
             await _historyRepository.AddAsync(history);
 
+            await _notificationService.CreateNotificationsAsync($"#{request.TaskId} numaralı göreve yeni bir yorum yapıldı.", null, request.TaskId);
             var outboxMessage = new OutboxMessage
             {
                 Type = "ReceiveNewComment",
                 Payload = JsonSerializer.Serialize(request.TaskId)
             };
             await _outboxRepository.AddAsync(outboxMessage);
+            // Notification injection handled dynamically
 
             await _unitOfWork.SaveChangesAsync();
         }
