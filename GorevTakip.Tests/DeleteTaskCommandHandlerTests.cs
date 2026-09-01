@@ -8,6 +8,7 @@ using GorevTakip.Entities;
 using Microsoft.Extensions.Caching.Distributed;
 using Moq;
 using Xunit;
+using GorevTakip.Business.Services;
 
 namespace GorevTakip.Tests
 {
@@ -17,6 +18,7 @@ namespace GorevTakip.Tests
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IDistributedCache> _cacheMock;
         private readonly Mock<IOutboxRepository> _outboxRepositoryMock;
+        private readonly Mock<INotificationService> _notificationServiceMock;
 
         public DeleteTaskCommandHandlerTests()
         {
@@ -24,6 +26,7 @@ namespace GorevTakip.Tests
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _cacheMock = new Mock<IDistributedCache>();
             _outboxRepositoryMock = new Mock<IOutboxRepository>();
+            _notificationServiceMock = new Mock<INotificationService>();
         }
 
         [Fact]
@@ -39,7 +42,8 @@ namespace GorevTakip.Tests
                 _taskRepositoryMock.Object,
                 _unitOfWorkMock.Object,
                 _cacheMock.Object,
-                _outboxRepositoryMock.Object
+                _outboxRepositoryMock.Object,
+                _notificationServiceMock.Object
             );
 
             // Act
@@ -63,7 +67,8 @@ namespace GorevTakip.Tests
                 _taskRepositoryMock.Object,
                 _unitOfWorkMock.Object,
                 _cacheMock.Object,
-                _outboxRepositoryMock.Object
+                _outboxRepositoryMock.Object,
+                _notificationServiceMock.Object
             );
 
             // Act

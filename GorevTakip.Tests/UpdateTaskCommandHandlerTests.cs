@@ -11,6 +11,7 @@ using Microsoft.Extensions.Caching.Distributed;
 using Moq;
 using Xunit;
 using GorevTakip.Business.Exceptions;
+using GorevTakip.Business.Services;
 
 namespace GorevTakip.Tests
 {
@@ -22,6 +23,7 @@ namespace GorevTakip.Tests
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IDistributedCache> _cacheMock;
         private readonly Mock<IOutboxRepository> _outboxRepositoryMock;
+        private readonly Mock<INotificationService> _notificationServiceMock;
         private readonly Mock<IMapper> _mapperMock;
 
         public UpdateTaskCommandHandlerTests()
@@ -32,6 +34,7 @@ namespace GorevTakip.Tests
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _cacheMock = new Mock<IDistributedCache>();
             _outboxRepositoryMock = new Mock<IOutboxRepository>();
+            _notificationServiceMock = new Mock<INotificationService>();
             _mapperMock = new Mock<IMapper>();
         }
 
@@ -54,6 +57,7 @@ namespace GorevTakip.Tests
                 _unitOfWorkMock.Object,
                 _cacheMock.Object,
                 _outboxRepositoryMock.Object,
+                _notificationServiceMock.Object,
                 _mapperMock.Object
             );
 
@@ -84,6 +88,7 @@ namespace GorevTakip.Tests
                 _unitOfWorkMock.Object,
                 _cacheMock.Object,
                 _outboxRepositoryMock.Object,
+                _notificationServiceMock.Object,
                 _mapperMock.Object
             );
 
@@ -122,6 +127,7 @@ namespace GorevTakip.Tests
                 _unitOfWorkMock.Object,
                 _cacheMock.Object,
                 _outboxRepositoryMock.Object,
+                _notificationServiceMock.Object,
                 _mapperMock.Object
             );
 
