@@ -46,7 +46,7 @@ Görev Takip Sistemi (GorevTakipSistemi), ekiplerin iş süreçlerini Kanban yak
 - [Next.js](https://nextjs.org/) (App Router, React 18)
 - [Tailwind CSS](https://tailwindcss.com/) & Glassmorphism UI
 - [TanStack Query (React Query)](https://tanstack.com/query/v5) (Asenkron durum yönetimi)
-- [Zustand](https://docs.pmnd.rs/zustand) (Yerel durum yönetimi)
+- [Zustand](https://zustand-demo.pmnd.rs) (Yerel durum yönetimi)
 
 **Backend:**
 - .NET 8 / C#
@@ -106,7 +106,7 @@ Task Tracking System (GorevTakipSistemi) is a **production-ready** web applicati
 - [Next.js](https://nextjs.org/) (App Router, React 18)
 - [Tailwind CSS](https://tailwindcss.com/) & Glassmorphism UI
 - [TanStack Query (React Query)](https://tanstack.com/query/v5) (Asynchronous state management)
-- [Zustand](https://docs.pmnd.rs/zustand) (Local state management)
+- [Zustand](https://zustand-demo.pmnd.rs) (Local state management)
 
 **Backend:**
 - .NET 8 / C#
