@@ -17,22 +17,36 @@ namespace GorevTakip.Tests
     public class UpdateTaskStatusCommandHandlerTests
     {
         private readonly Mock<ITaskRepository> _taskRepositoryMock;
+        private readonly Mock<IGenericRepository<User>> _userRepositoryMock;
         private readonly Mock<ITaskHistoryRepository> _historyRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IDistributedCache> _cacheMock;
         private readonly Mock<IOutboxRepository> _outboxRepositoryMock;
         private readonly Mock<INotificationService> _notificationServiceMock;
         private readonly Mock<IMapper> _mapperMock;
+        private readonly UpdateTaskStatusCommandHandler _handler;
 
         public UpdateTaskStatusCommandHandlerTests()
         {
             _taskRepositoryMock = new Mock<ITaskRepository>();
+            _userRepositoryMock = new Mock<IGenericRepository<User>>();
             _historyRepositoryMock = new Mock<ITaskHistoryRepository>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _cacheMock = new Mock<IDistributedCache>();
             _outboxRepositoryMock = new Mock<IOutboxRepository>();
             _notificationServiceMock = new Mock<INotificationService>();
             _mapperMock = new Mock<IMapper>();
+
+            _handler = new UpdateTaskStatusCommandHandler(
+                _taskRepositoryMock.Object,
+                _userRepositoryMock.Object,
+                _historyRepositoryMock.Object,
+                _unitOfWorkMock.Object,
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object,
+                _notificationServiceMock.Object,
+                _mapperMock.Object
+            );
         }
 
         [Fact]
@@ -43,18 +57,8 @@ namespace GorevTakip.Tests
 
             _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync((TaskItem?)null);
 
-            var handler = new UpdateTaskStatusCommandHandler(
-                _taskRepositoryMock.Object,
-                _historyRepositoryMock.Object,
-                _unitOfWorkMock.Object,
-                _cacheMock.Object,
-                _outboxRepositoryMock.Object,
-                _notificationServiceMock.Object,
-                _mapperMock.Object
-            );
-
             // Act & Assert
-            Func<Task> act = async () => await handler.Handle(command, CancellationToken.None);
+            Func<Task> act = async () => await _handler.Handle(command, CancellationToken.None);
 
             await act.Should().ThrowAsync<NotFoundException>().WithMessage("Görev bulunamadı.");
         }
@@ -68,18 +72,8 @@ namespace GorevTakip.Tests
 
             _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(existingTask);
 
-            var handler = new UpdateTaskStatusCommandHandler(
-                _taskRepositoryMock.Object,
-                _historyRepositoryMock.Object,
-                _unitOfWorkMock.Object,
-                _cacheMock.Object,
-                _outboxRepositoryMock.Object,
-                _notificationServiceMock.Object,
-                _mapperMock.Object
-            );
-
             // Act
-            await handler.Handle(command, CancellationToken.None);
+            await _handler.Handle(command, CancellationToken.None);
 
             // Assert
             existingTask.Status.Should().Be(WorkStatus.Done);

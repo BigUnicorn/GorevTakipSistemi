@@ -15,18 +15,30 @@ namespace GorevTakip.Tests
     public class DeleteTaskCommandHandlerTests
     {
         private readonly Mock<ITaskRepository> _taskRepositoryMock;
+        private readonly Mock<IGenericRepository<User>> _userRepositoryMock;
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
         private readonly Mock<IDistributedCache> _cacheMock;
         private readonly Mock<IOutboxRepository> _outboxRepositoryMock;
         private readonly Mock<INotificationService> _notificationServiceMock;
+        private readonly DeleteTaskCommandHandler _handler;
 
         public DeleteTaskCommandHandlerTests()
         {
             _taskRepositoryMock = new Mock<ITaskRepository>();
+            _userRepositoryMock = new Mock<IGenericRepository<User>>();
             _unitOfWorkMock = new Mock<IUnitOfWork>();
             _cacheMock = new Mock<IDistributedCache>();
             _outboxRepositoryMock = new Mock<IOutboxRepository>();
             _notificationServiceMock = new Mock<INotificationService>();
+
+            _handler = new DeleteTaskCommandHandler(
+                _taskRepositoryMock.Object,
+                _userRepositoryMock.Object,
+                _unitOfWorkMock.Object,
+                _cacheMock.Object,
+                _outboxRepositoryMock.Object,
+                _notificationServiceMock.Object
+            );
         }
 
         [Fact]
@@ -38,16 +50,8 @@ namespace GorevTakip.Tests
 
             _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync(existingTask);
 
-            var handler = new DeleteTaskCommandHandler(
-                _taskRepositoryMock.Object,
-                _unitOfWorkMock.Object,
-                _cacheMock.Object,
-                _outboxRepositoryMock.Object,
-                _notificationServiceMock.Object
-            );
-
             // Act
-            await handler.Handle(command, CancellationToken.None);
+            await _handler.Handle(command, CancellationToken.None);
 
             // Assert
             _taskRepositoryMock.Verify(r => r.Delete(existingTask), Times.Once);
@@ -63,16 +67,8 @@ namespace GorevTakip.Tests
 
             _taskRepositoryMock.Setup(repo => repo.GetByIdAsync(1)).ReturnsAsync((TaskItem?)null);
 
-            var handler = new DeleteTaskCommandHandler(
-                _taskRepositoryMock.Object,
-                _unitOfWorkMock.Object,
-                _cacheMock.Object,
-                _outboxRepositoryMock.Object,
-                _notificationServiceMock.Object
-            );
-
             // Act
-            await handler.Handle(command, CancellationToken.None);
+            await _handler.Handle(command, CancellationToken.None);
 
             // Assert
             _taskRepositoryMock.Verify(r => r.Delete(It.IsAny<TaskItem>()), Times.Never);

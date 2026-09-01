@@ -63,7 +63,8 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             await _historyRepository.AddAsync(history);
             
             var responseDto = _mapper.Map<TaskResponseDto>(taskItem);
-            await _notificationService.CreateNotificationsAsync($"Yeni görev oluşturuldu: {taskItem.Title}", taskItem.AssignedUserId, taskItem.Id);
+            var userName = $"{userExists.FirstName} {userExists.LastName}";
+            await _notificationService.CreateNotificationsAsync($"{userName} kullanıcısına yeni bir görev atandı: '{taskItem.Title}'", taskItem.AssignedUserId, taskItem.Id);
             var outboxMessage = new OutboxMessage
             {
                 Type = "ReceiveTaskUpdate",
@@ -145,7 +146,8 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             };
             await _historyRepository.AddAsync(history);
             
-            await _notificationService.CreateNotificationsAsync($"Görev güncellendi: {existingTask.Title}", existingTask.AssignedUserId, existingTask.Id);
+            var userName = $"{userExists.FirstName} {userExists.LastName}";
+            await _notificationService.CreateNotificationsAsync($"{userName} kullanıcısının '{existingTask.Title}' adlı görevi güncellendi.", existingTask.AssignedUserId, existingTask.Id);
             var outboxMessage = new OutboxMessage
             {
                 Type = "ReceiveTaskUpdate",
@@ -178,14 +180,16 @@ namespace GorevTakip.Business.Features.Tasks.Commands
     public class DeleteTaskCommandHandler : IRequestHandler<DeleteTaskCommand>
     {
         private readonly ITaskRepository _taskRepository;
+        private readonly IGenericRepository<User> _userRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDistributedCache _cache;
         private readonly IOutboxRepository _outboxRepository;
         private readonly INotificationService _notificationService;
 
-        public DeleteTaskCommandHandler(ITaskRepository taskRepository, IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository, INotificationService notificationService)
+        public DeleteTaskCommandHandler(ITaskRepository taskRepository, IGenericRepository<User> userRepository, IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository, INotificationService notificationService)
         {
             _taskRepository = taskRepository;
+            _userRepository = userRepository;
             _unitOfWork = unitOfWork;
             _cache = cache;
             _outboxRepository = outboxRepository;
@@ -202,7 +206,9 @@ namespace GorevTakip.Business.Features.Tasks.Commands
                 
                 _taskRepository.Delete(task);
 
-                await _notificationService.CreateNotificationsAsync($"Bir görev silindi: {task.Title}", task.AssignedUserId, null);
+                var user = await _userRepository.GetByIdAsync(task.AssignedUserId);
+                var userName = user != null ? $"{user.FirstName} {user.LastName}" : "Bilinmeyen Kullanıcı";
+                await _notificationService.CreateNotificationsAsync($"{userName} kullanıcısına ait '{task.Title}' adlı görev silindi.", task.AssignedUserId, null);
                 var outboxMessage = new OutboxMessage
                 {
                     Type = "ReceiveTaskUpdate",
@@ -231,6 +237,7 @@ namespace GorevTakip.Business.Features.Tasks.Commands
     public class UpdateTaskStatusCommandHandler : IRequestHandler<UpdateTaskStatusCommand>
     {
         private readonly ITaskRepository _taskRepository;
+        private readonly IGenericRepository<User> _userRepository;
         private readonly ITaskHistoryRepository _historyRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IDistributedCache _cache;
@@ -238,10 +245,11 @@ namespace GorevTakip.Business.Features.Tasks.Commands
         private readonly INotificationService _notificationService;
         private readonly IMapper _mapper;
 
-        public UpdateTaskStatusCommandHandler(ITaskRepository taskRepository, ITaskHistoryRepository historyRepository, 
+        public UpdateTaskStatusCommandHandler(ITaskRepository taskRepository, IGenericRepository<User> userRepository, ITaskHistoryRepository historyRepository, 
             IUnitOfWork unitOfWork, IDistributedCache cache, IOutboxRepository outboxRepository, INotificationService notificationService, IMapper mapper)
         {
             _taskRepository = taskRepository;
+            _userRepository = userRepository;
             _historyRepository = historyRepository;
             _unitOfWork = unitOfWork;
             _cache = cache;
@@ -265,7 +273,9 @@ namespace GorevTakip.Business.Features.Tasks.Commands
             };
             await _historyRepository.AddAsync(history);
             
-            await _notificationService.CreateNotificationsAsync($"Görev durumu güncellendi: {request.NewStatus}", task.AssignedUserId, task.Id);
+            var user = await _userRepository.GetByIdAsync(task.AssignedUserId);
+            var userName = user != null ? $"{user.FirstName} {user.LastName}" : "Bilinmeyen Kullanıcı";
+            await _notificationService.CreateNotificationsAsync($"{userName} kullanıcısının '{task.Title}' görevi '{request.NewStatus}' durumuna geçti.", task.AssignedUserId, task.Id);
             var outboxMessage = new OutboxMessage
             {
                 Type = "ReceiveTaskUpdate",
