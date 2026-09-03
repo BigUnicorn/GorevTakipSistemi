@@ -6,14 +6,14 @@
 
 ## 📌 Copyright & Commercial Use (Required Notice)
 
-**Copyright © 2026 [Talha GÜRLEK]**
+**Copyright © 2026 Talha GÜRLEK**
 
 Except as explicitly permitted by this license, **any commercial use of this software (e.g., monetization, corporate use) is strictly prohibited.**
 
 To obtain a commercial license, request special permissions, or contact the author, please use the following channels:
 
-*   **Email:** [talha38tab@gmail.com]
-*   **GitHub:** [https://github.com/BigUnicorn]
+*   **Email:** talha38tab@gmail.com
+*   **GitHub:** https://github.com/BigUnicorn
 
 ---
 
